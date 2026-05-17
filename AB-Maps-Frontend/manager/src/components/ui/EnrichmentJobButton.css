@@ -1,0 +1,211 @@
+/* EnrichmentJobButton.css - Button for enrichment job tracking */
+
+.enrichment-job-button {
+  /* Base circular button styles - matches CircularToggle pattern */
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: visible;
+  
+  /* Ensure good contrast and readability */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  /* Shadow for depth */
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  
+  /* Force color scheme to be independent */
+  color-scheme: normal !important;
+  
+  /* Default inactive state */
+  background: rgba(245, 245, 245, 0.95);
+  color: #666;
+  border-color: #ddd;
+}
+
+.enrichment-job-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.enrichment-job-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Active state - when jobs are running (purple/blue gradient) */
+.enrichment-job-button.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  border-color: #8b5cf6;
+  box-shadow: 
+    0 4px 12px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.enrichment-job-button.active:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 16px rgba(139, 92, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.enrichment-job-button.active:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 6px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Inactive state - when no jobs */
+.enrichment-job-button.inactive {
+  background: rgba(245, 245, 245, 0.95);
+  color: #999;
+  border-color: #ddd;
+  cursor: not-allowed;
+}
+
+.enrichment-job-button.inactive:hover {
+  background: rgba(235, 235, 235, 0.95);
+  border-color: #ccc;
+}
+
+/* Disabled state */
+.enrichment-job-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Icon wrapper */
+.enrichment-job-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Icon styling */
+.enrichment-job-icon {
+  font-size: 18px;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+/* Spinning animation when active */
+.enrichment-job-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Badge for job count (when multiple jobs) */
+.enrichment-job-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 2px 6px rgba(239, 68, 68, 0.4),
+    0 0 0 2px rgba(255, 255, 255, 0.8);
+  z-index: 2;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Pulse animation for badge when jobs are active */
+.enrichment-job-button.active .enrichment-job-badge {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .enrichment-job-button {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .enrichment-job-icon {
+    font-size: 16px;
+  }
+  
+  .enrichment-job-badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+    padding: 0 5px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .enrichment-job-button {
+    border-width: 3px;
+  }
+  
+  .enrichment-job-button.active {
+    border-color: #000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .enrichment-job-icon.spinning {
+    animation: none;
+  }
+  
+  .enrichment-job-button.active .enrichment-job-badge {
+    animation: none;
+  }
+  
+  .enrichment-job-button {
+    transition: none;
+  }
+}

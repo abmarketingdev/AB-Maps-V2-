@@ -1,0 +1,32 @@
+{
+  "rewrites": [
+    {
+      "source": "/manager(/.*)?",
+      "destination": "/manager/index.html"
+    },
+    {
+      "source": "/emp(/.*)?",
+      "destination": "/emp/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/emp/workers/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        }
+      ]
+    },
+    {
+      "source": "/manager/workers/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        }
+      ]
+    }
+  ]
+}

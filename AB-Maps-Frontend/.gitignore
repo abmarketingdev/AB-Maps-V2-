@@ -1,0 +1,9 @@
+# .gitignore
+node_modules/
+ab-maps-fe-manager/node_modules/
+ab-maps-fe-emp/node_modules/
+ab-maps-sales-dashboard_old/node_modules/
+build/
+dist/
+.env
+.DS_Store

@@ -1,0 +1,85 @@
+/* DeleteToggle.css - Styles for the delete mode toggle button */
+
+/* Import shared circular toggle styles */
+/* These base styles are inherited from CircularToggle.css */
+
+/* Delete mode enabled state (red/danger) */
+.circular-toggle.enabled.delete-mode {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border-color: #e74c3c;
+  box-shadow: 
+    0 4px 12px rgba(231, 76, 60, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.delete-mode:hover {
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 16px rgba(231, 76, 60, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.delete-mode:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 6px rgba(231, 76, 60, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Focus state for delete mode */
+.circular-toggle.delete-mode:focus {
+  box-shadow: 
+    0 0 0 3px rgba(231, 76, 60, 0.3),
+    0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+/* Pulse animation to indicate danger zone */
+@keyframes deletePulse {
+  0% {
+    box-shadow: 
+      0 4px 12px rgba(231, 76, 60, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 4px 20px rgba(231, 76, 60, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  100% {
+    box-shadow: 
+      0 4px 12px rgba(231, 76, 60, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Apply subtle pulse when delete mode is active */
+.circular-toggle.enabled.delete-mode {
+  animation: deletePulse 2s ease-in-out infinite;
+}
+
+/* Disabled delete button has red tint to indicate danger */
+.circular-toggle.disabled.delete-button-hint {
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.circular-toggle.disabled.delete-button-hint:hover {
+  border-color: rgba(231, 76, 60, 0.5);
+}
+
+/* Reduced motion - disable pulse animation */
+@media (prefers-reduced-motion: reduce) {
+  .circular-toggle.enabled.delete-mode {
+    animation: none;
+  }
+}
+
+/* Separator line before delete button (optional visual grouping) */
+.delete-toggle-separator {
+  width: 100%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 4px 0;
+}
+

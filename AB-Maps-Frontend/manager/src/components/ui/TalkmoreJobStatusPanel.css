@@ -1,0 +1,248 @@
+.talkmore-status-panel {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.talkmore-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.talkmore-status-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.talkmore-refresh-button {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.talkmore-refresh-button:hover:not(:disabled) {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.talkmore-refresh-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.talkmore-connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.talkmore-connection-indicator {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.talkmore-connection-indicator.connected {
+  color: #10b981;
+}
+
+.talkmore-connection-indicator.disconnected {
+  color: #ef4444;
+}
+
+.talkmore-connection-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.talkmore-error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.talkmore-status-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border: 2px solid;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  background: #f9fafb;
+}
+
+.talkmore-status-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.talkmore-status-value {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.talkmore-progress-section {
+  margin-bottom: 20px;
+}
+
+.talkmore-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.talkmore-progress-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.talkmore-progress-percentage {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.talkmore-progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.talkmore-progress-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.talkmore-progress-text {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.talkmore-statistics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.talkmore-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.talkmore-stat-item.success {
+  background: #f0fdf4;
+}
+
+.talkmore-stat-item.warning {
+  background: #fffbeb;
+}
+
+.talkmore-stat-item.error {
+  background: #fef2f2;
+}
+
+.talkmore-stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.talkmore-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.talkmore-stat-item.success .talkmore-stat-value {
+  color: #10b981;
+}
+
+.talkmore-stat-item.warning .talkmore-stat-value {
+  color: #f59e0b;
+}
+
+.talkmore-stat-item.error .talkmore-stat-value {
+  color: #ef4444;
+}
+
+.talkmore-timestamps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.talkmore-timestamp {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.talkmore-timestamp-label {
+  color: #6b7280;
+}
+
+.talkmore-timestamp-value {
+  color: #111827;
+  font-weight: 500;
+}
+
+.talkmore-status-loading {
+  padding: 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .talkmore-status-panel {
+    min-width: auto;
+    max-width: 100%;
+    padding: 16px;
+  }
+
+  .talkmore-statistics {
+    grid-template-columns: 1fr;
+  }
+}

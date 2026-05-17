@@ -1,0 +1,2092 @@
+/* AssignEmployeesModal Styles - Immune to system color scheme */
+
+/* Full-screen overlay to block clicks behind & create a clean stacking context */
+.assign-employees-overlay {
+  position: fixed;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(17, 24, 39, 0.45) !important; /* semi-dark */
+  z-index: 11000; /* higher than manager toolbar & Leaflet */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  -webkit-overflow-scrolling: touch;
+  color-scheme: normal !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: auto !important;
+}
+
+/* The modal container itself */
+.assign-employees-modal {
+  position: relative;
+  width: min(90vw, 800px);
+  max-height: min(90vh, 720px);
+  background: #fff !important;
+  border-radius: 20px; /* PHASE 6 FIX: More rounded for minimalistic look */
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* clip sticky header shadow edges */
+  color-scheme: normal !important;
+  box-sizing: border-box !important; /* CRITICAL FIX: Ensure consistent box model */
+  margin: 0 auto !important; /* PHASE 6 FIX: Center horizontally */
+}
+
+/* Keep header visible; bigger close target; safe-area for notches */
+.assign-employees-modal .modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: calc(16px + env(safe-area-inset-top, 0)) 16px 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.assign-employees-modal .modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827 !important;
+}
+
+.assign-employees-modal .close-button {
+  width: 36px;
+  height: 36px;
+  font-size: 24px;
+  line-height: 1;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.assign-employees-modal .close-button:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+/* Body scrolls, not the whole page */
+.assign-employees-modal .modal-body {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  flex: 1;
+}
+
+/* Desktop: two columns; Mobile: one column stacked */
+.assign-employees-modal .employees-container {
+  display: flex;
+  gap: 16px;
+}
+
+.assign-employees-modal .employees-section {
+  flex: 1;
+  min-width: 0; /* prevent overflow from long emails */
+  display: flex;
+  flex-direction: column;
+}
+
+.assign-employees-modal .employees-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151 !important;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* ===== Search Field — Polished UI (no markup changes) ===== */
+.assign-employees-modal .employees-section .search-container {
+  position: sticky;           /* you already use sticky – keep it */
+  top: 0;
+  z-index: 2;
+  background: #fff;           /* ensure it sits on solid bg when sticky */
+  padding: 12px 0 8px;        /* breathing room when stuck */
+  /* Center horizontally inside the section on desktop */
+  max-width: 560px;
+  margin: 0 auto 12px;        /* auto centers the container */
+}
+
+/* Visual shell with icon on the left (using ::before) */
+.assign-employees-modal .employees-section .search-container::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(calc(-50% + 6px)); /* small nudge to align with text baseline */
+  width: 18px;
+  height: 18px;
+  opacity: 0.6;
+  /* inline SVG magnifier as a mask so it inherits color */
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>") center / contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>") center / contain no-repeat;
+  background: #9ca3af;
+  pointer-events: none;
+}
+
+/* Field */
+.assign-employees-modal .employees-section .search-input {
+  width: 100%;
+  height: 44px;
+  padding: 10px 44px 10px 40px;     /* room for icon (left) & clear button (right) */
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;              /* pill */
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+  font-size: 14px;
+  color: #111827 !important;
+  color-scheme: normal !important;
+}
+
+/* Hover + focus states */
+.assign-employees-modal .employees-section .search-input:hover {
+  border-color: #d1d5db;
+}
+
+.assign-employees-modal .employees-section .search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow:
+    0 0 0 3px rgba(59,130,246,.12),
+    0 2px 10px rgba(0,0,0,.06);
+  background: #fff;
+}
+
+/* Placeholder */
+.assign-employees-modal .employees-section .search-input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Clear (×) button aligned & larger click target */
+.assign-employees-modal .employees-section .clear-search-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(calc(-50% + 6px));
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #9ca3af;
+  display: grid;
+  place-items: center;
+  transition: background-color .15s ease, color .15s ease, transform .15s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.assign-employees-modal .employees-section .clear-search-btn:hover {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Optional: "searching" visual (add .is-searching to the section while debouncing) */
+.assign-employees-modal .employees-section.is-searching .search-input {
+  cursor: progress;
+}
+.assign-employees-modal .employees-section.is-searching .search-container::after {
+  content: "";
+  position: absolute;
+  right: 46px;
+  top: 50%;
+  transform: translateY(calc(-50% + 6px));
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #c7d2fe;
+  border-top-color: #4f46e5;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: translateY(calc(-50% + 6px)) rotate(360deg); } }
+
+/* Lists get their own scroll area to avoid giant pages on mobile */
+.assign-employees-modal .employees-list {
+  overflow-y: auto;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 240px;
+  max-height: 360px;
+  border: 1px solid #e5e7eb;
+}
+
+.assign-employees-modal .loading,
+.assign-employees-modal .no-employees {
+  text-align: center;
+  color: #6b7280 !important;
+  padding: 40px 20px;
+  font-size: 0.9rem;
+}
+
+.assign-employees-modal .employee-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white !important;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+  color-scheme: normal !important;
+}
+
+.assign-employees-modal .employee-item:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.assign-employees-modal .employee-info {
+  flex: 1;
+}
+
+.assign-employees-modal .employee-name {
+  font-weight: 600;
+  color: #111827 !important;
+  margin-bottom: 4px;
+}
+
+.assign-employees-modal .employee-email {
+  font-size: 0.875rem;
+  color: #6b7280 !important;
+  margin-bottom: 2px;
+}
+
+.assign-employees-modal .employee-status {
+  font-size: 0.75rem;
+  color: #9ca3af !important;
+}
+
+/* Buttons: slightly larger for touch */
+.assign-employees-modal .assign-button,
+.assign-employees-modal .unassign-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.assign-employees-modal .assign-button {
+  background-color: #10b981;
+  color: white;
+}
+
+.assign-employees-modal .assign-button:hover {
+  background-color: #059669;
+  transform: scale(1.05);
+}
+
+.assign-employees-modal .unassign-button {
+  background-color: #ef4444;
+  color: white;
+}
+
+.assign-employees-modal .unassign-button:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Footer sticks at bottom when content is tall */
+.assign-employees-modal .modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.assign-employees-modal .btn-secondary,
+.assign-employees-modal .btn-primary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  color-scheme: normal !important;
+}
+
+.assign-employees-modal .btn-secondary {
+  background-color: white !important;
+  color: #374151 !important;
+  border-color: #d1d5db;
+}
+
+.assign-employees-modal .btn-secondary:hover {
+  background-color: #f9fafb !important;
+  border-color: #9ca3af;
+}
+
+.assign-employees-modal .btn-primary {
+  background-color: #111827 !important;
+  color: white !important;
+}
+
+.assign-employees-modal .btn-primary:hover {
+  background-color: #374151 !important;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .assign-employees-modal {
+    width: 96vw;
+    max-height: 92vh;
+    border-radius: 12px;
+  }
+
+  .assign-employees-modal .employees-container {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .assign-employees-modal .employees-list {
+    min-height: 180px;
+    max-height: 260px; /* keep it above the keyboard */
+  }
+
+  /* ===== Mobile polish ===== */
+  .assign-employees-modal .employees-section .search-container {
+    max-width: none;             /* use full width */
+    padding: 10px 4px 8px;       /* snug to edges */
+    margin: 0 0 10px;
+  }
+  .assign-employees-modal .employees-section .search-input {
+    height: 46px;                /* bigger touch area */
+    font-size: 15px;
+  }
+  .assign-employees-modal .employees-section .clear-search-btn {
+    right: 6px;
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Add Employee Button Styles */
+.btn-add-employee {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #111827;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-add-employee:hover {
+  background-color: #374151;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add-employee svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* AreaPopup Add Employee Button Styles */
+.add-employee-btn {
+  background-color: #111827;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 0 4px;
+}
+
+.add-employee-btn:hover {
+  background-color: #374151;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure the modal appears above the Leaflet popup (kept here for clarity) */
+
+/* Error Message Styles */
+.error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.error-message p {
+  margin: 0 0 8px 0;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+.retry-button {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.retry-button:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* ============================================================================
+   PHASE 2: MAIN VIEW REDESIGN - SCOPED STYLES
+   All class names prefixed with 'assign-modal-' to prevent global conflicts
+   ============================================================================ */
+
+/* Main view container */
+.assign-modal-main-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+  background: #ffffff !important;
+}
+
+/* Integrated header with close button */
+.assign-modal-header-integrated {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(to bottom, #ffffff, #f9fafb);
+}
+
+.assign-modal-header-integrated h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827 !important;
+  flex: 1;
+}
+
+.assign-modal-close-btn-integrated {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 32px;
+  line-height: 1;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid #e5e7eb;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.assign-modal-close-btn-integrated:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+  transform: rotate(90deg);
+}
+
+.assign-modal-close-btn-integrated:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
+/* Main content area with action buttons */
+.assign-modal-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* PHASE 6 FIX: Center content vertically */
+  align-items: stretch; /* PHASE 6 FIX: Stretch to full width */
+  padding: 32px 24px;
+  gap: 20px;
+  background: #ffffff !important;
+  box-sizing: border-box; /* PHASE 6 FIX: Include padding in width */
+}
+
+/* Action buttons (Add/Remove) */
+.assign-modal-action-btn {
+  width: 100%;
+  padding: 24px 28px;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff !important;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box; /* PHASE 6 FIX: Include padding/border in width */
+}
+
+.assign-modal-action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.assign-modal-action-btn:hover::before {
+  opacity: 0.03;
+}
+
+.assign-modal-action-btn:hover {
+  border-color: #667eea;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+}
+
+.assign-modal-action-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.assign-modal-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Icon container within buttons */
+.assign-modal-action-btn-icon {
+  font-size: 36px;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.assign-modal-action-btn:hover .assign-modal-action-btn-icon {
+  transform: scale(1.1);
+}
+
+.assign-modal-add-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.assign-modal-remove-icon {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Button text */
+.assign-modal-action-btn-text {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827 !important;
+  text-align: left;
+  transition: color 0.2s ease;
+}
+
+.assign-modal-action-btn:hover .assign-modal-action-btn-text {
+  color: #667eea !important;
+}
+
+/* Arrow indicator */
+.assign-modal-action-btn-arrow {
+  font-size: 24px;
+  color: #9ca3af;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.assign-modal-action-btn:hover .assign-modal-action-btn-arrow {
+  color: #667eea;
+  transform: translateX(4px);
+}
+
+/* Employee count indicator */
+.assign-modal-employee-count-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-top: 12px;
+  width: 100%; /* PHASE 6 FIX: Ensure full width */
+  box-sizing: border-box; /* PHASE 6 FIX: Include padding in width */
+}
+
+.assign-modal-count-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #6b7280 !important;
+}
+
+.assign-modal-count-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827 !important;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Mobile optimizations for Phase 2 */
+@media (max-width: 768px) {
+  .assign-modal-header-integrated {
+    padding: 16px 20px;
+  }
+
+  .assign-modal-header-integrated h2 {
+    font-size: 20px;
+  }
+
+  .assign-modal-close-btn-integrated {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 28px;
+  }
+
+  .assign-modal-main-content {
+    padding: 24px 20px;
+    gap: 16px;
+  }
+
+  .assign-modal-action-btn {
+    padding: 20px 20px;
+    min-height: 80px;
+  }
+
+  .assign-modal-action-btn-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 28px;
+  }
+
+  .assign-modal-action-btn-text {
+    font-size: 16px;
+  }
+
+  .assign-modal-action-btn-arrow {
+    font-size: 20px;
+  }
+
+  .assign-modal-employee-count-indicator {
+    padding: 14px 16px;
+  }
+
+  .assign-modal-count-label {
+    font-size: 14px;
+  }
+
+  .assign-modal-count-value {
+    font-size: 24px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 375px) {
+  .assign-modal-header-integrated {
+    padding: 14px 16px;
+  }
+
+  .assign-modal-header-integrated h2 {
+    font-size: 18px;
+  }
+
+  .assign-modal-close-btn-integrated {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 24px;
+  }
+
+  .assign-modal-main-content {
+    padding: 20px 16px;
+    gap: 14px;
+  }
+
+  .assign-modal-action-btn {
+    padding: 18px 16px;
+    min-height: 72px;
+    gap: 12px;
+  }
+
+  .assign-modal-action-btn-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 24px;
+  }
+
+  .assign-modal-action-btn-text {
+    font-size: 15px;
+  }
+
+  .assign-modal-action-btn-arrow {
+    font-size: 18px;
+  }
+
+  .assign-modal-employee-count-indicator {
+    padding: 12px 14px;
+  }
+
+  .assign-modal-count-label {
+    font-size: 13px;
+  }
+
+  .assign-modal-count-value {
+    font-size: 20px;
+  }
+}
+
+/* Landscape mode optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+  .assign-modal-main-content {
+    padding: 16px 20px;
+  }
+
+  .assign-modal-action-btn {
+    min-height: 68px;
+    padding: 16px 20px;
+  }
+}
+
+/* Touch-friendly enhancements */
+.assign-modal-action-btn,
+.assign-modal-close-btn-integrated {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Prevent iOS zoom on touch */
+@media (max-width: 768px) {
+  .assign-modal-header-integrated h2 {
+    font-size: max(18px, 5vw);
+  }
+}
+
+/* ============================================================================
+   PHASE 3: ADD EMPLOYEE NESTED VIEW - SCOPED STYLES
+   All class names prefixed with 'assign-modal-' to prevent global conflicts
+   ============================================================================ */
+
+/* Nested view container */
+.assign-modal-nested-view {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff !important;
+  min-height: 400px;
+  width: 100%; /* PHASE 6 FIX: Ensure full width */
+  margin: 0; /* PHASE 6 FIX: Remove any margins */
+  padding: 0; /* PHASE 6 FIX: Remove container padding */
+}
+
+/* Nested header with back button and close */
+.assign-modal-nested-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: #ffffff !important;
+  z-index: 10;
+  gap: 12px;
+  width: 100%; /* PHASE 6 FIX: Ensure full width */
+  box-sizing: border-box; /* PHASE 6 FIX: Include padding in width */
+}
+
+.assign-modal-nested-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827 !important;
+  text-align: center;
+}
+
+/* Back button */
+.assign-modal-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563 !important;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 40px;
+  flex-shrink: 0;
+}
+
+.assign-modal-back-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827 !important;
+}
+
+.assign-modal-back-btn:active {
+  background: #f3f4f6;
+  transform: scale(0.98);
+}
+
+.assign-modal-back-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.assign-modal-back-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.assign-modal-back-text {
+  font-size: 14px;
+}
+
+/* Search section - sticky below header */
+.assign-modal-search-section {
+  padding: 16px 20px;
+  background: linear-gradient(to bottom, #f9fafb, #ffffff);
+  border-bottom: 1px solid #f3f4f6;
+  position: sticky;
+  top: 73px; /* Height of nested header */
+  z-index: 9;
+  width: 100%; /* PHASE 6 FIX: Ensure full width */
+  box-sizing: border-box; /* PHASE 6 FIX: Include padding in width */
+}
+
+.assign-modal-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #ffffff !important;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.assign-modal-search-wrapper:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.assign-modal-search-icon {
+  font-size: 20px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.assign-modal-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px; /* Prevents iOS zoom */
+  margin-left: 10px;
+  color: #111827 !important;
+  background: transparent !important;
+}
+
+.assign-modal-search-input::placeholder {
+  color: #9ca3af !important;
+}
+
+.assign-modal-clear-search {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 24px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.assign-modal-clear-search:hover {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Employees scroll container */
+.assign-modal-employees-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #f9fafb !important;
+  -webkit-overflow-scrolling: touch;
+  width: 100%; /* PHASE 6 FIX: Ensure full width */
+}
+
+/* Employee card */
+.assign-modal-employee-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #ffffff !important;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 16px;
+  transition: background-color 0.15s ease;
+  width: 100%; /* PHASE 6 FIX: Ensure full width */
+  box-sizing: border-box; /* PHASE 6 FIX: Include padding in width */
+}
+
+.assign-modal-employee-card:hover {
+  background: #f9fafb !important;
+}
+
+.assign-modal-employee-card:active {
+  background: #f3f4f6 !important;
+}
+
+/* Employee details */
+.assign-modal-employee-details {
+  flex: 1;
+  min-width: 0; /* Allow text truncation */
+}
+
+.assign-modal-employee-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827 !important;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assign-modal-employee-email {
+  font-size: 14px;
+  color: #6b7280 !important;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assign-modal-employee-status {
+  font-size: 13px;
+  color: #9ca3af !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Status dot indicator */
+.assign-modal-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.assign-modal-status-dot.active {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.assign-modal-status-dot.offline {
+  background: #9ca3af;
+}
+
+/* Assign action button */
+.assign-modal-assign-action-btn {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.assign-modal-assign-action-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+.assign-modal-assign-action-btn:active {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.assign-modal-action-icon {
+  display: block;
+}
+
+/* Loading state */
+.assign-modal-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+
+.assign-modal-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f3f4f6;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: assign-modal-spin 0.8s linear infinite;
+}
+
+@keyframes assign-modal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.assign-modal-loading-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #6b7280 !important;
+}
+
+/* Empty state */
+.assign-modal-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.assign-modal-empty-icon {
+  font-size: 72px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.assign-modal-empty-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280 !important;
+  margin-bottom: 16px;
+}
+
+.assign-modal-clear-search-btn {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white !important;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.assign-modal-clear-search-btn:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Mobile optimizations for Phase 3 */
+@media (max-width: 768px) {
+  .assign-modal-nested-header {
+    padding: 14px 16px;
+  }
+
+  .assign-modal-nested-header h2 {
+    font-size: 18px;
+  }
+
+  .assign-modal-back-btn {
+    padding: 7px 12px;
+    min-height: 38px;
+  }
+
+  .assign-modal-back-icon {
+    font-size: 16px;
+  }
+
+  .assign-modal-back-text {
+    font-size: 13px;
+  }
+
+  .assign-modal-search-section {
+    padding: 14px 16px;
+    top: 67px; /* Adjusted for smaller header */
+  }
+
+  .assign-modal-search-wrapper {
+    padding: 10px 14px;
+  }
+
+  .assign-modal-search-icon {
+    font-size: 18px;
+  }
+
+  .assign-modal-employee-card {
+    padding: 14px 16px;
+  }
+
+  .assign-modal-employee-name {
+    font-size: 15px;
+  }
+
+  .assign-modal-employee-email {
+    font-size: 13px;
+  }
+
+  .assign-modal-employee-status {
+    font-size: 12px;
+  }
+
+  .assign-modal-assign-action-btn {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 24px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 375px) {
+  .assign-modal-nested-header {
+    padding: 12px 14px;
+  }
+
+  .assign-modal-nested-header h2 {
+    font-size: 16px;
+  }
+
+  .assign-modal-back-btn {
+    padding: 6px 10px;
+    min-height: 36px;
+    gap: 4px;
+  }
+
+  .assign-modal-back-icon {
+    font-size: 14px;
+  }
+
+  .assign-modal-back-text {
+    font-size: 12px;
+  }
+
+  .assign-modal-close-btn-integrated {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 24px;
+  }
+
+  .assign-modal-search-section {
+    padding: 12px 14px;
+    top: 61px;
+  }
+
+  .assign-modal-search-wrapper {
+    padding: 9px 12px;
+  }
+
+  .assign-modal-employee-card {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .assign-modal-employee-name {
+    font-size: 14px;
+  }
+
+  .assign-modal-employee-email {
+    font-size: 12px;
+  }
+
+  .assign-modal-assign-action-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 22px;
+  }
+}
+
+/* ============================================================================
+   PHASE 4: REMOVE EMPLOYEE VIEW - SCOPED STYLES
+   All class names prefixed with 'assign-modal-' to prevent global conflicts
+   ============================================================================ */
+
+/* Remove action button - Red styling for removal context */
+.assign-modal-remove-action-btn {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.assign-modal-remove-action-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
+
+.assign-modal-remove-action-btn:active {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Remove view specific styling */
+.assign-modal-remove-view .assign-modal-nested-header h2 {
+  color: #dc2626 !important; /* Slightly red tint for remove context */
+}
+
+/* Mobile optimizations for Phase 4 */
+@media (max-width: 768px) {
+  .assign-modal-remove-action-btn {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 28px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 375px) {
+  .assign-modal-remove-action-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 26px;
+  }
+}
+
+/* ============================================================================
+   PHASE 5: VIEW TRANSITIONS & ANIMATIONS - SCOPED STYLES
+   All class names prefixed with 'assign-modal-' to prevent global conflicts
+   ============================================================================ */
+
+/* Check for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .assign-modal-views-container,
+  .assign-modal-views-container * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Container for view transitions */
+.assign-modal-views-container {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Individual views within the container */
+.assign-modal-views-container > * {
+  width: 100%;
+  flex: 1;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Disable interactions during transition */
+.assign-modal-view-transitioning {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Forward transition - Slide in from right */
+.assign-modal-transitioning-forward > * {
+  animation: assign-modal-slide-in-right 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Back transition - Slide in from left */
+.assign-modal-transitioning-back > * {
+  animation: assign-modal-slide-in-left 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Slide in from right animation (for forward navigation) */
+@keyframes assign-modal-slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Slide in from left animation (for back navigation) */
+@keyframes assign-modal-slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Fade-in animation for initial load */
+.assign-modal-main-view {
+  animation: assign-modal-fade-in 200ms ease-in-out;
+}
+
+@keyframes assign-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Performance optimizations */
+.assign-modal-views-container {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: contents;
+}
+
+/* Ensure smooth rendering on mobile */
+.assign-modal-nested-view,
+.assign-modal-main-view {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Loading state during transition */
+.assign-modal-view-transitioning .assign-modal-loading-state {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Mobile-specific transition optimizations */
+@media (max-width: 768px) {
+  .assign-modal-views-container {
+    min-height: 350px;
+  }
+  
+  /* Slightly faster animations on mobile for better performance */
+  .assign-modal-transitioning-forward > *,
+  .assign-modal-transitioning-back > * {
+    animation-duration: 250ms;
+  }
+}
+
+/* Very small screens - even faster transitions */
+@media (max-width: 375px) {
+  .assign-modal-views-container {
+    min-height: 300px;
+  }
+  
+  .assign-modal-transitioning-forward > *,
+  .assign-modal-transitioning-back > * {
+    animation-duration: 220ms;
+  }
+}
+
+/* ============================================================================
+   PHASE 6: MOBILE RESPONSIVENESS & TOUCH OPTIMIZATION - SCOPED STYLES
+   All class names prefixed with 'assign-modal-' to prevent global conflicts
+   ============================================================================ */
+
+/* ==================== MOBILE: 320px - 768px ==================== */
+@media (max-width: 768px) {
+  /* Full-width modal on mobile (but not full-height) */
+  .assign-employees-overlay {
+    /* padding: 16px !important; */ /* REMOVED: Not needed, causes positioning issues */
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .assign-employees-modal {
+    width: calc(100% - 32px) !important; /* PHASE 6 FIX: Leave space on sides */
+    max-width: calc(100% - 32px) !important;
+    max-height: calc(90vh - 32px) !important;
+    border-radius: 16px !important; /* PHASE 6 FIX: Keep rounded on mobile */
+    margin: 0 auto !important;
+    box-sizing: border-box !important; /* CRITICAL FIX: Ensure padding is included */
+  }
+  
+  /* Prevent iOS zoom on input focus */
+  .assign-modal-search-input,
+  input[type="text"],
+  input[type="search"] {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  /* Safe area support for notched devices (iPhone X+) */
+  .assign-modal-nested-header,
+  .assign-modal-header-integrated {
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+  
+  .assign-modal-main-view,
+  .assign-modal-nested-view {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Touch-friendly minimum sizes already set, but ensure enforcement */
+  .assign-modal-action-btn,
+  .assign-modal-add-btn,
+  .assign-modal-remove-btn,
+  .assign-modal-assign-action-btn,
+  .assign-modal-remove-action-btn,
+  .assign-modal-back-btn,
+  .assign-modal-close-btn-integrated {
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+  
+  /* Prevent double-tap zoom on interactive elements */
+  .assign-modal-action-btn,
+  .assign-modal-employee-card,
+  .assign-modal-assign-action-btn,
+  .assign-modal-remove-action-btn,
+  .assign-modal-back-btn,
+  .assign-modal-close-btn-integrated {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  /* Smooth touch scrolling */
+  .assign-modal-employees-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain; /* Prevent pull-to-refresh */
+  }
+  
+  /* Optimize views container for mobile */
+  .assign-modal-views-container {
+    min-height: 400px;
+  }
+  
+  /* Main view adjustments for mobile */
+  .assign-modal-main-view {
+    padding: 20px 16px;
+    padding-top: max(5px, env(safe-area-inset-top));
+  }
+  
+  /* Action buttons - larger on mobile for easier tapping */
+  .assign-modal-add-btn,
+  .assign-modal-remove-btn {
+    min-height: 80px;
+    padding: 18px 20px;
+  }
+  
+  .assign-modal-action-btn-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 28px;
+  }
+  
+  .assign-modal-action-btn-text h3 {
+    font-size: 18px;
+  }
+  
+  .assign-modal-action-btn-text p {
+    font-size: 14px;
+  }
+  
+  /* Employee count indicator */
+  .assign-modal-employee-count-indicator {
+    padding: 16px 20px;
+  }
+  
+  /* Search section - sticky with safe area */
+  .assign-modal-search-section {
+    position: sticky;
+    top: calc(73px + env(safe-area-inset-top));
+  }
+}
+
+/* ==================== SMALL PHONES: 320px - 375px ==================== */
+@media (max-width: 375px) {
+  /* Tighter spacing for small screens */
+  .assign-modal-main-view {
+    padding: 16px 14px;
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+  
+  .assign-modal-header-integrated {
+    padding: 14px 16px;
+    padding-top: max(14px, env(safe-area-inset-top));
+  }
+  
+  .assign-modal-add-btn,
+  .assign-modal-remove-btn {
+    min-height: 76px;
+    padding: 16px 18px;
+  }
+  
+  .assign-modal-action-btn-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 26px;
+  }
+  
+  .assign-modal-action-btn-text h3 {
+    font-size: 16px;
+  }
+  
+  .assign-modal-action-btn-text p {
+    font-size: 13px;
+  }
+  
+  .assign-modal-employee-count-indicator {
+    padding: 14px 18px;
+  }
+  
+  .assign-modal-count-label {
+    font-size: 13px;
+  }
+  
+  .assign-modal-count-value {
+    font-size: 22px;
+  }
+  
+  /* Employee cards */
+  .assign-modal-employee-card {
+    padding: 12px 14px;
+  }
+  
+  /* Search adjustments */
+  .assign-modal-search-section {
+    padding: 12px 14px;
+    top: calc(67px + env(safe-area-inset-top));
+  }
+}
+
+/* ==================== LANDSCAPE MODE: Mobile ==================== */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Optimize for limited vertical space */
+  .assign-employees-modal {
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  
+  /* Reduce vertical padding to maximize content area */
+  .assign-modal-main-view {
+    padding: 12px 16px;
+  }
+  
+  .assign-modal-add-btn,
+  .assign-modal-remove-btn {
+    min-height: 64px;
+    padding: 12px 16px;
+  }
+  
+  .assign-modal-action-btn-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+  
+  .assign-modal-header-integrated,
+  .assign-modal-nested-header {
+    padding: 10px 16px;
+  }
+  
+  .assign-modal-search-section {
+    padding: 10px 16px;
+  }
+  
+  .assign-modal-employee-card {
+    padding: 10px 16px;
+  }
+  
+  .assign-modal-employee-count-indicator {
+    padding: 12px 16px;
+  }
+}
+
+/* ==================== TABLETS: 768px - 1024px ==================== */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .assign-employees-overlay {
+    padding: 20px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .assign-employees-modal {
+    width: 80vw;
+    max-width: 600px;
+    height: 85vh;
+    max-height: 85vh;
+    border-radius: 20px; /* PHASE 6 FIX: More rounded */
+    margin: 0 auto !important;
+  }
+  
+  .assign-modal-views-container {
+    min-height: calc(85vh - 40px);
+  }
+  
+  /* Slightly larger touch targets for tablet */
+  .assign-modal-add-btn,
+  .assign-modal-remove-btn {
+    min-height: 88px;
+  }
+  
+  .assign-modal-action-btn-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 30px;
+  }
+}
+
+/* ==================== DESKTOP: 1024px+ ==================== */
+@media (min-width: 1025px) {
+  .assign-employees-overlay {
+    padding: 40px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .assign-employees-modal {
+    width: 600px;
+    max-width: 600px;
+    max-height: 80vh;
+    border-radius: 24px; /* PHASE 6 FIX: Even more rounded on desktop */
+    margin: 0 auto !important;
+  }
+  
+  .assign-modal-views-container {
+    min-height: 500px;
+  }
+  
+  /* Desktop hover states more prominent */
+  .assign-modal-add-btn:hover,
+  .assign-modal-remove-btn:hover {
+    transform: translateY(-3px);
+  }
+  
+  .assign-modal-employee-card:hover {
+    transform: translateX(4px);
+  }
+}
+
+/* ==================== EXTRA LARGE SCREENS: 1440px+ ==================== */
+@media (min-width: 1440px) {
+  .assign-employees-modal {
+    width: 650px;
+    max-width: 650px;
+  }
+}
+
+/* ==================== TOUCH OPTIMIZATIONS (ALL DEVICES) ==================== */
+
+/* Prevent text selection on buttons */
+.assign-modal-action-btn,
+.assign-modal-add-btn,
+.assign-modal-remove-btn,
+.assign-modal-assign-action-btn,
+.assign-modal-remove-action-btn,
+.assign-modal-back-btn,
+.assign-modal-close-btn-integrated {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Smooth momentum scrolling on iOS */
+.assign-modal-employees-scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Prevent overscroll/bounce on container */
+.assign-employees-modal,
+.assign-modal-employees-scroll-container {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Active state feedback for touch */
+.assign-modal-action-btn:active,
+.assign-modal-add-btn:active,
+.assign-modal-remove-btn:active {
+  transform: scale(0.98);
+}
+
+/* ==================== SAFE AREA INSETS (iOS NOTCH SUPPORT) ==================== */
+
+/* Apply safe area insets to all views */
+@supports (padding: max(0px)) {
+  .assign-modal-main-view,
+  .assign-modal-nested-view {
+    padding-left: max(16px, env(safe-area-inset-left)); /* CRITICAL FIX: Reduced from 20px to prevent right-shift */
+    padding-right: max(16px, env(safe-area-inset-right)); /* CRITICAL FIX: Reduced from 20px for consistency */
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  
+  .assign-modal-header-integrated,
+  .assign-modal-nested-header {
+    padding-left: max(16px, env(safe-area-inset-left)); /* CRITICAL FIX: Reduced from 20px */
+    padding-right: max(16px, env(safe-area-inset-right)); /* CRITICAL FIX: Reduced from 20px */
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+  
+  @media (max-width: 768px) {
+    /* Mobile gets even tighter padding */
+    .assign-modal-main-view,
+    .assign-modal-nested-view {
+      padding-left: max(5px, env(safe-area-inset-left)) !important; /* CRITICAL FIX: Minimal left padding for mobile */
+      padding-right: max(0px, env(safe-area-inset-right)) !important; /* CRITICAL FIX: No right padding to maximize space */
+    }
+    
+    .assign-modal-search-section {
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+    
+    .assign-modal-employee-card {
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+  }
+}
+
+/* ==================== PULL-TO-REFRESH PREVENTION ==================== */
+
+/* Prevent pull-to-refresh on mobile browsers */
+.assign-employees-modal,
+.assign-modal-views-container,
+.assign-modal-employees-scroll-container {
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+}
+
+/* iOS specific - prevent bounce scroll */
+@supports (-webkit-touch-callout: none) {
+  .assign-employees-modal {
+    overflow: hidden;
+  }
+  
+  .assign-modal-employees-scroll-container {
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ==================== ACCESSIBILITY - LARGE TEXT SUPPORT ==================== */
+
+@media (prefers-contrast: high) {
+  .assign-modal-add-btn,
+  .assign-modal-remove-btn {
+    border: 3px solid currentColor;
+  }
+  
+  .assign-modal-employee-card {
+    border: 2px solid #e5e7eb;
+  }
+}
+
+/* ============================================================================
+   PHASE 7: LOADING STATES, ERROR HANDLING & TOAST NOTIFICATIONS
+   All class names prefixed with 'assign-modal-' to prevent global conflicts
+   ============================================================================ */
+
+/* ==================== ERROR BANNER ==================== */
+.assign-modal-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  margin: 16px 20px;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border: 2px solid #ef4444;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+  animation: assign-modal-error-slide-in 300ms ease-out;
+}
+
+@keyframes assign-modal-error-slide-in {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.assign-modal-error-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+  animation: assign-modal-error-pulse 2s ease-in-out infinite;
+}
+
+@keyframes assign-modal-error-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.assign-modal-error-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.assign-modal-error-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #991b1b !important;
+  margin-bottom: 4px;
+}
+
+.assign-modal-error-message {
+  font-size: 14px;
+  color: #dc2626 !important;
+  word-wrap: break-word;
+}
+
+.assign-modal-retry-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white !important;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.assign-modal-retry-btn:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.assign-modal-retry-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.25);
+}
+
+/* ==================== TOAST NOTIFICATIONS ==================== */
+.assign-modal-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  animation: assign-modal-toast-slide-in 300ms ease-out;
+  max-width: 90vw;
+  text-align: center;
+}
+
+@keyframes assign-modal-toast-slide-in {
+  from {
+    transform: translate(-50%, -20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.assign-modal-toast-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.assign-modal-toast-error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* ==================== MOBILE OPTIMIZATIONS (PHASE 7) ==================== */
+@media (max-width: 768px) {
+  .assign-modal-error-banner {
+    margin: 12px 16px;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  
+  .assign-modal-error-icon {
+    font-size: 28px;
+  }
+  
+  .assign-modal-error-title {
+    font-size: 15px;
+  }
+  
+  .assign-modal-error-message {
+    font-size: 13px;
+  }
+  
+  .assign-modal-retry-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .assign-modal-toast {
+    top: 16px;
+    padding: 12px 20px;
+    font-size: 14px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* Small phones */
+@media (max-width: 375px) {
+  .assign-modal-error-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 10px 14px;
+    padding: 12px 14px;
+  }
+  
+  .assign-modal-error-icon {
+    font-size: 24px;
+  }
+  
+  .assign-modal-retry-btn {
+    width: 100%;
+    padding: 10px 16px;
+  }
+  
+  .assign-modal-toast {
+    top: 12px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}

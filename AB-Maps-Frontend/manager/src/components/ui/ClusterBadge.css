@@ -1,0 +1,62 @@
+/* Cluster badge styles for better click handling */
+.cluster-badge {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.cluster-badge:hover {
+  transform: scale(1.1);
+}
+
+/* Ensure cluster badges don't interfere with popup events */
+.cluster-badge div {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Make sure popups are always on top */
+.leaflet-popup-pane {
+  z-index: 1200 !important;
+}
+
+.leaflet-popup {
+  z-index: 1200 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  z-index: 1201 !important;
+  pointer-events: auto !important;
+}
+
+/* Enhanced popup protection */
+.address-popup-enhanced .leaflet-popup-content-wrapper {
+  z-index: 1300 !important;
+  pointer-events: auto !important;
+}
+
+.address-popup-enhanced .leaflet-popup-content {
+  pointer-events: auto !important;
+}
+
+.address-popup {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 1301;
+}
+
+.address-popup * {
+  pointer-events: auto !important;
+}
+
+.status-button {
+  pointer-events: auto !important;
+  z-index: 1302;
+  position: relative;
+}
+
+/* Custom popup root for absolute positioned popups */
+.custom-popup-root {
+  position: absolute;
+  z-index: 1200; /* > popupPane (700), markerPane (600), clusterPane (550) */
+  pointer-events: auto;
+}

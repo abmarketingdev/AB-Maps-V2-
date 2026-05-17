@@ -1,0 +1,656 @@
+/* Floating Address Popup - Complete Event Isolation */
+.floating-address-popup {
+  position: fixed !important;
+  z-index: 100000 !important;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid #e0e0e0;
+  min-width: 380px;
+  max-width: 480px;
+  min-height: 400px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: popupSlideIn 0.3s ease-out;
+  
+  /* CRITICAL: Complete event isolation */
+  pointer-events: auto !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  
+  /* Additional isolation */
+  isolation: isolate !important;
+  contain: layout style paint !important;
+  
+  /* Prevent map zoom/pan */
+  touch-action: manipulation !important;
+  overscroll-behavior: contain !important;
+  
+  /* Ensure popup is above everything */
+  will-change: transform;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  
+  /* Ensure header events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  /* CRITICAL: Ensure button is clickable */
+  pointer-events: auto !important;
+  user-select: none !important;
+  z-index: 100001 !important;
+  position: relative;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.popup-content {
+  padding: 20px;
+  
+  /* CRITICAL: Ensure content events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #fcc;
+  font-size: 14px;
+}
+
+.success-message {
+  background: #e8f5e8;
+  color: #2e7d32;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #c8e6c9;
+  font-size: 14px;
+}
+
+.coordinates {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #e9ecef;
+}
+
+.coordinates p {
+  margin: 0;
+  font-size: 13px;
+  color: #6c757d;
+  font-family: 'Courier New', monospace;
+}
+
+.addresses-section {
+  margin-bottom: 16px;
+}
+
+.address-counter {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.counter-text {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #bbdefb;
+}
+
+/* Apartment Check Loading Indicator */
+.apartment-check-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+  border-radius: 10px;
+  border: 1px solid #c2d4f8;
+  color: #3b5998;
+  font-size: 14px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.loading-dots .dot {
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.loading-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+}
+
+.addresses-list {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  
+  /* CRITICAL: Ensure scrolling doesn't trigger map events */
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+  pointer-events: auto !important;
+  scroll-behavior: smooth;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  scrollbar-gutter: stable;
+  
+  /* Prevent map interaction while scrolling */
+  touch-action: manipulation !important;
+  overscroll-behavior: contain !important;
+}
+
+.addresses-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.addresses-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.addresses-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.addresses-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* CRITICAL: Ensure all list items capture events */
+.addresses-list * {
+  pointer-events: auto !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+}
+
+.address-item {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+  
+  /* CRITICAL: Ensure item events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+.address-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.address-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+  gap: 0;
+  
+  /* CRITICAL: Ensure header events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+.address-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 0;
+  
+  /* CRITICAL: Ensure info events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+.address-number {
+  display: inline-block;
+  background: #007bff;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 24px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.address-text {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+  line-height: 1.4;
+}
+
+.saved-status {
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  font-size: 13px;
+  font-weight: 600;
+  
+  /* CRITICAL: Ensure status events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+.status-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e9ecef;
+  
+  /* CRITICAL: Ensure button container events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+.status-button {
+  flex: 1;
+  min-width: 100px;
+  transition: all 0.2s ease;
+  
+  /* CRITICAL: Ensure buttons are clickable and don't propagate */
+  pointer-events: auto !important;
+  cursor: pointer;
+  user-select: none !important;
+  
+  /* Prevent map interaction */
+  touch-action: manipulation !important;
+  
+  /* Ensure button is above everything */
+  position: relative;
+  z-index: 100001 !important;
+}
+
+.status-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.status-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.status-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading-message {
+  background: #fff3cd;
+  color: #856404;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #ffeaa7;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  
+  /* CRITICAL: Ensure loading events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+/* Apartment lookup styles */
+/* Address text wrapper for apartment badge */
+.address-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 10px;
+}
+
+.selected-apartment-info {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-content: normal;
+  justify-content: normal;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  margin-top: 4px;
+}
+
+.selected-apartment-badge {
+  font-size: 13px;
+  color: white;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  padding: 8px 14px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  box-shadow: 0 3px 10px rgba(76, 175, 80, 0.4);
+  margin-top: 0;
+  animation: badgePulse 0.3s ease-out;
+}
+
+.selected-apartment-badge::before {
+  content: '✓';
+  font-weight: bold;
+  font-size: 14px;
+}
+
+@keyframes badgePulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.final-address-preview {
+  font-size: 13px;
+  color: #666;
+  padding: 10px 14px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  border-left: 4px solid #4caf50;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.final-address-preview strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Address actions container */
+.address-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-content: normal;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-top: 12px;
+  width: 100%;
+  padding-top: 8px;
+}
+
+/* Apartment icon button styling - Enhanced */
+.apartment-icon-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  user-select: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+  position: relative;
+  overflow: hidden;
+  min-height: 44px;
+}
+
+.apartment-icon-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.apartment-icon-button:hover::before {
+  left: 100%;
+}
+
+.apartment-icon-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.apartment-icon-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.apartment-icon-button svg {
+  font-size: 18px;
+}
+
+.apartment-count {
+  font-weight: 700;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.35);
+  padding: 4px 10px;
+  border-radius: 14px;
+  min-width: 28px;
+  text-align: center;
+  line-height: 1;
+}
+
+.apartment-loading {
+  color: #667eea;
+  font-size: 18px;
+  animation: spin 1s linear infinite;
+}
+
+.user-info {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  font-size: 12px;
+  color: #6c757d;
+  text-align: center;
+  margin-top: 16px;
+  
+  /* CRITICAL: Ensure user info events don't propagate */
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .floating-address-popup {
+    min-width: 320px;
+    max-width: 90vw;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  
+  .status-buttons {
+    flex-direction: column;
+  }
+  
+  .status-button {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .address-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .saved-status {
+    margin-top: 8px;
+    align-self: flex-start;
+  }
+}
+
+/* CRITICAL: Force all popup elements to capture events */
+.floating-address-popup,
+.floating-address-popup *,
+.floating-address-popup *::before,
+.floating-address-popup *::after {
+  pointer-events: auto !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+  overscroll-behavior: contain !important;
+}
+
+/* CRITICAL: Ensure focus states work */
+.status-button:focus,
+.close-button:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* CRITICAL: Loading state animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* CRITICAL: Error state styling */
+.error-message {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* CRITICAL: Success state styling */
+.success-message {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

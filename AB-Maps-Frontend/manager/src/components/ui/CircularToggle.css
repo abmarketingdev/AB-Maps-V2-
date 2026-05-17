@@ -1,0 +1,298 @@
+/* CircularToggle.css - Shared styles for circular toggle buttons */
+
+.circular-toggle {
+  /* Base circular button styles */
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+  
+  /* Ensure good contrast and readability */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  /* Shadow for depth */
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  
+  /* Force color scheme to be independent */
+  color-scheme: normal !important;
+}
+
+/* Icon styling */
+.toggle-icon {
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+/* Disabled state (default) */
+.circular-toggle.disabled {
+  background: rgba(245, 245, 245, 0.95);
+  color: #666;
+  border-color: #ddd;
+}
+
+.circular-toggle.disabled:hover {
+  background: rgba(235, 235, 235, 0.95);
+  border-color: #ccc;
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.circular-toggle.disabled:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Drawing mode enabled state (green) */
+.circular-toggle.enabled.drawing-mode {
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  color: white;
+  border-color: #27ae60;
+  box-shadow: 
+    0 4px 12px rgba(39, 174, 96, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.drawing-mode:hover {
+  background: linear-gradient(135deg, #229954 0%, #27ae60 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 16px rgba(39, 174, 96, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.drawing-mode:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 6px rgba(39, 174, 96, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Movement mode enabled state (blue) */
+.circular-toggle.enabled.movement-mode {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+  border-color: #3498db;
+  box-shadow: 
+    0 4px 12px rgba(52, 152, 219, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.movement-mode:hover {
+  background: linear-gradient(135deg, #2980b9 0%, #1f4e79 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 16px rgba(52, 152, 219, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.movement-mode:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 6px rgba(52, 152, 219, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Fetch mode enabled state (orange/amber) */
+.circular-toggle.enabled.fetch-mode {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  color: white;
+  border-color: #f39c12;
+  box-shadow: 
+    0 4px 12px rgba(243, 156, 18, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.fetch-mode:hover {
+  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 16px rgba(243, 156, 18, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.fetch-mode:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 6px rgba(243, 156, 18, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Spinning animation for loading state */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.toggle-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Disabled state */
+.circular-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.circular-toggle:disabled:hover {
+  transform: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Focus states for accessibility */
+.circular-toggle:focus {
+  outline: none;
+}
+
+.circular-toggle.drawing-mode:focus {
+  box-shadow: 
+    0 0 0 3px rgba(39, 174, 96, 0.3),
+    0 4px 12px rgba(39, 174, 96, 0.4);
+}
+
+.circular-toggle.movement-mode:focus {
+  box-shadow: 
+    0 0 0 3px rgba(52, 152, 219, 0.3),
+    0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.circular-toggle.fetch-mode:focus {
+  box-shadow: 
+    0 0 0 3px rgba(243, 156, 18, 0.3),
+    0 4px 12px rgba(243, 156, 18, 0.4);
+}
+
+.circular-toggle.disabled:focus {
+  box-shadow: 
+    0 0 0 3px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Desktop styles */
+@media (min-width: 769px) {
+  .circular-toggle {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .toggle-icon {
+    font-size: 16px;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1024px) {
+  .circular-toggle {
+    width: 46px;
+    height: 46px;
+  }
+  
+  .toggle-icon {
+    font-size: 17px;
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .circular-toggle {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .toggle-icon {
+    font-size: 16px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .circular-toggle {
+    width: 42px;
+    height: 42px;
+  }
+  
+  .toggle-icon {
+    font-size: 15px;
+  }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .circular-toggle {
+    border-width: 1px; /* Thinner borders on high DPI */
+  }
+}
+
+/* Removed dark mode support - components are now immune to system color scheme */
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .circular-toggle,
+  .toggle-icon {
+    animation: none;
+    transition: none;
+  }
+  
+  .toggle-icon.spinning {
+    animation: none;
+  }
+}
+
+/* Toolbar integration styles */
+.toolbar-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Desktop toolbar layout */
+@media (min-width: 769px) {
+  .toolbar-controls {
+    gap: 10px;
+    padding: 10px;
+  }
+}
+
+/* Mobile toolbar adjustments */
+@media (max-width: 768px) {
+  .toolbar-controls {
+    gap: 10px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+}
+
+/* Delete toggle separator (visual grouping for danger buttons) */
+.delete-toggle-separator {
+  width: 100%;
+  height: 1px;
+  background: rgba(231, 76, 60, 0.2);
+  margin: 2px 0;
+}

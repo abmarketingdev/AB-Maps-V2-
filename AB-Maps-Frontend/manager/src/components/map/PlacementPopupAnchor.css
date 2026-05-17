@@ -1,0 +1,79 @@
+/* Debug visible marker styles */
+.debug-visible-marker {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  width: 20px !important;
+  height: 20px !important;
+  background: red !important;
+  border: 2px solid yellow !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  color: white !important;
+  z-index: 10000 !important;
+}
+
+.debug-visible-marker .leaflet-marker-icon {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Invisible anchor marker styles */
+.invisible-anchor {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 1px !important;
+  height: 1px !important;
+}
+
+.invisible-anchor .leaflet-marker-icon {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure the popup is visible */
+.leaflet-popup {
+  z-index: 1000 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: white;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  padding: 0;
+  min-width: 200px;
+}
+
+/* Ensure placement popup is visible and properly styled */
+.placement-popup {
+  z-index: 1000 !important;
+}
+
+.placement-popup .leaflet-popup-content-wrapper {
+  background: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.placement-popup .leaflet-popup-content {
+  background: white !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure the popup is properly positioned and styled */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  padding: 0;
+} 

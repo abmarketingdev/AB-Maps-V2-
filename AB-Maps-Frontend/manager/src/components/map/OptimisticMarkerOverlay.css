@@ -1,0 +1,84 @@
+/* Optimistic marker styles */
+.optimistic-marker {
+  background: none !important;
+  border: none !important;
+}
+
+.optimistic-marker-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  position: relative;
+  opacity: 0.9;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.optimistic-marker-inner.status-ja {
+  background: #28a745;
+}
+
+.optimistic-marker-inner.status-nei {
+  background: #dc3545;
+}
+
+.optimistic-marker-inner.status-ikke_hjemme {
+  background: #ffc107;
+}
+
+.optimistic-marker-inner.status-folg_opp {
+  background: #9b59b6;  /* Darker purple for follow-up */
+}
+
+.optimistic-marker-inner.status-uploaded {
+  background: #007bff;
+}
+
+.optimistic-marker-pulse {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.6;
+  animation: pulse 1.5s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .optimistic-marker-pulse {
+    animation: pulse-mobile 1s ease-out infinite;
+  }
+  
+  @keyframes pulse-mobile {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(1.2);
+      opacity: 0;
+    }
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .optimistic-marker-pulse {
+    animation: none !important;
+    display: none;
+  }
+}

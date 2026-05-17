@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QC kontaktoversikt</title>
+</head>
+<body style="margin:0; padding:0; background:#f0f0f2; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f2; padding:32px 12px;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="660" cellpadding="0" cellspacing="0" style="max-width:660px; width:100%;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#18181b; border-radius:10px 10px 0 0; padding:28px 32px;">
+            <p style="margin:0; font-size:11px; color:#a1a1aa; text-transform:uppercase; letter-spacing:0.08em;">AB Maps · QC-system</p>
+            <h1 style="margin:8px 0 0; font-size:22px; font-weight:700; color:#fafafa;">📋 QC Kontaktoversikt</h1>
+            <p style="margin:8px 0 0; font-size:13px; color:#d4d4d8;">
+              {{ contact_count }} kontakt{% if contact_count != 1 %}er{% endif %} &nbsp;·&nbsp; {{ sent_at_display }}
+            </p>
+            {% if chief_display_name %}
+            <p style="margin:6px 0 0; font-size:13px; color:#d4d4d8;">Til: <strong style="color:#fafafa;">{{ chief_display_name }}</strong></p>
+            {% endif %}
+          </td>
+        </tr>
+
+        <!-- Legend strip -->
+        <tr>
+          <td style="background:#27272a; padding:12px 32px;">
+            <p style="margin:0; font-size:11px; color:#a1a1aa; line-height:1.8;">
+              ✅ <strong style="color:#d4d4d8;">Svarte</strong> &nbsp;|&nbsp;
+              📵 <strong style="color:#d4d4d8;">Ikke svar</strong> &nbsp;|&nbsp;
+              ⏰ <strong style="color:#d4d4d8;">Opptatt</strong> &nbsp;|&nbsp;
+              😐 <strong style="color:#d4d4d8;">Nøytral</strong> &nbsp;|&nbsp;
+              💚 <strong style="color:#d4d4d8;">Positiv</strong> &nbsp;|&nbsp;
+              🔴 <strong style="color:#d4d4d8;">Negativ</strong> &nbsp;|&nbsp;
+              💡 <strong style="color:#d4d4d8;">Giverinspill</strong> &nbsp;|&nbsp;
+              🚫 <strong style="color:#d4d4d8;">Reservert</strong> &nbsp;|&nbsp;
+              ❌ <strong style="color:#d4d4d8;">Si opp</strong> &nbsp;|&nbsp;
+              📂 <strong style="color:#d4d4d8;">Andre</strong>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Contact cards -->
+        {% for row in contact_rows %}
+
+        <!-- Determine category color -->
+        {% if row.svarte_category == 'positiv' %}
+          {% with card_bg="#f0fdf4" border_color="#16a34a" badge_bg="#16a34a" badge_text="#ffffff" emoji="💚" status_display="Positiv" category_desc="Ros — de som gjorde litt ekstra godt inntrykk på QC-agent" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% elif row.svarte_category == 'negativ' %}
+          {% with card_bg="#fff1f2" border_color="#dc2626" badge_bg="#dc2626" badge_text="#ffffff" emoji="🔴" status_display="Negativ" category_desc="Ris — mangel på informasjon, pågående selger, eller andre klager" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% elif row.svarte_category == 'giverinspill' or row.status == 'giverinspill' %}
+          {% with card_bg="#fefce8" border_color="#d97706" badge_bg="#d97706" badge_text="#ffffff" emoji="💡" status_display="Giverinspill" category_desc="Forbedringspotensiale — snakket for fort, friere fra manus, savnet muligheten for engangsbeløp" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% elif row.svarte_category == 'noeytral' %}
+          {% with card_bg="#f8fafc" border_color="#64748b" badge_bg="#64748b" badge_text="#ffffff" emoji="😐" status_display="Nøytral" category_desc="Fornøyd, hyggelig samtale — ingen klager, ikke noe å utsette" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% elif row.svarte_category == 'reservert' or row.status == 'reservert' %}
+          {% with card_bg="#fff7ed" border_color="#ea580c" badge_bg="#ea580c" badge_text="#ffffff" emoji="🚫" status_display="Reservert" category_desc="Ønsker ikke telefonkontakt — ringer ikke på oppring, da det blir for masete" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% elif row.svarte_category == 'annen' or row.status == 'other_inquiries' %}
+          {% with card_bg="#eff6ff" border_color="#2563eb" badge_bg="#2563eb" badge_text="#ffffff" emoji="📂" status_display="Andre henvendelser" category_desc="Beskjeder til oppdragsgivere, ufullstendig registrering, endre beløp, endre trekkdato o.l." %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% elif row.si_opp == 'JA' or row.status == 'si_opp' %}
+          {% with card_bg="#fff1f2" border_color="#9f1239" badge_bg="#9f1239" badge_text="#ffffff" emoji="❌" status_display="Si opp" category_desc="Giver ønsker å si opp avtalen" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% elif row.qc_result == 'Ikke svar' %}
+          {% with card_bg="#fafafa" border_color="#a1a1aa" badge_bg="#a1a1aa" badge_text="#ffffff" emoji="📵" status_display="Ikke svar" category_desc="Ikke fått kontakt med giver — telefonsvarer, opptatt, avvist eller 'lommeringt'" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% elif row.qc_result == 'Opptatt' %}
+          {% with card_bg="#fafafa" border_color="#78716c" badge_bg="#78716c" badge_text="#ffffff" emoji="⏰" status_display="Opptatt" category_desc="Giver kan ikke prate nå, men ønsker å bli ringt på et annet tidspunkt" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% else %}
+          {% with card_bg="#fafafa" border_color="#d4d4d8" badge_bg="#52525b" badge_text="#ffffff" emoji="✅" status_display=row.status_label category_desc="" %}
+          {% include "emails/_qc_contact_card.html" %}
+          {% endwith %}
+        {% endif %}
+
+        {% endfor %}
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#27272a; border-radius:0 0 10px 10px; padding:18px 32px;">
+            <p style="margin:0; font-size:11px; color:#71717a; line-height:1.7;">
+              {% if sent_by_display %}Sendt av: <span style="color:#a1a1aa;">{{ sent_by_display }}</span><br>{% endif %}
+              Automatisk melding fra AB Maps QC-system.<br>
+              Inneholder personopplysninger — håndter i henhold til selskapets retningslinjer for personvern.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

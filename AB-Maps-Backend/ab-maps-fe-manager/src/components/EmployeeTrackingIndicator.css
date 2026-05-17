@@ -1,0 +1,199 @@
+/* Employee Tracking Indicator Styles */
+
+.employee-tracking-indicator {
+  position: fixed;
+  top: 100px;
+  right: 24px;
+  width: 320px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  z-index: 2000;
+  animation: slideInFromRight 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tracking-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.tracking-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+}
+
+.tracking-icon svg {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.tracking-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tracking-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tracking-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.wifi-icon {
+  width: 12px;
+  height: 12px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.stop-tracking-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.stop-tracking-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.tracking-details {
+  padding: 16px;
+  background: #ffffff;
+}
+
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.location-icon {
+  width: 16px;
+  height: 16px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.last-update {
+  font-size: 12px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .employee-tracking-indicator {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .tracking-details {
+    background: #1f2937;
+  }
+
+  .location-info {
+    color: #f9fafb;
+  }
+
+  .last-update {
+    color: #9ca3af;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .employee-tracking-indicator {
+    width: 280px;
+    right: 16px;
+    top: 80px;
+  }
+
+  .tracking-header {
+    padding: 12px;
+  }
+
+  .tracking-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+  }
+
+  .tracking-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tracking-name {
+    font-size: 14px;
+  }
+
+  .tracking-status {
+    font-size: 11px;
+  }
+
+  .tracking-details {
+    padding: 12px;
+  }
+
+  .location-info {
+    font-size: 13px;
+  }
+
+  .last-update {
+    font-size: 11px;
+  }
+} 

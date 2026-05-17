@@ -1,0 +1,655 @@
+/* Outer container - centered on screen */
+.fam-outer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* center on screen */
+  z-index: 2147483646;
+}
+
+/* Inner container - ONLY for animation and styling */
+.fam-inner {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid #e0e0e0;
+  min-width: 380px;
+  max-width: 480px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: famIn 0.18s ease both;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  isolation: isolate;
+  contain: layout style paint;
+}
+
+/* MOBILE OPTIMIZED: Simpler animation for better performance */
+@keyframes famIn {
+  from { 
+    opacity: 0; 
+  }
+  to { 
+    opacity: 1; 
+  }
+}
+
+/* Mobile-specific faster animation */
+@media (max-width: 768px) {
+  @keyframes famInMobile {
+    from { 
+      opacity: 0; 
+      transform: translateY(10px);
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0);
+    }
+  }
+  
+  .fam-inner {
+    animation: famInMobile 0.15s ease both; /* Faster animation on mobile */
+  }
+  
+  /* Disable animations for low-performance devices */
+  .fam-inner.fam-no-animation {
+    animation: none;
+  }
+}
+
+/* Backdrop with selection prevention */
+.fam-backdrop {
+  position: fixed; 
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none; 
+  -webkit-user-select: none;
+  z-index: 2147483645; /* below popup */
+}
+
+.fam-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.fam-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.fam-close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.fam-close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.fam-content {
+  padding: 20px;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.fam-error {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #fcc;
+  font-size: 14px;
+}
+
+.fam-address-info {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.fam-address-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fam-address-text {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.fam-copy-address-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fam-copy-address-btn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.fam-copy-address-btn:active {
+  transform: translateY(0);
+}
+
+.fam-copied-text {
+  font-size: 11px;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fam-coordinates {
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.fam-coordinates p {
+  margin: 0;
+  font-size: 13px;
+  color: #6c757d;
+  font-family: 'Courier New', monospace;
+}
+
+.fam-creator-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.fam-creator-section h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.fam-creator-display {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.fam-status-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.fam-status-section h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fam-status-display {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fam-tags-section {
+  margin-bottom: 20px;
+}
+
+.fam-tags-section h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fam-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fam-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #bbdefb;
+}
+
+.fam-actions-section {
+  margin-bottom: 20px;
+}
+
+.fam-delete-button {
+  width: 100%;
+  padding: 12px 20px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fam-delete-button:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.fam-delete-button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+.fam-user-info {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  font-size: 13px;
+  color: #6c757d;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Notes Section */
+.fam-notes-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.fam-notes-section h5 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fam-notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.fam-btn-edit-notes {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fam-btn-edit-notes:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.fam-btn-edit-notes:active {
+  transform: translateY(0);
+}
+
+.fam-notes-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fam-notes-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.fam-notes-textarea:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.fam-notes-textarea:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.fam-notes-textarea::placeholder {
+  color: #999;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.fam-notes-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.fam-char-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.fam-char-count.warning {
+  color: #e74c3c;
+  font-weight: bold;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.fam-notes-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.fam-btn-save-notes,
+.fam-btn-cancel-notes {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.fam-btn-save-notes {
+  background: #28a745;
+  color: white;
+}
+
+.fam-btn-save-notes:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.fam-btn-save-notes:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.fam-btn-save-notes:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.7;
+}
+
+.fam-btn-cancel-notes {
+  background: #6c757d;
+  color: white;
+}
+
+.fam-btn-cancel-notes:hover:not(:disabled) {
+  background: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+}
+
+.fam-btn-cancel-notes:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.fam-btn-cancel-notes:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.7;
+}
+
+.fam-notes-error {
+  background: #fee;
+  color: #c33;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid #fcc;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fam-notes-display {
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  min-height: 60px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.fam-notes-display p {
+  margin: 0 0 8px 0;
+}
+
+.fam-notes-display p:last-child {
+  margin-bottom: 0;
+}
+
+.fam-no-notes {
+  color: #999;
+  font-style: italic;
+  font-size: 13px;
+  display: block;
+}
+
+/* MOBILE OPTIMIZED: Enhanced mobile responsiveness with performance focus */
+@media (max-width: 768px) {
+  .fam-inner {
+    min-width: 300px; /* Reduced from 320px */
+    max-width: 95vw; /* Increased for better mobile fit */
+    max-height: 85vh; /* Increased for better mobile fit */
+    overflow-y: auto;
+    /* PERFORMANCE: Hardware acceleration for smoother scrolling */
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0); /* Force GPU acceleration */
+    will-change: transform; /* Hint browser for optimization */
+  }
+  
+  .fam-content {
+    padding: 14px; /* Reduced padding for mobile */
+  }
+  
+  .fam-header {
+    padding: 12px 16px; /* Reduced padding for mobile */
+  }
+  
+  .fam-address-text {
+    font-size: 15px; /* Slightly smaller for mobile */
+    line-height: 1.3; /* Tighter line height */
+  }
+  
+  .fam-address-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .fam-copy-address-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .fam-delete-button {
+    padding: 12px 16px; /* Reduced padding */
+    font-size: 14px; /* Smaller font */
+    /* PERFORMANCE: Disable expensive hover effects on mobile */
+    transition: none;
+  }
+  
+  .fam-address-info,
+  .fam-status-section,
+  .fam-notes-section {
+    margin-bottom: 16px;
+    padding: 14px;
+  }
+  
+  .fam-notes-textarea {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+    padding: 10px;
+  }
+  
+  .fam-notes-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .fam-notes-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .fam-btn-save-notes,
+  .fam-btn-cancel-notes {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .fam-char-count {
+    text-align: center;
+    order: -1; /* Move above buttons */
+    margin-bottom: 8px;
+  }
+  
+  .fam-delete-button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  /* PERFORMANCE: Simplify gradients for mobile */
+  .fam-header {
+    background: #667eea; /* Solid color instead of gradient */
+  }
+  
+  .fam-delete-button {
+    background: #e74c3c; /* Solid color instead of gradient */
+  }
+  
+  .fam-delete-button:hover:not(:disabled) {
+    background: #c0392b; /* Simple hover state */
+  }
+}
+

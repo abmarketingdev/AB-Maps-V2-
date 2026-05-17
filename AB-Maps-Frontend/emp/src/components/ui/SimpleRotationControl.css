@@ -1,0 +1,116 @@
+.simple-rotation-control {
+  position: relative;
+  display: inline-block;
+  pointer-events: auto;
+  z-index: 1000;
+}
+
+.simple-rotation-main {
+  display: flex;
+  align-items: center;
+}
+
+.simple-rotation-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 2px solid #1976d2;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1976d2;
+  transition: all 0.2s ease;
+  width: 48px;
+  height: 48px;
+  justify-content: center;
+  min-width: unset;
+}
+
+.simple-rotation-button:hover {
+  background: #f9fafb;
+  border-color: #1565c0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.simple-rotation-button:active {
+  transform: translateY(1px);
+}
+
+.simple-rotation-angle {
+  font-weight: 600;
+  color: #1976d2;
+  min-width: 30px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.simple-rotation-panel {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  margin-bottom: 8px;
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.simple-rotation-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.simple-rotation-row:last-child {
+  margin-bottom: 0;
+}
+
+.simple-rotation-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+}
+
+.simple-rotation-btn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.simple-rotation-btn:active {
+  transform: translateY(1px);
+  background: #d1d5db;
+}
+
+/* Animation for panel appearance */
+.simple-rotation-panel {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

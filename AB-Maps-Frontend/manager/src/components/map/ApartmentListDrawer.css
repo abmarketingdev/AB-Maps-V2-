@@ -1,0 +1,945 @@
+/* ApartmentListDrawer.css - Modern Redesign */
+
+/* Overlay with blur */
+.apartment-drawer-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  z-index: 2147483647 !important; /* Maximum z-index value */
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Drawer - Full height from top */
+.apartment-drawer {
+  position: relative;
+  z-index: 2147483647 !important;
+  width: 100%;
+  max-width: 480px;
+  height: 100vh;
+  height: 100dvh;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 0;
+  box-shadow: 
+    0 10px 50px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px 16px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.drawer-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+
+/* Navigation Buttons - Modern pill style */
+.drawer-header .back-btn {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.drawer-header .back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.drawer-header .back-btn:active {
+  transform: scale(0.98);
+}
+
+.drawer-header .close-btn {
+  position: relative;
+  z-index: 1;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fecaca;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.drawer-header .close-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: white;
+  transform: scale(1.05);
+}
+
+.drawer-header .close-btn:active {
+  transform: scale(0.98);
+}
+
+/* Header Title */
+.header-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.header-icon {
+  font-size: 20px;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.header-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.header-text h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+/* Stats Bar - Dark Design */
+.drawer-stats-bar {
+  padding: 16px 20px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.stats-progress {
+  height: 8px;
+  background: #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.stats-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  border-radius: 8px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.stats-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.stats-numbers {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stats-visited {
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stats-remaining {
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Talkmore Campaign Banner */
+.talkmore-campaign-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(29, 78, 216, 0.15) 100%);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+  border-top: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  animation: fadeInBanner 0.4s ease-out;
+}
+
+.banner-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.banner-text {
+  flex: 1;
+  letter-spacing: 0.2px;
+}
+
+@keyframes fadeInBanner {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Filter Tabs - Dark Pill Style */
+.filter-tabs {
+  display: flex;
+  padding: 12px 20px;
+  gap: 8px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  background: #334155;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-tab:hover {
+  background: #475569;
+  color: #e2e8f0;
+}
+
+.filter-tab.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Search - Dark Design */
+/* Scoped to drawer to avoid affecting map search bar */
+.apartment-drawer .search-container {
+  position: relative;
+  padding: 12px 20px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.apartment-drawer .search-icon {
+  position: absolute;
+  left: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 14px;
+  z-index: 1;
+}
+
+.apartment-drawer .search-input {
+  width: 100%;
+  padding: 14px 44px 14px 48px;
+  border: 2px solid #334155;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  background: #0f172a;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #f1f5f9;
+}
+
+.apartment-drawer .search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #0f172a;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.apartment-drawer .search-input::placeholder {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.apartment-drawer .search-clear {
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #334155;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.apartment-drawer .search-clear:hover {
+  background: #475569;
+  color: #e2e8f0;
+}
+
+/* Refresh Button - Dark */
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 20px;
+  padding: 12px 20px;
+  background: #334155;
+  border: 2px solid #475569;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #475569;
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Apartment List - Scrollable - FULL HEIGHT */
+/* Using more specific selector to override App.css grid styles */
+.apartment-drawer .apartment-list {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 16px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  background: #0f172a !important;
+  grid-template-columns: none !important;
+}
+
+/* ===== APARTMENT LIST ITEM - Dark Card Design ===== */
+.apartment-list-item {
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 20px;
+  padding: 20px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.apartment-list-item:hover {
+  border-color: #475569;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.apartment-list-item.visited {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-color: #10b981;
+  border-width: 2px;
+}
+
+.apartment-list-item.updating {
+  opacity: 0.7;
+  pointer-events: none;
+  transform: scale(0.99);
+}
+
+/* Apartment Header */
+.apartment-item-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.apartment-number-badge {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
+  letter-spacing: -0.02em;
+}
+
+.apartment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.apartment-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.apartment-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.apartment-status-indicator {
+  flex-shrink: 0;
+}
+
+.status-dot {
+  font-size: 14px;
+}
+
+.status-dot.unvisited {
+  color: #e2e8f0;
+}
+
+.status-dot.visited {
+  filter: drop-shadow(0 2px 4px currentColor);
+}
+
+.updating-spinner {
+  color: #3b82f6;
+  font-size: 18px;
+}
+
+/* Carrier Status Badge - Talkmore/Telenor indicator */
+.carrier-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  margin-left: auto;
+  animation: fadeInBadge 0.3s ease-out;
+}
+
+.carrier-badge-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.carrier-badge-text {
+  letter-spacing: 0.3px;
+}
+
+@keyframes fadeInBadge {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Notes Toggle Button - Dark theme */
+.notes-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  background: #334155;
+  border: 2px dashed #475569;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notes-toggle-btn:hover {
+  background: #475569;
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+.notes-toggle-btn .toggle-icon {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+/* Notes Input Container - More space */
+.notes-input-container {
+  margin-bottom: 16px;
+  animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notes-input {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #334155;
+  border-radius: 14px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: none;
+  background: #0f172a;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  min-height: 100px;
+  color: #f1f5f9;
+}
+
+.notes-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.notes-input::placeholder {
+  color: #64748b;
+}
+
+.notes-char-count {
+  text-align: right;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Status Buttons - Modern Pill Design */
+.apartment-status-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.status-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.status-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+}
+
+.status-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.status-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.status-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Visited Actions - Clean Design */
+.apartment-visited-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.visited-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.visited-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.visited-info .visited-label {
+  margin-bottom: 2px;
+}
+
+/* Existing Notes Display - Card style */
+.existing-notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+  border: 1px solid #fde047;
+  border-radius: 12px;
+  max-width: 100%;
+}
+
+.existing-notes .notes-icon {
+  color: #ca8a04;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.existing-notes .notes-text {
+  font-size: 14px;
+  color: #713f12;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.reset-btn {
+  padding: 12px 20px;
+  background: #334155;
+  border: 2px solid #475569;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.reset-btn:hover:not(:disabled) {
+  background: #475569;
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+.reset-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading Skeleton - Dark */
+.loading-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeleton-item {
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.skeleton-badge {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 16px;
+}
+
+.skeleton-text {
+  flex: 1;
+  height: 24px;
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.skeleton-buttons {
+  height: 56px;
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 14px;
+}
+
+/* Error State */
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+.error-state p {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.error-state button {
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.error-state button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+.empty-state p {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .apartment-drawer {
+    max-width: none;
+  }
+  
+  .drawer-header {
+    padding: 16px;
+  }
+  
+  .drawer-header .back-btn,
+  .drawer-header .close-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+  
+  .header-icon {
+    display: none;
+  }
+  
+  .apartment-drawer .apartment-list {
+    padding: 12px 16px !important;
+    gap: 12px !important;
+  }
+  
+  .apartment-list-item {
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  .apartment-number-badge {
+    width: 48px;
+    height: 48px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+  
+  .apartment-label {
+    font-size: 14px;
+  }
+  
+  .status-btn {
+    padding: 14px 10px;
+    font-size: 12px;
+  }
+  
+  .filter-tabs {
+    padding: 10px 16px;
+  }
+  
+  .filter-tab {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+  
+  .apartment-drawer .search-container {
+    padding: 10px 16px;
+  }
+  
+  .apartment-drawer .search-input {
+    padding: 12px 40px 12px 44px;
+    font-size: 14px;
+  }
+  
+  .apartment-drawer .search-icon {
+    left: 32px;
+  }
+  
+  .apartment-drawer .search-clear {
+    right: 32px;
+  }
+  
+  .refresh-btn {
+    margin: 10px 16px;
+  }
+}
+
+/* Desktop - side drawer style */
+@media (min-width: 769px) {
+  .apartment-drawer-overlay {
+    justify-content: flex-end;
+    align-items: stretch;
+  }
+  
+  .apartment-drawer {
+    height: 100%;
+    max-width: 480px;
+    animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0.8;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+}

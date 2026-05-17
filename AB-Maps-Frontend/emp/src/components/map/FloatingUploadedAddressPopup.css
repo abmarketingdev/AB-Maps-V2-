@@ -1,0 +1,241 @@
+.floating-uploaded-address-popup {
+  position: fixed;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  min-width: 300px;
+  max-width: 400px;
+  z-index: 999999; /* ENHANCED: Highest z-index for complete isolation */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* ENHANCED: Additional isolation properties */
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  /* ENHANCED: Ensure popup is above all map elements */
+  isolation: isolate;
+  contain: layout style paint;
+}
+
+/* ENHANCED: Ensure popup content doesn't interfere with map */
+.floating-uploaded-address-popup * {
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #f0f8ff;
+  border-radius: 12px 12px 0 0;
+  /* ENHANCED: Prevent event interference */
+  pointer-events: auto;
+  /* ENHANCED: Ensure header is always visible */
+  position: relative;
+  z-index: 1000001;
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1976d2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* ENHANCED: Prevent text selection */
+  user-select: none;
+  -webkit-user-select: none;
+  /* ENHANCED: Ensure header text is visible */
+  flex: 1;
+  min-width: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: #666;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  /* ENHANCED: Ensure button is always visible and clickable */
+  pointer-events: auto;
+  z-index: 1000000;
+  /* ENHANCED: Make sure the button is properly sized and visible */
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* ENHANCED: Ensure proper contrast and visibility */
+  background-color: transparent;
+  border: 1px solid transparent;
+  /* ENHANCED: Ensure the X symbol is always visible */
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 1;
+  text-align: center;
+}
+
+.close-button:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+  border-color: #1976d2;
+}
+
+.close-button:focus {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+/* ENHANCED: Ensure the close button text is always visible */
+.close-button {
+  color: #666 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+}
+
+/* ENHANCED: Ensure the close button icon is always visible */
+.close-button svg,
+.close-button .fa-times {
+  width: 16px;
+  height: 16px;
+  display: block;
+  color: inherit;
+  opacity: 1;
+  visibility: visible;
+}
+
+.popup-content {
+  padding: 20px;
+  /* ENHANCED: Prevent content interference */
+  pointer-events: auto;
+}
+
+.address-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.address-text {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 16px;
+  line-height: 1.4;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #1976d2;
+  /* ENHANCED: Prevent text selection */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.meta-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c757d;
+  font-size: 14px;
+  /* ENHANCED: Prevent text selection */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.meta-info svg {
+  color: #1976d2;
+  width: 14px;
+}
+
+.info-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #e8f5e8;
+  border-radius: 6px;
+  color: #2e7d32;
+  font-size: 14px;
+  border: 1px solid #c8e6c9;
+  /* ENHANCED: Prevent text selection */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.info-note svg {
+  color: #4caf50;
+  width: 14px;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+  background: #fff5f5;
+  color: #e53e3e;
+  border: 1px solid #fed7d7;
+  /* ENHANCED: Prevent text selection */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ENHANCED: Mobile responsive with better isolation */
+@media (max-width: 768px) {
+  .floating-uploaded-address-popup {
+    min-width: 280px;
+    max-width: 90vw;
+    margin: 20px;
+    /* ENHANCED: Ensure mobile popup is above everything */
+    z-index: 999999;
+    position: fixed;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  
+  .popup-content {
+    padding: 16px;
+  }
+  
+  .address-text {
+    font-size: 15px;
+  }
+}
+
+/* ENHANCED: Focus management for accessibility */
+.floating-uploaded-address-popup:focus {
+  outline: none;
+}
+
+.floating-uploaded-address-popup:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+/* ENHANCED: Prevent any map interference */
+.floating-uploaded-address-popup::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+}

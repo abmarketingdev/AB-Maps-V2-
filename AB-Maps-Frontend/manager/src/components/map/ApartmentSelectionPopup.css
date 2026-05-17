@@ -1,0 +1,605 @@
+/* Backdrop */
+.apartment-popup-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+  animation: backdropFadeIn 0.3s ease-out;
+  margin: 0;
+  padding: 0;
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Main popup container - FULLY ISOLATED with Portal */
+.apartment-selection-popup {
+  /* Reset and isolation */
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  
+  /* Positioning - Fixed to viewport */
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100001;
+  
+  /* Size */
+  width: 550px;
+  max-width: 90vw;
+  max-height: 85vh;
+  min-height: 500px;
+  
+  /* Appearance */
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: none;
+  
+  /* Typography */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #333;
+  
+  /* Layout */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  
+  /* Interaction */
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  
+  /* Animation */
+  animation: apartmentPopupSlideIn 0.3s ease-out;
+}
+
+/* Apply box-sizing to all children */
+.apartment-selection-popup *,
+.apartment-selection-popup *::before,
+.apartment-selection-popup *::after {
+  box-sizing: border-box;
+}
+
+@keyframes apartmentPopupSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Header */
+.apartment-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  flex-shrink: 0;
+  border-radius: 12px 12px 0 0;
+}
+
+.apartment-popup-back-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  user-select: none;
+  padding: 0;
+  margin: 0;
+}
+
+.apartment-popup-back-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.apartment-popup-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: center;
+}
+
+.apartment-title-icon {
+  font-size: 18px;
+}
+
+.apartment-popup-title h3 {
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.apartment-popup-close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  user-select: none;
+  padding: 0;
+  margin: 0;
+}
+
+.apartment-popup-close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05) rotate(90deg);
+}
+
+/* Content */
+.apartment-popup-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  pointer-events: auto;
+  gap: 16px;
+}
+
+/* Base address display */
+.apartment-base-address {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.base-address-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.base-address-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.base-address-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  padding: 0;
+}
+
+.base-address-text {
+  font-size: 15px;
+  color: #333;
+  font-weight: 600;
+  word-break: break-word;
+  line-height: 1.4;
+  margin: 0;
+  padding: 0;
+}
+
+/* Apartment count indicator */
+.apartment-count-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #e8f5e9;
+  border-radius: 8px;
+  border: 2px solid #4caf50;
+  flex-shrink: 0;
+}
+
+.count-badge {
+  background: #4caf50;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.count-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2e7d32;
+  margin: 0;
+  padding: 0;
+}
+
+/* Apartment list header */
+.apartment-list-header {
+  padding: 6px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.apartment-list-header span {
+  margin: 0;
+  padding: 0;
+}
+
+/* Empty message */
+.apartment-empty-message {
+  padding: 32px 16px;
+  text-align: center;
+  color: #999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.apartment-empty-message .empty-icon {
+  font-size: 36px;
+  color: #ddd;
+}
+
+.apartment-empty-message p {
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Apartments list */
+.apartments-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  margin: 0 -8px;
+  padding: 0 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+.apartments-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.apartments-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.apartments-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.apartments-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Apartment item */
+.apartment-item {
+  padding: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  pointer-events: auto;
+  user-select: none;
+  background: white;
+  position: relative;
+  overflow: hidden;
+  min-height: 70px;
+}
+
+.apartment-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.apartment-item:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.apartment-item:hover::before {
+  transform: scaleY(1);
+}
+
+.apartment-item.selected {
+  border-color: #4caf50;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.25);
+  transform: translateX(2px);
+}
+
+.apartment-item.selected::before {
+  transform: scaleY(1);
+  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+}
+
+.apartment-item:last-child {
+  margin-bottom: 0;
+}
+
+.apartment-item-number-badge {
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+}
+
+.apartment-item:hover .apartment-item-number-badge {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.apartment-item.selected .apartment-item-number-badge {
+  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.apartment-number {
+  font-weight: 700;
+  font-size: 20px;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+
+.apartment-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.apartment-label {
+  font-size: 11px;
+  color: #999;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  padding: 0;
+}
+
+.apartment-address {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  line-height: 1.5;
+  word-break: break-word;
+  margin: 0;
+  padding: 0;
+}
+
+.apartment-item.selected .apartment-address {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.apartment-checkmark {
+  width: 36px;
+  height: 36px;
+  background: #4caf50;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: checkmarkPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+
+@keyframes checkmarkPop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.selected-icon {
+  color: white;
+  font-size: 18px;
+}
+
+/* Action buttons */
+.apartment-popup-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.apartment-cancel-button,
+.apartment-select-button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: inherit;
+}
+
+.apartment-cancel-button {
+  background: #f5f5f5;
+  color: #666;
+  border: 2px solid #e0e0e0;
+}
+
+.apartment-cancel-button:hover {
+  background: #e0e0e0;
+  border-color: #d0d0d0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.apartment-select-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.apartment-select-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+}
+
+.apartment-select-button:disabled {
+  background: #ccc;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.apartment-select-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .apartment-selection-popup {
+    width: 90vw;
+    max-height: 85vh;
+    border-radius: 12px;
+  }
+
+  .apartment-popup-header {
+    padding: 14px 16px;
+  }
+
+  .apartment-popup-title h3 {
+    font-size: 15px;
+  }
+
+  .apartment-popup-content {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .apartment-item {
+    padding: 12px;
+    min-height: 48px; /* Touch target size */
+  }
+
+  .apartment-item-number-badge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .apartment-number {
+    font-size: 16px;
+  }
+
+  .apartment-address {
+    font-size: 12px;
+  }
+
+  .apartment-popup-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .apartment-cancel-button,
+  .apartment-select-button {
+    width: 100%;
+    padding: 14px 20px;
+  }
+}

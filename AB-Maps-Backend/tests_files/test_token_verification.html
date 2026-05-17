@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Verification Test</title>
+</head>
+<body>
+    <h1>Token Verification Test</h1>
+    <div id="output"></div>
+
+    <script>
+        async function testTokenVerification() {
+            const output = document.getElementById('output');
+            
+            // Get token from URL parameters (simulating AB Maps)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenString = urlParams.get('token');
+            
+            if (!tokenString) {
+                output.innerHTML = '<p style="color: red;">No token provided in URL</p>';
+                return;
+            }
+            
+            try {
+                // Parse the token
+                const tokens = JSON.parse(tokenString);
+                console.log('Parsed tokens:', tokens);
+                
+                if (!tokens.access) {
+                    output.innerHTML = '<p style="color: red;">No access token found</p>';
+                    return;
+                }
+                
+                // Test the verification endpoint
+                const response = await fetch('http://localhost:8000/api/auth/verify-public/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${tokens.access}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    output.innerHTML = `<p style="color: red;">Verification failed: ${response.status} - ${errorText}</p>`;
+                    return;
+                }
+                
+                const verificationData = await response.json();
+                console.log('Verification successful:', verificationData);
+                
+                output.innerHTML = `
+                    <p style="color: green;">Token verification successful!</p>
+                    <pre>${JSON.stringify(verificationData, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                output.innerHTML = `<p style="color: red;">Test failed: ${error.message}</p>`;
+            }
+        }
+        
+        // Run the test when page loads
+        testTokenVerification();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,39 @@
+/* AgeStatsToggle.css - Styles specific to age stats button */
+
+/* Stats mode enabled state (purple/violet) */
+.circular-toggle.enabled.stats-mode {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+  color: white;
+  border-color: #9b59b6;
+  box-shadow: 
+    0 4px 12px rgba(155, 89, 182, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.stats-mode:hover {
+  background: linear-gradient(135deg, #8e44ad 0%, #7d3c98 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 16px rgba(155, 89, 182, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.stats-mode:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 6px rgba(155, 89, 182, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.circular-toggle.enabled.stats-mode.loading {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+  cursor: wait;
+}
+
+/* Focus state */
+.circular-toggle.stats-mode:focus {
+  box-shadow: 
+    0 0 0 3px rgba(155, 89, 182, 0.3),
+    0 4px 12px rgba(155, 89, 182, 0.4);
+}
+

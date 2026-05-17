@@ -1,0 +1,2459 @@
+/* Modern Campaign Form Popup Styles */
+.campaign-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3200;
+  padding: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.campaign-form-popup {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  max-width: 900px;
+  width: 100%;
+  max-height: 95vh;
+  overflow-y: auto;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.campaign-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 32px 20px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px 20px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.campaign-form-header h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 18px;
+  color: white;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 28px;
+  right: 32px;
+  z-index: 30;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Selection Step Styles */
+.selection-step {
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.selection-content h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+}
+
+.selection-content p {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0 0 40px 0;
+}
+
+.payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #374151;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.payment-option:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.payment-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.payment-option.avtalegiro {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+}
+
+.payment-option.avtalegiro:hover:not(:disabled) {
+  border-color: #059669;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.payment-option.avtalegiro:hover:not(:disabled) svg {
+  color: white;
+}
+
+.payment-option.vipps {
+  border-color: #f97316;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.payment-option.vipps:hover:not(:disabled) {
+  border-color: #ea580c;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+}
+
+.payment-option.vipps:hover:not(:disabled) .vipps-icon {
+  background: white;
+  color: #f97316;
+}
+
+.payment-option svg {
+  width: 20px;
+  height: 20px;
+  color: #10b981;
+  transition: color 0.3s ease;
+}
+
+.vipps-icon {
+  width: 20px;
+  height: 20px;
+  background: #f97316;
+  color: white;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+/* Success Message Styles */
+.success-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  text-align: center;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: bold;
+  margin-bottom: 24px;
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #10b981;
+  margin-bottom: 12px;
+}
+
+/* Vipps Loading Styles */
+.vipps-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #f97316;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 24px;
+}
+
+.loading-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.vipps-loading p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Phone Lookup Section Styles */
+.phone-lookup-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #0ea5e9;
+}
+
+.phone-lookup-section h3 {
+  color: #0369a1;
+}
+
+.lookup-description {
+  font-size: 14px;
+  color: #0369a1;
+  margin: -8px 0 20px 0;
+  font-weight: 500;
+}
+
+.phone-lookup-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.finn-btn {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.3);
+  min-width: 120px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.finn-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -1px rgba(14, 165, 233, 0.4);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+}
+
+.finn-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+}
+
+.lookup-error {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 1px solid #f87171;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* PHASE 6: Enhanced lookup success message */
+/* REMOVED: Old lookup-success styles - replaced with toast notification */
+
+/* PHASE 6: Skip lookup option */
+.lookup-skip {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.lookup-skip .skip-text {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Auto-filled field styling */
+.form-group input.auto-filled {
+  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.auto-fill-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.error-message {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 1px solid #f87171;
+  color: #dc2626;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin: 20px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-message::before {
+  content: "⚠️";
+  font-size: 16px;
+}
+
+.campaign-form {
+  padding: 0 32px 32px 32px;
+}
+
+.form-section {
+  margin-bottom: 40px;
+  background: #fafbfc;
+  border-radius: 16px;
+  padding: 28px;
+  border: 1px solid #e5e7eb;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.form-section h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+/* Keep title content (icon + text) together as one flex item */
+.section-title-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.form-section h3 svg {
+  width: 20px;
+  height: 20px;
+  color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 8px;
+  border-radius: 8px;
+  color: white;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.form-group.required label::after {
+  content: ' *';
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.form-group input,
+.form-group select {
+  padding: 16px 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: white;
+  color: #1f2937;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 
+    0 0 0 4px rgba(102, 126, 234, 0.1),
+    0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-group input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.form-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  accent-color: #667eea;
+}
+
+.checkbox-group {
+  flex-direction: row;
+  align-items: center;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  margin-top: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: #374151;
+  font-weight: 500;
+  width: 100%;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+}
+
+.signature-container {
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.signature-canvas {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background-color: #fafbfc;
+  cursor: crosshair;
+  touch-action: none;
+  transition: all 0.3s ease;
+}
+
+.signature-canvas:hover {
+  border-color: #667eea;
+  background-color: #f8fafc;
+}
+
+.signature-controls {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.clear-signature-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+}
+
+.clear-signature-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -1px rgba(239, 68, 68, 0.3);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.cancel-btn {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(107, 114, 128, 0.2);
+  min-width: 120px;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -1px rgba(107, 114, 128, 0.3);
+}
+
+.cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+  min-width: 140px;
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -1px rgba(16, 185, 129, 0.3);
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 768px) {
+  /* Selection mode - Floating centered popup with visible map */
+  .campaign-form-overlay {
+    padding: 20px 12px;
+    align-items: center;
+  }
+  
+  .campaign-form-popup.selection-mode {
+    max-width: 85%;
+    width: 85%;
+    max-height: 60vh;
+    height: auto;
+    border-radius: 16px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-y: auto;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Form mode - Full-screen for the actual form */
+  .campaign-form-popup.form-mode {
+    max-width: 100vw;
+    width: 100vw;
+    max-height: 100vh;
+    min-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-y: auto;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  .selection-mode .campaign-form-header {
+    padding: 1rem;
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .form-mode .campaign-form-header {
+    padding: 1rem;
+    border-radius: 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .campaign-form-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-right: 3.5rem; /* Push away from close button */
+  }
+  
+  .close-button {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 3300;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .selection-mode .selection-step {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .form-mode .selection-step {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .selection-mode .selection-content h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  
+  .selection-mode .selection-content p {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  
+  .selection-mode .payment-options {
+    max-width: 100%;
+    gap: 10px;
+  }
+  
+  .selection-mode .payment-option {
+    padding: 14px 18px;
+    font-size: 14px;
+    min-height: 52px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .form-mode .selection-content h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  
+  .form-mode .selection-content p {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  
+  .form-mode .payment-options {
+    max-width: 100%;
+    gap: 12px;
+  }
+  
+  .form-mode .payment-option {
+    padding: 16px 20px;
+    font-size: 15px;
+    min-height: 56px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .campaign-form {
+    padding: 0;
+    flex: 1;
+    overflow-y: visible;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .form-section {
+    padding: 1rem;
+    margin: 0.5rem;
+    border-radius: 12px;
+    width: calc(100% - 1rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+  
+  .form-section h3 {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .form-section h3 svg {
+    width: 16px;
+    height: 16px;
+    padding: 6px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 14px 16px;
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  
+  .checkbox-group {
+    padding: 12px 16px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  
+  .checkbox-label {
+    font-size: 14px;
+    min-height: 48px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .signature-container {
+    padding: 16px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  
+  .signature-canvas {
+    height: 120px;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .signature-controls {
+    margin-top: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .clear-signature-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    min-height: 48px;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    padding: 1rem;
+    border-radius: 12px;
+    position: relative;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    width: calc(100% - 1rem);
+    max-width: none;
+    z-index: 10;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+  }
+  
+  .form-actions button {
+    width: 100%;
+    padding: 16px 24px;
+    min-height: 48px;
+    font-size: 15px;
+    box-sizing: border-box;
+  }
+  
+  .success-message,
+  .vipps-loading {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+  
+  .success-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+    margin-bottom: 16px;
+  }
+  
+  .success-text {
+    font-size: 18px;
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+  
+  .loading-text {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  
+  .error-message {
+    margin: 0.5rem;
+    padding: 12px 16px;
+    font-size: 13px;
+    width: calc(100% - 1rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  /* Fix button transform issues on mobile */
+  .submit-btn:disabled,
+  .cancel-btn:disabled {
+    transform: none !important;
+  }
+
+  .submit-btn:hover:not(:disabled),
+  .cancel-btn:hover:not(:disabled) {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Selection mode - Floating centered popup */
+  .campaign-form-overlay {
+    padding: 16px 10px;
+    align-items: center;
+  }
+  
+  .campaign-form-popup.selection-mode {
+    max-width: 90%;
+    width: 90%;
+    max-height: 55vh;
+    height: auto;
+    border-radius: 12px;
+    padding: 0;
+  }
+  
+  /* Form mode - Full-screen */
+  .campaign-form-popup.form-mode {
+    max-width: 100vw;
+    width: 100vw;
+    max-height: 100vh;
+    min-height: 100vh;
+    border-radius: 0;
+    padding: 0;
+  }
+  
+  .selection-mode .campaign-form-header {
+    padding: 0.75rem;
+    border-radius: 12px 12px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .form-mode .campaign-form-header {
+    padding: 0.75rem;
+    border-radius: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .campaign-form-header h2 {
+    font-size: 18px;
+    margin-right: 3rem;
+  }
+  
+  .close-button {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+    position: fixed;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 3300;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .selection-mode .selection-step {
+    padding: 0.75rem;
+  }
+  
+  .selection-mode .selection-content h3 {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  
+  .selection-mode .selection-content p {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .selection-mode .payment-option {
+    padding: 12px 14px;
+    font-size: 13px;
+    min-height: 48px;
+  }
+  
+  .form-mode .selection-step {
+    padding: 0.5rem;
+  }
+  
+  .form-mode .selection-content h3 {
+    font-size: 18px;
+  }
+  
+  .form-mode .selection-content p {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  
+  .form-mode .payment-option {
+    padding: 14px 16px;
+    font-size: 14px;
+    min-height: 52px;
+  }
+  
+  .campaign-form {
+    padding: 0;
+  }
+  
+  .form-section {
+    padding: 0.75rem;
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+    max-width: none;
+  }
+  
+  .form-section h3 {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 12px 14px;
+    min-height: 44px;
+  }
+  
+  .form-actions {
+    padding: 0.75rem;
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+    max-width: none;
+    position: relative;
+  }
+  
+  .form-actions button {
+    padding: 14px 20px;
+    min-height: 44px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  
+  .signature-canvas {
+    height: 100px;
+  }
+  
+  .clear-signature-btn {
+    padding: 10px 14px;
+    min-height: 44px;
+    font-size: 12px;
+  }
+  
+  .error-message {
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  /* Fix button transform issues on small mobile */
+  .submit-btn:disabled,
+  .cancel-btn:disabled {
+    transform: none !important;
+  }
+
+  .submit-btn:hover:not(:disabled),
+  .cancel-btn:hover:not(:disabled) {
+    transform: none !important;
+  }
+
+  /* Phone Lookup Small Mobile */
+  .finn-btn {
+    min-height: 44px;
+    height: 44px;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .lookup-description {
+    font-size: 12px;
+  }
+
+  .auto-fill-badge {
+    font-size: 8px;
+    padding: 1px 5px;
+  }
+}
+
+/* Enhanced Scrollbar Styling */
+.campaign-form-popup::-webkit-scrollbar {
+  width: 8px;
+}
+
+.campaign-form-popup::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.campaign-form-popup::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+.campaign-form-popup::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+/* Loading State */
+.submit-btn:disabled {
+  position: relative;
+}
+
+
+
+/* Focus States for Accessibility */
+.form-group input:focus-visible,
+.form-group select:focus-visible,
+.close-button:focus-visible,
+.cancel-btn:focus-visible,
+.submit-btn:focus-visible,
+.clear-signature-btn:focus-visible,
+.payment-option:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Hover Effects */
+.form-group:hover input {
+  border-color: #d1d5db;
+}
+
+.form-group:hover label {
+  color: #667eea;
+}
+
+/* Form Validation Styles */
+.form-group input:invalid:not(:placeholder-shown) {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.form-group input:valid:not(:placeholder-shown) {
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+/* Success State */
+.form-group.success input {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.form-group.success label {
+  color: #10b981;
+}
+
+/* Error State */
+.form-group.error input {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.form-group.error label {
+  color: #ef4444;
+}
+
+/* Signature Required Indicator */
+.signature-container::before {
+  content: 'Underskrift påkrevd *';
+  display: block;
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* ============================================================================
+   PHASE 2: PROGRESS BAR COMPONENT
+   ============================================================================ */
+
+/* Progress bar container - sticky positioned */
+.progress-bar-container {
+  position: sticky;
+  top: 76px; /* Below header (adjust based on header height) */
+  z-index: 200;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Main progress bar */
+.progress-bar {
+  padding: 20px 32px;
+  background: white;
+}
+
+/* Progress line container (background track) */
+.progress-line {
+  position: absolute;
+  top: 36px; /* Center with dots */
+  left: 32px;
+  right: 32px;
+  height: 3px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  z-index: 0;
+}
+
+/* Progress line fill (animated) */
+.progress-line-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.4);
+}
+
+/* Progress dots container */
+.progress-dots {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 16px;
+  z-index: 1;
+}
+
+/* Individual progress dot */
+.progress-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  z-index: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #9ca3af;
+  cursor: default;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Active dot (current section) */
+.progress-dot.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Completed dot */
+.progress-dot.completed {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Checkmark in completed dots */
+.progress-dot .checkmark {
+  font-size: 18px;
+  font-weight: bold;
+  animation: checkmark-appear 0.3s ease-out;
+}
+
+/* Step number */
+.progress-dot .step-number {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Progress label section */
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+/* Section name label */
+.progress-label .section-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  animation: fade-slide-in 0.3s ease-out;
+}
+
+/* Section counter */
+.progress-label .section-counter {
+  font-size: 13px;
+  font-weight: 500;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+/* Animations */
+@keyframes pulse-dot {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.6);
+  }
+}
+
+@keyframes checkmark-appear {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .progress-bar-container {
+    top: 60px; /* Smaller header on mobile */
+  }
+  
+  .progress-bar {
+    padding: 16px 20px;
+  }
+  
+  .progress-line {
+    top: 30px;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+  }
+  
+  .progress-dot {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    border-width: 2px;
+  }
+  
+  .progress-dot.active {
+    transform: scale(1.1);
+  }
+  
+  .progress-dot .checkmark {
+    font-size: 16px;
+  }
+  
+  .progress-dot .step-number {
+    font-size: 12px;
+  }
+  
+  .progress-label .section-name {
+    font-size: 14px;
+  }
+  
+  .progress-label .section-counter {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-bar {
+    padding: 14px 16px;
+  }
+  
+  .progress-line {
+    top: 26px;
+    left: 16px;
+    right: 16px;
+  }
+  
+  .progress-dot {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+  
+  .progress-dot .checkmark {
+    font-size: 14px;
+  }
+  
+  .progress-dot .step-number {
+    font-size: 11px;
+  }
+  
+  .progress-label .section-name {
+    font-size: 13px;
+  }
+  
+  .progress-label .section-counter {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+}
+
+/* ============================================================================
+   PHASE 3: SECTION SLIDING ANIMATION
+   ============================================================================ */
+
+/* Sections container - horizontal flex layout for sliding */
+.sections-container {
+  display: flex;
+  width: 500%; /* 5 sections × 100% each */
+  will-change: transform;
+  /* Transform applied inline via React state */
+}
+
+/* Individual section wrapper - takes up full width */
+.form-section-wrapper {
+  min-width: 20%; /* 100% / 5 sections = 20% of container */
+  max-width: 20%;
+  flex-shrink: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* Prevent content from breaking layout */
+  overflow-x: hidden;
+}
+
+/* Ensure form sections fill the wrapper properly */
+.form-section-wrapper .form-section {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+/* Smooth scrolling behavior for better UX */
+.campaign-form {
+  scroll-behavior: smooth;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-y: visible; /* Allow vertical scroll */
+}
+
+/* Performance optimization - GPU acceleration */
+.sections-container {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+/* Mobile optimizations for sliding */
+@media (max-width: 768px) {
+  .sections-container {
+    /* Ensure smooth sliding on mobile */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .form-section-wrapper {
+    /* Slightly reduce padding on mobile for more space */
+    padding: 0;
+  }
+  
+  .form-section-wrapper .form-section {
+    /* Mobile-specific adjustments handled by existing form-section styles */
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Very small screens - optimize for space */
+  .form-section-wrapper {
+    min-width: 20%;
+    max-width: 20%;
+  }
+}
+
+/* Prevent layout shifts during transitions */
+.campaign-form:has(.sections-container) {
+  position: relative;
+  min-height: 400px; /* Prevent collapse during transitions */
+}
+
+/* ============================================================================
+   PHASE 4: VISUAL VALIDATION FEEDBACK
+   ============================================================================ */
+
+/* Valid input state - green border and shadow */
+.form-group input:valid:not(:placeholder-shown):not([type="checkbox"]),
+.form-group select:valid:not(:placeholder-shown),
+.form-group input.valid-field {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  background-color: #f0fdf4;
+}
+
+/* Invalid input state - red border and shadow */
+.form-group input:invalid:not(:placeholder-shown):not([type="checkbox"]),
+.form-group select:invalid:not(:placeholder-shown),
+.form-group input.invalid-field {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  background-color: #fef2f2;
+}
+
+/* Focus states override validation colors */
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1) !important;
+  background-color: white !important;
+}
+
+/* Validation icon indicators */
+.form-group {
+  position: relative;
+}
+
+.form-group input:valid:not(:placeholder-shown):not([type="checkbox"]):not(:focus)::after,
+.form-group.has-validation-success::after {
+  content: '✓';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981;
+  font-weight: bold;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+/* Required field indicator - enhanced */
+.form-group.required label::after {
+  content: ' *';
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Field-level error messages */
+.field-error {
+  display: block;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: #fee2e2;
+  border-radius: 6px;
+  border-left: 3px solid #ef4444;
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Field-level success messages */
+.field-success {
+  display: block;
+  color: #059669;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: #d1fae5;
+  border-radius: 6px;
+  border-left: 3px solid #10b981;
+}
+
+/* Section validation status badge */
+.section-validation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 12px;
+}
+
+.section-validation-badge.valid {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #059669;
+}
+
+.section-validation-badge.invalid {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+}
+
+/* REMOVED: Problematic inline badges - replaced with toast notifications */
+
+/* ============================================================================
+   TOAST NOTIFICATION SYSTEM - Simple, small, no animation
+   ============================================================================ */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10b981;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10000;
+  white-space: nowrap;
+}
+
+.toast-notification.show {
+  display: flex;
+}
+
+.toast-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .toast-notification {
+    top: 15px;
+    max-width: 90vw;
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+  
+  .toast-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 14px;
+  }
+}
+
+/* Signature canvas validation states */
+.signature-canvas.has-signature {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.signature-canvas.no-signature.touched {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+/* Validation summary at section level */
+.section-validation-summary {
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.section-validation-summary.error {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.section-validation-summary.success {
+  background: #d1fae5;
+  border-color: #10b981;
+  color: #059669;
+}
+
+.section-validation-summary .icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.section-validation-summary .message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Auto-filled fields get special treatment */
+.form-group input.auto-filled:valid {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+}
+
+/* Enhanced mobile validation feedback */
+@media (max-width: 768px) {
+  .field-error,
+  .field-success {
+    font-size: 11px;
+    padding: 3px 6px;
+    margin-top: 4px;
+  }
+  
+  .section-validation-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+  
+  .section-validation-summary {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  .section-validation-summary .icon {
+    font-size: 18px;
+  }
+}
+
+/* ============================================================================
+   PHASE 5: NAVIGATION CONTROLS
+   ============================================================================ */
+
+/* Navigation controls container - sticky at bottom */
+.navigation-controls {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: white;
+  border-top: 2px solid #e5e7eb;
+  box-shadow: 0 -4px 12px -1px rgba(0, 0, 0, 0.1);
+  z-index: 300;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,1) 100%);
+}
+
+/* Common button styles */
+.navigation-controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  min-height: 56px;
+}
+
+/* Button hover effect */
+.navigation-controls button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.15);
+}
+
+/* Button active effect */
+.navigation-controls button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Back button styles */
+.back-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+}
+
+.back-btn:not(:disabled):hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+}
+
+/* Next button styles */
+.next-btn {
+  flex: 2;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 700;
+}
+
+.next-btn:not(:disabled):hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+/* Submit button styles */
+.submit-btn {
+  flex: 2;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-weight: 700;
+}
+
+.submit-btn:not(:disabled):hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Disabled button state */
+.navigation-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Button icon styling */
+.btn-icon {
+  font-size: 18px;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-text {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Loading spinner for submit button */
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Ripple effect on button click */
+.navigation-controls button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.navigation-controls button:not(:disabled):active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Mobile optimizations for navigation controls */
+@media (max-width: 768px) {
+  .navigation-controls {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  
+  .navigation-controls button {
+    padding: 14px 20px;
+    font-size: 15px;
+    min-height: 52px;
+  }
+  
+  .btn-icon {
+    font-size: 16px;
+  }
+  
+  .btn-text {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navigation-controls {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  
+  .navigation-controls button {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+  
+  .btn-icon {
+    font-size: 14px;
+  }
+  
+  .btn-text {
+    font-size: 14px;
+  }
+  
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Tooltip hint for disabled buttons */
+.navigation-controls button:disabled {
+  position: relative;
+}
+
+.navigation-controls button:disabled:hover::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeIn 0.2s ease-out forwards;
+  z-index: 1000;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Special styling for first and last sections */
+.navigation-controls:has(.back-btn):not(:has(.next-btn)) {
+  /* Last section - only back and submit */
+  justify-content: space-between;
+}
+
+.navigation-controls:has(.next-btn):not(:has(.back-btn)) {
+  /* First section - only next */
+  justify-content: flex-end;
+}
+
+/* Accessibility improvements */
+.navigation-controls button:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   PHASE 7: MOBILE RESPONSIVENESS & POLISH
+   ============================================================================ */
+
+/* Touch optimizations - prevent double-tap zoom */
+button,
+.progress-dot,
+.signature-canvas,
+.clear-signature-btn,
+.finn-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling */
+.campaign-form-popup {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Prevent iOS zoom on input focus - CRITICAL for mobile UX */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important; /* iOS won't zoom if font-size is 16px or larger */
+  }
+}
+
+/* Ensure all touch targets are 48x48px minimum (WCAG AAA) */
+.form-group input,
+.form-group select,
+.navigation-controls button,
+.progress-dot,
+.finn-btn,
+.clear-signature-btn {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Keyboard handling - ensure inputs are visible when keyboard appears */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  scroll-margin-top: 100px; /* Space for sticky headers */
+  scroll-margin-bottom: 150px; /* Space for navigation controls */
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .sections-container {
+    transition: none !important;
+  }
+  
+  .progress-bar,
+  .progress-dot,
+  .navigation-controls button {
+    animation: none !important;
+  }
+}
+
+/* Base mobile: 320px - 768px (most phones and tablets) */
+@media (max-width: 768px) {
+  /* Full-screen form on mobile */
+  .campaign-form-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+  
+  .campaign-form-popup.form-mode {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  
+  /* Optimize form sections for mobile */
+  .form-section {
+    padding: 16px;
+    margin: 0;
+  }
+  
+  /* Better spacing on mobile */
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+}
+
+/* Small phones: 320px - 375px (iPhone SE, iPhone 12/13 mini) */
+@media (max-width: 375px) {
+  /* Compact header */
+  .campaign-form-header {
+    padding: 12px 16px;
+  }
+  
+  .campaign-form-header h2 {
+    font-size: 18px;
+  }
+  
+  .close-button {
+    width: 36px;
+    height: 36px;
+  }
+  
+  /* Smaller progress dots */
+  .progress-dot {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+  
+  .progress-bar {
+    padding: 12px 16px;
+  }
+  
+  /* Compact form elements */
+  .form-group input,
+  .form-group select {
+    padding: 12px 14px;
+    min-height: 44px;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+  }
+  
+  /* Smaller navigation buttons */
+  .navigation-controls {
+    padding: 10px 12px;
+  }
+  
+  .navigation-controls button {
+    padding: 12px 16px;
+    min-height: 44px;
+    font-size: 14px;
+  }
+  
+  /* Compact section title */
+  .form-section h3 {
+    font-size: 16px;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  
+  .section-title-content {
+    gap: 6px;
+  }
+}
+
+/* Medium phones: 376px - 428px (most modern phones) */
+@media (min-width: 376px) and (max-width: 428px) {
+  .form-section {
+    padding: 18px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 14px 16px;
+  }
+}
+
+/* Large phones: 429px - 768px (iPhone Plus, Pro Max, tablets in portrait) */
+@media (min-width: 429px) and (max-width: 768px) {
+  .campaign-form-popup.form-mode {
+    width: 95vw;
+    max-width: 550px;
+    height: 95vh;
+    border-radius: 16px;
+  }
+  
+  .campaign-form-overlay {
+    padding: 16px;
+    align-items: center;
+  }
+  
+  .form-section {
+    padding: 20px;
+  }
+}
+
+/* Landscape orientation optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+  .campaign-form-popup {
+    max-height: 100vh;
+  }
+  
+  .progress-bar {
+    padding: 8px 16px;
+  }
+  
+  .progress-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  
+  .campaign-form-header {
+    padding: 8px 16px;
+  }
+  
+  .navigation-controls {
+    padding: 10px 16px;
+  }
+  
+  .form-section {
+    padding: 12px 16px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+}
+
+/* Tablets in portrait: 768px - 1024px */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .campaign-form-popup {
+    max-width: 680px;
+    width: 80vw;
+  }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .progress-line,
+  .form-group input,
+  .form-group select {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Dark mode support (optional enhancement) */
+@media (prefers-color-scheme: dark) {
+  /* Note: Currently maintaining light theme for consistency */
+  /* Can be enhanced in future if dark mode is desired */
+}
+
+/* Enhanced Mobile Touch Targets */
+@media (max-width: 768px) {
+  .form-group input,
+  .form-group select {
+    min-height: 48px; /* Better touch target */
+  }
+  
+  .checkbox-label {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .clear-signature-btn {
+    min-height: 48px;
+  }
+  
+  .form-actions button {
+    min-height: 48px;
+  }
+  
+  .payment-option {
+    min-height: 60px;
+  }
+
+  /* Phone Lookup Mobile Styles */
+  .phone-lookup-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .finn-btn {
+    width: 100%;
+    min-height: 48px;
+    height: 48px;
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+
+  .lookup-description {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .lookup-error {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+  
+  /* PHASE 6: Mobile lookup success */
+  .lookup-skip {
+    padding: 10px 14px;
+    margin-top: 14px;
+  }
+  
+  .lookup-skip .skip-text {
+    font-size: 12px;
+  }
+
+  .auto-fill-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+}
+
+/* Smooth Transitions for All Interactive Elements */
+.form-group,
+.form-section,
+.signature-container,
+.form-actions,
+.payment-option {
+  transition: all 0.3s ease;
+}
+
+/* Focus Ring for Better Accessibility */
+.form-group input:focus,
+.form-group select:focus,
+.signature-canvas:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Loading Animation for Submit Button */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.submit-btn:disabled {
+  animation: pulse 2s infinite;
+} 

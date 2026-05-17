@@ -1,0 +1,214 @@
+.talkmore-address-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.talkmore-address-popup {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.talkmore-address-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+
+.talkmore-address-popup-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.talkmore-address-popup-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #6b7280;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.talkmore-address-popup-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.talkmore-address-popup-content {
+  padding: 20px;
+}
+
+.talkmore-address-section {
+  margin-bottom: 20px;
+}
+
+.talkmore-address-section:last-child {
+  margin-bottom: 0;
+}
+
+.talkmore-address-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.talkmore-address-text {
+  font-size: 16px;
+  color: #111827;
+  margin: 0;
+  font-weight: 500;
+}
+
+.talkmore-address-status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.talkmore-address-status-done {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.talkmore-address-coordinates {
+  font-size: 14px;
+  color: #6b7280;
+  font-family: monospace;
+  margin: 0;
+}
+
+.talkmore-address-carriers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.talkmore-address-carrier-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.talkmore-address-carrier-name {
+  font-weight: 500;
+  color: #111827;
+}
+
+.talkmore-address-carrier-count {
+  background: #3b82f6;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.talkmore-address-people {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.talkmore-address-person {
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+.talkmore-address-person-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.talkmore-address-person-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.talkmore-address-person-phone {
+  color: #374151;
+}
+
+.talkmore-address-person-carrier {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.talkmore-address-uuid {
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.talkmore-address-uuid-value {
+  font-size: 11px;
+  color: #9ca3af;
+  font-family: monospace;
+  word-break: break-all;
+  margin: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .talkmore-address-popup {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 12px 12px 0 0;
+    margin-top: auto;
+  }
+
+  .talkmore-address-popup-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .talkmore-address-popup-header {
+    padding: 16px;
+  }
+
+  .talkmore-address-popup-content {
+    padding: 16px;
+  }
+}

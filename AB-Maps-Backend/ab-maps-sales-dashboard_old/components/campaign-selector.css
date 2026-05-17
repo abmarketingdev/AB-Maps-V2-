@@ -1,0 +1,4 @@
+/* Hide the close (X) button in shadcn/ui DialogContent */
+.hide-dialog-close [data-dialog-close] {
+  display: none !important;
+} 

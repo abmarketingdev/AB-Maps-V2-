@@ -1,0 +1,114 @@
+/* LocationStatus styles copied from emp */
+.location-status {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 2000;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.13);
+  padding: 12px 18px;
+  min-width: 220px;
+  font-family: inherit;
+  transition: box-shadow 0.2s;
+}
+.location-status .status-icon-button {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 10px;
+  padding: 8px 0;
+}
+.location-status .icon-background {
+  background: #e8f4fd;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.location-status .status-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2980b9;
+}
+.location-status .expand-icon {
+  margin-left: auto;
+  color: #7f8c8d;
+  font-size: 16px;
+}
+.location-status .status-content {
+  margin-top: 8px;
+  display: block;
+}
+.location-status .status-header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #22314a;
+  margin-bottom: 6px;
+}
+.location-status .status-text {
+  font-size: 14px;
+  color: #22314a;
+}
+.location-status .permission-request {
+  margin: 10px 0;
+  text-align: center;
+}
+.location-status .permission-button {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.location-status .permission-button:hover {
+  background: #125ea2;
+}
+.location-status .status-details {
+  margin-top: 8px;
+}
+.location-status .status-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #495057;
+  margin-bottom: 2px;
+}
+.location-status .status-item .label {
+  font-weight: 500;
+  color: #7f8c8d;
+}
+.location-status .status-item .value {
+  font-weight: 600;
+  color: #22314a;
+}
+.location-status .status-icon {
+  font-size: 20px;
+}
+.location-status .status-icon.success {
+  color: #27ae60;
+}
+.location-status .status-icon.error {
+  color: #e74c3c;
+}
+.location-status .status-icon.tracking {
+  color: #1976d2;
+}
+.location-status .status-icon.online {
+  color: #10b981;
+}
+.location-status .status-icon.warning {
+  color: #f1c40f;
+}
+.location-status.expanded {
+  box-shadow: 0 8px 32px rgba(44,62,80,0.13);
+}
+.location-status.collapsed .status-content {
+  display: none;
+} 

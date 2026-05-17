@@ -1,0 +1,306 @@
+databases:
+  - name: ab-maps-postgres
+    databaseName: ab_maps_db_frankfurt
+    user: ab_maps_db_frankfurt_user
+    plan: free
+
+redis:
+  - name: ab-maps-redis
+    plan: free
+
+services:
+  # Web Service - Django Backend
+  - type: web
+    name: ab-maps-backend
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT ab_maps.asgi:application"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: DJANGO_SETTINGS_MODULE
+        value: ab_maps.settings_production
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: ab-maps-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: ab-maps-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: ab-maps-postgres
+          property: password
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: ab-maps-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: ab-maps-postgres
+          property: port
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ab-maps-redis
+          property: connectionString
+
+  # Worker A: Address Discovery
+  - type: worker
+    name: ab-maps-worker-a-discover
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py worker_a_discover_addresses"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: ab_maps.settings_production
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: ab-maps-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: ab-maps-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: ab-maps-postgres
+          property: password
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: ab-maps-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: ab-maps-postgres
+          property: port
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ab-maps-redis
+          property: connectionString
+
+  # Worker B: 1881 Enrichment
+  - type: worker
+    name: ab-maps-worker-b-1881
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py worker_b_1881"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: ab_maps.settings_production
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: ab-maps-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: ab-maps-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: ab-maps-postgres
+          property: password
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: ab-maps-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: ab-maps-postgres
+          property: port
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ab-maps-redis
+          property: connectionString
+
+  # Worker C: Data247 Carrier Lookup
+  - type: worker
+    name: ab-maps-worker-c-data247
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py worker_c_data247"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: ab_maps.settings_production
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: ab-maps-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: ab-maps-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: ab-maps-postgres
+          property: password
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: ab-maps-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: ab-maps-postgres
+          property: port
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ab-maps-redis
+          property: connectionString
+
+  # Worker D: Database Writer
+  - type: worker
+    name: ab-maps-worker-d-writer
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py worker_d_writer"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: ab_maps.settings_production
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: ab-maps-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: ab-maps-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: ab-maps-postgres
+          property: password
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: ab-maps-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: ab-maps-postgres
+          property: port
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ab-maps-redis
+          property: connectionString
+
+  # Cron Job: Weekly Analytics Report
+  - type: cron
+    name: ab-maps-weekly-analytics-report
+    env: python
+    plan: free
+    schedule: "0 9 * * 1"  # Every Monday at 9 AM UTC
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py send_weekly_analytics_report"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: ab_maps.settings_production
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: ab-maps-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: ab-maps-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: ab-maps-postgres
+          property: password
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: ab-maps-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: ab-maps-postgres
+          property: port
+      - key: ANALYTICS_REPORT_EMAIL
+        value: atavelgiro@absystem.no
+
+  # Cron Job: Reaper Work Sessions (close open WorkSession rows with stale heartbeats)
+  - type: cron
+    name: ab-maps-reaper-work-sessions
+    env: python
+    plan: starter
+    schedule: "*/5 * * * *"   # every 5 minutes
+    buildCommand: "pip install -r requirements_production.txt"
+    startCommand: "python manage.py close_stale_work_sessions --timeout 10"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: ab_maps.settings_production
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: ab-maps-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: ab-maps-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: ab-maps-postgres
+          property: password
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: ab-maps-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: ab-maps-postgres
+          property: port
+
+  # Cron Job: Stale online status (Employee/Manager is_online after WebSocket disconnects)
+  - type: cron
+    name: ab-maps-cleanup-stale-online-status
+    env: python
+    plan: starter
+    schedule: "*/5 * * * *"   # every 5 minutes
+    buildCommand: "pip install -r requirements_production.txt"
+    startCommand: "python manage.py cleanup_stale_online_status --timeout 10"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: ab_maps.settings_production
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: ab-maps-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: ab-maps-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: ab-maps-postgres
+          property: password
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: ab-maps-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: ab-maps-postgres
+          property: port

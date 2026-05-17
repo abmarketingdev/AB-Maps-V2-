@@ -1,0 +1,50 @@
+.forbidden-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 13000;
+}
+
+.floating-forbidden-popup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 13001;
+  min-width: 320px;
+  max-width: 90vw;
+  background: #1f2430;
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.ffp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #ff9f43 0%, #ff6b6b 100%);
+  font-weight: 700;
+}
+
+.ffp-close {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 18px;
+  pointer-events: auto;
+}
+
+.ffp-body {
+  padding: 18px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
