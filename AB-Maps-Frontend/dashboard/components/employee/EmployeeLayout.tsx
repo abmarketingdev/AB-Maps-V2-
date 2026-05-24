@@ -9,8 +9,10 @@
  */
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Home,
   LogOut,
@@ -32,7 +34,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { authService } from "@/lib/auth/authService";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import CampaignSelector from "@/components/CampaignSelector";
+import { CampaignPicker } from "@/components/dashboard/v2/CampaignPicker";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -51,20 +53,20 @@ interface EmployeeLayoutProps {
   campaigns?: any[];
 }
 
-const NAV_ITEM_CLASS = (active: boolean, expanded: boolean) =>
-  cn(
-    "group/nav w-full h-10 rounded-lg px-3 gap-3 inline-flex items-center overflow-hidden",
-    "text-[14px] tracking-[-0.005em] font-medium",
-    "transition-all duration-150 ease-out",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ab-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-ab-canvas",
-    active
-      ? "text-ab-fg bg-gradient-to-r from-ab-accent/10 via-ab-accent/[0.06] to-transparent"
-      : "text-ab-fg-2 hover:bg-ab-subtle/70 hover:text-ab-fg",
-    !expanded && "justify-center px-0",
-  );
+// One unified nav row used everywhere (rail, expanded, mobile). Active state
+// gets a sliding accent bar (Framer layoutId) + soft gradient wash; collapsed
+// rows reveal their label as a right-side tooltip.
+interface EmpNavItem { title: string; icon: React.ReactNode; href?: string; onClick?: () => void }
 
-const NAV_ITEMS = [
-  { href: "/employee", title: "Dashbord", icon: <Home className="h-4 w-4" /> },
+const NAV_ITEM_BASE = cn(
+  "group/nav relative w-full h-10 rounded-xl px-3 gap-3 inline-flex items-center overflow-hidden text-left",
+  "text-[14px] tracking-[-0.005em] font-medium",
+  "transition-all duration-150 ease-out",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0b1222]",
+);
+
+const WORK_ITEMS: EmpNavItem[] = [
+  { href: "/employee/dashbord", title: "Dashbord", icon: <Home className="h-4 w-4" /> },
   { href: "/employee/stats", title: "Min statistikk", icon: <BarChart2 className="h-4 w-4" /> },
 ];
 
@@ -77,15 +79,11 @@ export function EmployeeLayout({
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // pinned-open; default = slim rail
+  const [sidebarHovered, setSidebarHovered] = useState(false);
+  const expanded = sidebarOpen || sidebarHovered; // hover floats over content
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const changeCampaign = () => {
-    if (onCampaignSelect) {
-      // delegated to parent
-    }
-  };
 
   const handleLogout = async () => {
     setLoading(true);
@@ -132,114 +130,142 @@ export function EmployeeLayout({
     .toUpperCase()
     .slice(0, 2);
 
+  // Nav groups. AB Maps + AB Academy keep their original behavior (handler/href);
+  // only their presentation is unified with the rest of the rail.
+  const NAV_GROUPS: { group: string; items: EmpNavItem[] }[] = [
+    { group: "ARBEIDSFLATE", items: WORK_ITEMS },
+    { group: "TERRITORIUM", items: [{ title: "AB Maps", icon: <MapPinned className="h-4 w-4" />, onClick: handleABMapsClick }] },
+    { group: "LÆRING", items: [{ href: "/learning-platform", title: "AB Academy", icon: <GraduationCap className="h-4 w-4" /> }] },
+  ];
+
+  const renderNav = (item: EmpNavItem, isExpanded: boolean, mobile = false) => {
+    const active = !!item.href && pathname === item.href;
+    const collapsed = !isExpanded && !mobile;
+    const cls = cn(
+      NAV_ITEM_BASE,
+      active
+        ? "text-white bg-gradient-to-r from-blue-500/[0.16] via-blue-500/[0.07] to-transparent border border-blue-400/20"
+        : "text-white/55 hover:bg-white/[0.05] hover:text-white border border-transparent",
+      collapsed && "justify-center px-0",
+    );
+    const inner = (
+      <>
+        {active && (
+          <motion.span
+            layoutId="emp-nav-active-bar"
+            transition={{ type: "spring", stiffness: 500, damping: 34 }}
+            aria-hidden
+            className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-blue-400"
+            style={{ boxShadow: "0 0 10px rgba(96,165,250,0.7)" }}
+          />
+        )}
+        <span className={cn("flex-shrink-0 relative z-10 transition-transform duration-150 ease-out group-hover/nav:scale-[1.08]", active ? "text-blue-300" : "text-white/55 group-hover/nav:text-white")}>
+          {item.icon}
+        </span>
+        {!collapsed && <span className="truncate relative z-10">{item.title}</span>}
+      </>
+    );
+    const el = item.href
+      ? <Link href={item.href} className={cls} onClick={mobile ? () => setMobileMenuOpen(false) : undefined}>{inner}</Link>
+      : <button type="button" className={cls} onClick={() => { item.onClick?.(); if (mobile) setMobileMenuOpen(false); }}>{inner}</button>;
+
+    if (!collapsed) return el;
+    return (
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>{el}</TooltipTrigger>
+          <TooltipContent side="right" sideOffset={10} className="font-medium">{item.title}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
   return (
-    <div className="flex min-h-screen bg-ab-base text-ab-fg">
-      {/* Desktop Sidebar */}
+    <div className="flex min-h-screen bg-[#0a0f1e] text-white">
+      {/* Desktop Sidebar — slim rail that expands on hover (floats over content) */}
       <aside
+        onMouseEnter={() => setSidebarHovered(true)}
+        onMouseLeave={() => setSidebarHovered(false)}
         className={cn(
           "fixed inset-y-0 z-50 hidden md:flex h-full flex-col overflow-hidden",
-          "bg-ab-canvas border-r border-ab-line-1",
-          "transition-[width] duration-200 ease-out-cubic",
-          sidebarOpen ? "w-64" : "w-14",
+          "bg-[#0b1222]/95 backdrop-blur-xl border-r border-white/[0.07]",
+          "transition-[width,box-shadow] duration-200 ease-out-cubic",
+          expanded ? "w-64" : "w-16",
+          sidebarHovered && !sidebarOpen && "shadow-[16px_0_48px_-16px_rgba(0,0,0,0.7)]",
         )}
       >
+        {/* soft blue depth glow, top-left */}
         <span
           aria-hidden
-          className="pointer-events-none absolute top-0 left-0 h-60 w-60 bg-ab-accent/[0.06] dark:bg-ab-accent/[0.10] rounded-full blur-3xl opacity-60"
+          className="pointer-events-none absolute -top-10 -left-10 h-56 w-56 rounded-full bg-blue-600/10 blur-3xl"
         />
-        <div className="h-12 px-3 flex items-center justify-between border-b border-ab-line-1">
-          <Link href="/employee" className="flex items-center gap-2 min-w-0">
-            <div className="h-7 w-7 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center flex-shrink-0">
+        <div className={cn("h-16 flex items-center justify-between border-b border-white/[0.06]", expanded ? "px-3.5" : "px-0 justify-center")}>
+          <Link href="/employee/dashbord" className={cn("flex items-center gap-2.5 min-w-0", !expanded && "justify-center")}>
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500/25 to-blue-600/10 border border-blue-400/25 flex items-center justify-center flex-shrink-0 shadow-[0_0_16px_-4px_rgba(59,130,246,0.5)]">
               <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" priority />
             </div>
-            {sidebarOpen && (
+            {expanded && (
               <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-ab-fg leading-none">AB Marketing</div>
-                <div className="eyebrow mt-0.5">Ansatt</div>
+                <div className="text-[13.5px] font-semibold text-white leading-tight">AB Marketing</div>
+                <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/35 mt-0.5">Ansatt</div>
               </div>
             )}
           </Link>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="h-7 w-7 inline-flex items-center justify-center rounded-ab-sm text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-colors"
-            aria-label={sidebarOpen ? "Skjul meny" : "Vis meny"}
-          >
-            {sidebarOpen ? <ChevronsLeft className="h-3.5 w-3.5" /> : <ChevronsRight className="h-3.5 w-3.5" />}
-          </button>
+          {expanded && (
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="h-7 w-7 inline-flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/[0.07] transition-colors shrink-0"
+              aria-label={sidebarOpen ? "Lås opp meny" : "Lås meny åpen"}
+              title={sidebarOpen ? "Lås opp meny" : "Lås meny åpen"}
+            >
+              {sidebarOpen ? <ChevronsLeft className="h-3.5 w-3.5" /> : <ChevronsRight className="h-3.5 w-3.5" />}
+            </button>
+          )}
         </div>
 
-        {sidebarOpen ? (
+        {expanded ? (
           <div className="px-2 pt-3">
-            <CampaignSelector
-              onCampaignSelect={changeCampaign}
-              selectedCampaign={selectedCampaign}
-              useCurrentCampaign={true}
-              className="w-full"
-            />
+            <CampaignPicker className="w-full" />
           </div>
         ) : (
           <div className="pt-3" />
         )}
 
         <nav className="relative z-10 flex-1 overflow-y-auto px-2 pt-4 pb-3 space-y-5 scrollbar-thin">
-          <div>
-            {sidebarOpen && <div className="eyebrow px-3 pb-2">ARBEIDSFLATE</div>}
-            <div className="space-y-1.5">
-              {NAV_ITEMS.map((item) => {
-                const active = pathname === item.href;
-                return (
-                  <Link key={item.href} href={item.href} className={NAV_ITEM_CLASS(active, sidebarOpen)}>
-                    <span className="flex-shrink-0">{item.icon}</span>
-                    {sidebarOpen && <span className="truncate">{item.title}</span>}
-                  </Link>
-                );
-              })}
+          {NAV_GROUPS.map(({ group, items }, gi) => (
+            <div key={group}>
+              {expanded
+                ? <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">{group}</div>
+                : gi > 0 && <div className="mx-3 mb-2 h-px bg-white/[0.07]" />}
+              <div className="space-y-1">
+                {items.map((item, idx) => (
+                  <div key={`${item.href ?? item.title}-${idx}`}>{renderNav(item, expanded)}</div>
+                ))}
+              </div>
             </div>
-          </div>
-
-          <div>
-            {sidebarOpen && <div className="eyebrow px-3 pb-2">TERRITORIUM</div>}
-            <div className="space-y-1.5">
-              <button onClick={handleABMapsClick} className={NAV_ITEM_CLASS(false, sidebarOpen)}>
-                <MapPinned className="h-4 w-4 flex-shrink-0" />
-                {sidebarOpen && <span className="truncate">AB Maps</span>}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            {sidebarOpen && <div className="eyebrow px-3 pb-2">LÆRING</div>}
-            <div className="space-y-1.5">
-              <Link
-                href="/learning-platform"
-                className={NAV_ITEM_CLASS(pathname === "/learning-platform", sidebarOpen)}
-              >
-                <GraduationCap className="h-4 w-4 flex-shrink-0" />
-                {sidebarOpen && <span className="truncate">AB Academy</span>}
-              </Link>
-            </div>
-          </div>
+          ))}
         </nav>
 
-        <div className="border-t border-ab-line-1 p-2">
+        <div className="border-t border-white/[0.06] p-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  "w-full flex items-center gap-2 p-1.5 rounded-ab-md",
-                  "hover:bg-ab-hover transition-colors text-left",
+                  "w-full flex items-center gap-2.5 p-1.5 rounded-xl",
+                  "hover:bg-white/[0.05] transition-colors text-left",
+                  !expanded && "justify-center",
                 )}
               >
-                <Avatar className="h-7 w-7 ring-1 ring-ab-line">
+                <Avatar className="h-8 w-8 ring-1 ring-white/10">
                   <AvatarImage src="/placeholder.svg" alt={userName} />
-                  <AvatarFallback className="bg-ab-active text-ab-fg-2 text-[10px] font-semibold">
+                  <AvatarFallback className="bg-blue-500/20 text-blue-200 text-[10px] font-semibold">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
-                {sidebarOpen && (
+                {expanded && (
                   <div className="min-w-0 flex-1">
-                    <div className="text-[12px] font-medium text-ab-fg leading-tight truncate">{userName}</div>
-                    <div className="text-[10px] text-ab-fg-3 truncate capitalize">{user?.user_type || "Ansatt"}</div>
+                    <div className="text-[12px] font-medium text-white leading-tight truncate">{userName}</div>
+                    <div className="text-[10px] text-white/40 truncate capitalize">{user?.user_type || "Ansatt"}</div>
                   </div>
                 )}
               </button>
@@ -282,108 +308,64 @@ export function EmployeeLayout({
           <Button
             variant="outline"
             size="icon"
-            className="fixed left-4 top-4 z-50 md:hidden bg-ab-canvas border-ab-line shadow-md hover:bg-ab-hover"
+            className="fixed left-4 top-4 z-50 md:hidden bg-[#0b1222] border-white/10 text-white shadow-md hover:bg-white/[0.06]"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Vis meny</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0 bg-ab-canvas border-r border-ab-line-1 flex flex-col">
+        <SheetContent side="left" className="w-64 p-0 bg-[#0b1222] border-r border-white/[0.07] text-white flex flex-col">
           <SheetTitle className="sr-only">Navigasjon</SheetTitle>
-          <div className="h-12 px-3 flex items-center border-b border-ab-line-1">
+          <div className="h-16 px-3.5 flex items-center border-b border-white/[0.06]">
             <Link
-              href="/employee"
-              className="flex items-center gap-2 min-w-0"
+              href="/employee/dashbord"
+              className="flex items-center gap-2.5 min-w-0"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <div className="h-7 w-7 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center flex-shrink-0">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500/25 to-blue-600/10 border border-blue-400/25 flex items-center justify-center flex-shrink-0 shadow-[0_0_16px_-4px_rgba(59,130,246,0.5)]">
                 <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" />
               </div>
               <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-ab-fg leading-none">AB Marketing</div>
-                <div className="eyebrow mt-0.5">Ansatt</div>
+                <div className="text-[13.5px] font-semibold text-white leading-tight">AB Marketing</div>
+                <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/35 mt-0.5">Ansatt</div>
               </div>
             </Link>
           </div>
 
           <div className="px-2 pt-3">
-            <CampaignSelector
-              onCampaignSelect={changeCampaign}
-              selectedCampaign={selectedCampaign}
-              useCurrentCampaign={true}
-              className="w-full"
-            />
+            <CampaignPicker className="w-full" />
           </div>
 
           <nav className="flex-1 overflow-y-auto px-2 pt-4 pb-3 space-y-5">
-            <div>
-              <div className="eyebrow px-3 pb-2">ARBEIDSFLATE</div>
-              <div className="space-y-1.5">
-                {NAV_ITEMS.map((item) => {
-                  const active = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={NAV_ITEM_CLASS(active, true)}
-                    >
-                      <span className="flex-shrink-0">{item.icon}</span>
-                      <span className="truncate">{item.title}</span>
-                    </Link>
-                  );
-                })}
+            {NAV_GROUPS.map(({ group, items }) => (
+              <div key={group}>
+                <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">{group}</div>
+                <div className="space-y-1.5">
+                  {items.map((item, idx) => (
+                    <div key={`${item.href ?? item.title}-${idx}`}>{renderNav(item, true, true)}</div>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div>
-              <div className="eyebrow px-3 pb-2">TERRITORIUM</div>
-              <div className="space-y-1.5">
-                <button
-                  onClick={() => {
-                    handleABMapsClick();
-                    setMobileMenuOpen(false);
-                  }}
-                  className={NAV_ITEM_CLASS(false, true)}
-                >
-                  <MapPinned className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">AB Maps</span>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="eyebrow px-3 pb-2">LÆRING</div>
-              <div className="space-y-1.5">
-                <Link
-                  href="/learning-platform"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={NAV_ITEM_CLASS(pathname === "/learning-platform", true)}
-                >
-                  <GraduationCap className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">AB Academy</span>
-                </Link>
-              </div>
-            </div>
+            ))}
           </nav>
 
-          <div className="border-t border-ab-line-1 p-2">
-            <div className="flex items-center gap-2 p-1.5 mb-1">
-              <Avatar className="h-7 w-7 ring-1 ring-ab-line">
+          <div className="border-t border-white/[0.06] p-2">
+            <div className="flex items-center gap-2.5 p-1.5 mb-1">
+              <Avatar className="h-8 w-8 ring-1 ring-white/10">
                 <AvatarImage src="/placeholder.svg" alt={userName} />
-                <AvatarFallback className="bg-ab-active text-ab-fg-2 text-[10px] font-semibold">
+                <AvatarFallback className="bg-blue-500/20 text-blue-200 text-[10px] font-semibold">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="text-[12px] font-medium text-ab-fg leading-tight truncate">{userName}</div>
-                <div className="text-[10px] text-ab-fg-3 truncate capitalize">{user?.user_type || "Ansatt"}</div>
+                <div className="text-[12px] font-medium text-white leading-tight truncate">{userName}</div>
+                <div className="text-[10px] text-white/40 truncate capitalize">{user?.user_type || "Ansatt"}</div>
               </div>
             </div>
             <button
               onClick={handleLogout}
               disabled={loading}
-              className="w-full inline-flex items-center gap-2 px-3 py-2 rounded-ab-md text-[13px] font-medium text-ab-danger hover:bg-ab-danger-bg/40 transition-colors disabled:opacity-50"
+              className="w-full inline-flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-medium text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-50"
             >
               <LogOut className="h-4 w-4" />
               <span>Logg ut</span>
@@ -395,24 +377,24 @@ export function EmployeeLayout({
       {/* Main Content Area */}
       <div
         className={cn(
-          "flex-1 flex flex-col min-h-screen transition-[margin] duration-200",
-          sidebarOpen ? "md:ml-64" : "md:ml-14",
+          "flex-1 flex flex-col min-h-screen transition-[margin] duration-200 ease-out-cubic",
+          sidebarOpen ? "md:ml-64" : "md:ml-16",
         )}
       >
         {/* Top Bar */}
-        <header className="sticky top-0 z-40 w-full border-b border-ab-line-1 bg-ab-canvas/95 backdrop-blur supports-[backdrop-filter]:bg-ab-canvas/60">
+        <header className="sticky top-0 z-40 w-full border-b border-white/[0.06] bg-[#0a0f1e]/80 backdrop-blur-xl">
           <div className="flex h-14 items-center justify-between px-4 md:px-6 lg:px-8">
             <div className="flex items-center gap-4">
               <div className="hidden md:block" />
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden md:flex items-center gap-2">
-                <Input type="search" placeholder="Søk..." className="w-64 h-9 bg-ab-elevated border-ab-line" />
+                <Input type="search" placeholder="Søk..." className="w-64 h-9 bg-white/[0.04] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/40" />
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden md:flex h-9 w-9 text-ab-fg-3 hover:text-ab-fg"
+                className="hidden md:flex h-9 w-9 text-white/45 hover:text-white hover:bg-white/[0.06]"
               >
                 <MessageSquare className="h-4 w-4" />
               </Button>
@@ -420,17 +402,17 @@ export function EmployeeLayout({
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden md:flex relative h-9 w-9 text-ab-fg-3 hover:text-ab-fg"
+                className="hidden md:flex relative h-9 w-9 text-white/45 hover:text-white hover:bg-white/[0.06]"
               >
                 <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 bg-ab-danger rounded-full" />
+                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 bg-rose-500 rounded-full" />
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative rounded-full h-9 w-9">
-                    <Avatar className="h-7 w-7 ring-1 ring-ab-line">
+                  <Button variant="ghost" size="icon" className="relative rounded-full h-9 w-9 hover:bg-white/[0.06]">
+                    <Avatar className="h-7 w-7 ring-1 ring-white/10">
                       <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
-                      <AvatarFallback className="bg-ab-active text-ab-fg-2 text-[10px] font-semibold">
+                      <AvatarFallback className="bg-blue-500/20 text-blue-200 text-[10px] font-semibold">
                         {userInitials}
                       </AvatarFallback>
                     </Avatar>
@@ -449,7 +431,7 @@ export function EmployeeLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 bg-ab-base">{children}</main>
+        <main className="flex-1 bg-[#0a0f1e]">{children}</main>
       </div>
     </div>
   );

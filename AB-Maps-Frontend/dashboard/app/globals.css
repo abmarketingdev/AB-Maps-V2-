@@ -460,6 +460,14 @@ table.ab-table tbody tr.selected { background: var(--ab-accent-3); }
   50% { transform: rotate(8deg); }
   100% { transform: rotate(0deg); }
 }
+@keyframes ab-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes ab-loading-glow {
+  0%, 100% { box-shadow: 0 0 12px rgba(0, 162, 199, 0.45); }
+  50% { box-shadow: 0 0 24px rgba(0, 162, 199, 0.85); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

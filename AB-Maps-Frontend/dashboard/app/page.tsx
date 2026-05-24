@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import ClientLayout from "./ClientLayout";
-import Dashboard from "../dashboard";
+import { BriefingView } from "@/components/dashboard/v2/BriefingView";
 import { ProtectedRoute } from "@/lib/auth/ProtectedRoute";
 import { useAuth } from "@/lib/auth/AuthContext";
 
@@ -11,21 +10,16 @@ export default function Page() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  // Redirect employees to their dashboard
+  // Employees go straight to their own dashboard; the Briefing is for managers/admins.
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
-      if (user.user_type === "employee") {
-        console.log("Employee detected on root page, redirecting to /employee");
-        router.push("/employee");
-      }
+    if (!isLoading && isAuthenticated && user && user.user_type === "employee") {
+      router.push("/employee");
     }
   }, [user, isAuthenticated, isLoading, router]);
 
   return (
     <ProtectedRoute requiredUserType="manager">
-      <ClientLayout>
-        <Dashboard />
-      </ClientLayout>
+      <BriefingView />
     </ProtectedRoute>
   );
 }

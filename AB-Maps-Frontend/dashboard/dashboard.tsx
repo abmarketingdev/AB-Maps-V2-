@@ -1,14 +1,7 @@
 "use client"
 
-/**
- * Dashboard Component - Manager Dashboard
- * 
- * New dashboard design implementation with placeholder API calls.
- * Backend developer should implement the API endpoints as documented in DashboardContent.tsx
- */
-
-import { DashboardContent } from '@/components/dashboard/DashboardContent';
+import { DashboardV2 } from '@/components/dashboard/v2/DashboardV2';
 
 export default function Dashboard() {
-  return <DashboardContent />;
+  return <DashboardV2 />;
 }

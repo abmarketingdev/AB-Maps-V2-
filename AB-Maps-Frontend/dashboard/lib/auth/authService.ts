@@ -1,7 +1,27 @@
+// Backend returns one of four values (see Module 1 guide §1.1). Treat
+// "superuser"/"admin" as admin, and anything that isn't "employee" as
+// manager-level for dashboard access.
+export type UserType = 'employee' | 'manager' | 'superuser' | 'admin';
+
+export const isAdmin = (ut?: UserType | string): boolean =>
+  ut === 'superuser' || ut === 'admin';
+export const isManagerLevel = (ut?: UserType | string): boolean =>
+  ut !== undefined && ut !== 'employee';
+
+export interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+  manager_id?: string | null;
+  ab_person_id?: string | null;
+  employee_type?: string;
+  admin_type?: string;
+}
+
 export interface LoginRequest {
   username: string;
   password: string;
-  user_type?: 'manager' | 'employee';
+  user_type?: UserType;
 }
 
 export interface LoginResponse {
@@ -10,13 +30,8 @@ export interface LoginResponse {
   user_id: string;
   username: string;
   email: string;
-  user_type: 'manager' | 'employee';
-  user_info: {
-    id: string;
-    name: string;
-    email: string;
-    manager_id?: string;
-  };
+  user_type: UserType;
+  user_info: UserInfo;
   expires_in: number;
   is_sales_chief?: boolean;
 }
@@ -32,13 +47,8 @@ export interface VerificationResponse {
   user_id: string;
   username: string;
   email: string;
-  user_type: 'manager' | 'employee';
-  user_info: {
-    id: string;
-    name: string;
-    email: string;
-    manager_id?: string;
-  };
+  user_type: UserType;
+  user_info: UserInfo;
   timestamp: string;
   is_sales_chief?: boolean;
 }
@@ -283,8 +293,7 @@ class AuthService {
    * Get access token for API requests
    */
   getAccessToken(): string | null {
-    const tokens = this.getStoredTokens();
-    return tokens?.access || null;
+    return this.getStoredTokens()?.access ?? null;
   }
 
   /**
@@ -301,8 +310,7 @@ class AuthService {
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {
-    const tokens = this.getStoredTokens();
-    return !!(tokens?.access && tokens?.refresh);
+    return !!this.getStoredTokens()?.access;
   }
 
   /**

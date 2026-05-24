@@ -112,104 +112,64 @@ export interface FetchAvailableParams {
   signal?: AbortSignal;
 }
 
+// ─── LIVE (Module 4 / §6) ───────────────────────────────────────────────
+
+async function jsonOrThrow<T>(res: Response, errMsg: string): Promise<T> {
+  if (!res.ok) throw await parseError(res, errMsg);
+  return res.json() as Promise<T>;
+}
+
 export async function fetchAvailablePeople(
   params: FetchAvailableParams = {}
 ): Promise<AvailablePeopleResponse> {
   const qs = new URLSearchParams();
-  if (params.search) qs.set('search', params.search);
   if (params.role) qs.set('role', params.role);
+  if (params.search) qs.set('search', params.search);
   if (params.page) qs.set('page', String(params.page));
   if (params.pageSize) qs.set('page_size', String(params.pageSize));
-
-  const base = buildApiUrl(API_CONFIG.SALES_CHIEF.AVAILABLE_PEOPLE);
-  const url = qs.toString() ? `${base}?${qs.toString()}` : base;
-
-  const res = await fetchWithAuth(url, { signal: params.signal });
-  if (!res.ok) {
-    throw await parseError(res, 'Kunne ikke hente tilgjengelige brukere.');
-  }
-  return res.json();
+  const url = buildApiUrl(API_CONFIG.SALES_CHIEF.AVAILABLE_PEOPLE) + (qs.toString() ? `?${qs}` : '');
+  return jsonOrThrow<AvailablePeopleResponse>(await fetchWithAuth(url, { signal: params.signal }), 'Kunne ikke hente tilgjengelige personer');
 }
 
 export async function fetchMyTeam(signal?: AbortSignal): Promise<TeamResponse> {
   const url = buildApiUrl(API_CONFIG.SALES_CHIEF.TEAM);
-  const res = await fetchWithAuth(url, { signal });
-  if (!res.ok) {
-    throw await parseError(res, 'Kunne ikke hente teamet.');
-  }
-  return res.json();
+  return jsonOrThrow<TeamResponse>(await fetchWithAuth(url, { signal }), 'Kunne ikke hente teamet');
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Writes                                                                    */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Add a single member. `role` is optional — when omitted the backend
- * infers it from the user's manager/employee profile.
- */
 export async function addTeamMember(userId: string, role?: Role): Promise<TeamMember> {
   const url = buildApiUrl(API_CONFIG.SALES_CHIEF.ADD);
-  const body: { user_id: string; role?: Role } = { user_id: userId };
-  if (role) body.role = role;
-
-  const res = await fetchWithAuth(url, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    throw await parseError(res, 'Kunne ikke legge til medlem.');
-  }
-  return res.json();
+  return jsonOrThrow<TeamMember>(
+    await fetchWithAuth(url, { method: 'POST', body: JSON.stringify({ user_id: userId, ...(role ? { role } : {}) }) }),
+    'Kunne ikke legge til medlem',
+  );
 }
 
-/**
- * Add many members in one call. `role` is optional per member and will be
- * inferred when omitted. Users that cannot be classified (and did not ship
- * an explicit `role`) come back in `no_role` and are not added.
- */
 export async function bulkAddTeamMembers(
   members: Array<{ user_id: string; role?: Role }>
 ): Promise<BulkAddResult> {
   const url = buildApiUrl(API_CONFIG.SALES_CHIEF.BULK_ADD);
-  const res = await fetchWithAuth(url, {
-    method: 'POST',
-    body: JSON.stringify({ members }),
-  });
-  if (!res.ok) {
-    throw await parseError(res, 'Kunne ikke legge til medlemmer.');
-  }
-  const data = (await res.json()) as Partial<BulkAddResult>;
-  return {
-    added: Array.isArray(data.added) ? data.added : [],
-    already_exists: Array.isArray(data.already_exists) ? data.already_exists : [],
-    not_found: Array.isArray(data.not_found) ? data.not_found : [],
-    no_role: Array.isArray(data.no_role) ? data.no_role : [],
-  };
+  return jsonOrThrow<BulkAddResult>(
+    await fetchWithAuth(url, { method: 'POST', body: JSON.stringify({ members }) }),
+    'Kunne ikke legge til medlemmer',
+  );
 }
 
 export async function removeTeamMember(userId: string): Promise<RemoveResult> {
   const url = buildApiUrl(API_CONFIG.SALES_CHIEF.REMOVE, { user_id: userId });
-  const res = await fetchWithAuth(url, { method: 'DELETE' });
-  if (!res.ok) {
-    throw await parseError(res, 'Kunne ikke fjerne medlem.');
-  }
-  return res.json();
+  return jsonOrThrow<RemoveResult>(
+    await fetchWithAuth(url, { method: 'DELETE' }),
+    'Kunne ikke fjerne medlem',
+  );
 }
 
 export async function bulkRemoveTeamMembers(userIds: string[]): Promise<BulkRemoveResult> {
   const url = buildApiUrl(API_CONFIG.SALES_CHIEF.BULK_REMOVE);
-  const res = await fetchWithAuth(url, {
-    method: 'POST',
-    body: JSON.stringify({ user_ids: userIds }),
-  });
-  if (!res.ok) {
-    throw await parseError(res, 'Kunne ikke fjerne medlemmer.');
-  }
-  const data = (await res.json()) as Partial<BulkRemoveResult>;
-  return {
-    removed: typeof data.removed === 'number' ? data.removed : 0,
-    removed_members: Array.isArray(data.removed_members) ? data.removed_members : [],
-    not_found: Array.isArray(data.not_found) ? data.not_found : [],
-  };
+  return jsonOrThrow<BulkRemoveResult>(
+    await fetchWithAuth(url, { method: 'POST', body: JSON.stringify({ user_ids: userIds }) }),
+    'Kunne ikke fjerne medlemmer',
+  );
 }

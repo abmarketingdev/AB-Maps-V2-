@@ -1,0 +1,610 @@
+"use client"
+
+/**
+ * Team (Campaign Teams) — campaign-scoped teams with role-based CRUD, member
+ * management, per-team analytics + a campaign leaderboard. Live via /api/teams/.
+ * Managers see only teams they created; sales chiefs/admins see all. Employees
+ * never reach this (nav-hidden + backend 403). Glassmorphism dark, animated.
+ */
+
+import React, { useState, useMemo, useEffect, useCallback } from "react"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import {
+  Users, Plus, Search, X, Trash2, Pencil, UserPlus, Trophy, ChevronDown,
+  Loader2, Crown, Check, Activity as ActivityIcon, Clock,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { fetchCampaignsWithStats } from "@/lib/api/campaigns"
+import { useSelectedCampaign } from "@/lib/hooks/useSelectedCampaign"
+import { useAuth } from "@/lib/auth/AuthContext"
+import { useToast } from "@/hooks/use-toast"
+import {
+  listTeams, createTeam, getTeam, updateTeam, deleteTeam,
+  addTeamMember, removeTeamMember, fetchAssignableMembers,
+  fetchTeamAnalytics, fetchTeamLeaderboard, TeamMemberError,
+  type TeamListItem, type TeamDetail, type TeamMember, type AssignableMember,
+  type TeamAnalytics, type LeaderboardMetric, type LeaderboardEntry, type PersonType,
+} from "@/lib/api/teams"
+import { PanelLoading, PanelEmpty, PanelError } from "./_states"
+
+const COLORS = ["#10b981", "#ec4899", "#f59e0b", "#06b6d4", "#3b82f6", "#8b5cf6", "#f43f5e", "#14b8a6"]
+const ICONS = ["🚀", "⭐", "🔥", "💪", "🎯", "⚡", "🏆", "🦁", "🐺", "🦅", "💎", "🛡️"]
+const nbFmt = new Intl.NumberFormat("nb-NO")
+
+interface CampaignVM { id: string; name: string; color: string }
+
+const METRICS: { key: LeaderboardMetric; label: string }[] = [
+  { key: "ja_rate", label: "Ja-rate" },
+  { key: "doors", label: "Dører" },
+  { key: "contact_rate", label: "Kontakt-rate" },
+  { key: "work_time", label: "Arbeidstid" },
+  { key: "consistency", label: "Konsistens" },
+]
+function fmtMetric(metric: LeaderboardMetric, v: number): string {
+  if (metric === "doors") return nbFmt.format(Math.round(v))
+  if (metric === "work_time") { const h = Math.floor(v / 60), m = Math.round(v % 60); return h > 0 ? `${h}t ${m}m` : `${m}m` }
+  return `${v.toFixed(1)}%`
+}
+
+export function TeamsView() {
+  const reduced = useReducedMotion()
+  const { toast } = useToast()
+  const { user, isAdmin, isSalesChief } = useAuth()
+  const { campaignId: globalCampaignId } = useSelectedCampaign()
+  const seesAll = isAdmin || isSalesChief
+  const myId = user?.user_info?.id || user?.user_id || ""
+
+  const [campaigns, setCampaigns] = useState<CampaignVM[]>([])
+  const [campaignFilter, setCampaignFilter] = useState<string>("")
+  const [campOpen, setCampOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const [mineOnly, setMineOnly] = useState(false)
+
+  const [teams, setTeams] = useState<TeamListItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [errored, setErrored] = useState(false)
+
+  const [detail, setDetail] = useState<TeamDetail | null>(null)
+  const [modal, setModal] = useState<null | { kind: "create" } | { kind: "edit"; t: TeamListItem | TeamDetail }>(null)
+  const [confirmDel, setConfirmDel] = useState<TeamListItem | null>(null)
+
+  useEffect(() => {
+    fetchCampaignsWithStats().then(l => setCampaigns(l.map(c => ({ id: c.id, name: c.name, color: c.color })))).catch(() => {})
+  }, [])
+  useEffect(() => { if (globalCampaignId) setCampaignFilter(globalCampaignId) }, [globalCampaignId])
+
+  const load = useCallback(() => {
+    setLoading(true); setErrored(false)
+    return listTeams({
+      campaignId: campaignFilter || undefined,
+      createdBy: mineOnly && seesAll ? myId : undefined,
+      search: search || undefined,
+      pageSize: 200,
+    })
+      .then(res => setTeams(res.results))
+      .catch(() => setErrored(true))
+      .finally(() => setLoading(false))
+  }, [campaignFilter, mineOnly, seesAll, myId, search])
+  useEffect(() => { const t = setTimeout(() => { void load() }, 250); return () => clearTimeout(t) }, [load])
+
+  const openDetail = async (id: string) => {
+    try { setDetail(await getTeam(id)) }
+    catch { toast({ title: "Kunne ikke åpne team", variant: "destructive" }) }
+  }
+
+  const campaignName = (id: string | undefined) => campaigns.find(c => c.id === id)?.name ?? "Kampanje"
+
+  return (
+    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-purple-600/8 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-blue-600/8 blur-3xl" />
+      </div>
+
+      <div className="relative px-6 py-6 max-w-[1600px] mx-auto space-y-5">
+        {/* Header */}
+        <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Lag · Kampanje-team</p>
+            <h1 className="text-3xl font-bold text-white">Team</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk team…" className="h-10 w-48 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+            </div>
+            {/* Campaign filter */}
+            <div className="relative">
+              <button onClick={() => setCampOpen(o => !o)} className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white/70 hover:text-white transition-all">
+                {campaignFilter ? campaignName(campaignFilter) : "Alle kampanjer"} <ChevronDown className="h-3.5 w-3.5 text-white/40" />
+              </button>
+              <AnimatePresence>
+                {campOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setCampOpen(false)} />
+                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="absolute right-0 top-full mt-2 z-20 w-56 max-h-72 overflow-y-auto rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl py-1">
+                      <button onClick={() => { setCampaignFilter(""); setCampOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left"><span className="flex-1 text-white/85">Alle kampanjer</span>{!campaignFilter && <Check className="h-3.5 w-3.5 text-blue-400" />}</button>
+                      {campaigns.map(c => (
+                        <button key={c.id} onClick={() => { setCampaignFilter(c.id); setCampOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left">
+                          <span className="h-2 w-2 rounded-full" style={{ background: c.color }} /><span className="flex-1 text-white/85 truncate">{c.name}</span>{campaignFilter === c.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+            {seesAll && (
+              <button onClick={() => setMineOnly(m => !m)} className={cn("cursor-pointer rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all", mineOnly ? "border-blue-500/40 bg-blue-600/15 text-blue-200" : "border-white/10 bg-white/5 text-white/60 hover:text-white")}>
+                Mine team
+              </button>
+            )}
+            <button onClick={() => setModal({ kind: "create" })} className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.35)] hover:bg-blue-500 transition-all">
+              <Plus className="h-4 w-4" /> Nytt team
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Leaderboard (requires a selected campaign) */}
+        <LeaderboardPanel campaignId={campaignFilter} campaignName={campaignName(campaignFilter)} />
+
+        {/* Teams grid */}
+        {loading ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelLoading label="Laster team…" /></div>
+        ) : errored ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelError onRetry={() => void load()} /></div>
+        ) : teams.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelEmpty msg="Ingen team ennå" sub="Opprett et team for å komme i gang." /></div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teams.map((t, i) => (
+              <motion.button key={t.id} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 12) * 0.03 }}
+                onClick={() => openDetail(t.id)}
+                className="cursor-pointer text-left rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-white/20 hover:bg-white/[0.07] transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style={{ background: `${t.color}22`, border: `1px solid ${t.color}55` }}>{t.icon || "👥"}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-bold text-white truncate">{t.name}</p>
+                    <p className="text-xs text-white/40 truncate">{t.campaign?.name ?? "Ingen kampanje"}</p>
+                  </div>
+                </div>
+                {t.description && <p className="mt-3 text-sm text-white/55 line-clamp-2">{t.description}</p>}
+                <div className="mt-4 flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 text-white/50"><Users className="h-3.5 w-3.5" /> {t.member_count} medlem{t.member_count === 1 ? "" : "mer"}</span>
+                  {t.owner && <span className="flex items-center gap-1.5 text-white/35"><Crown className="h-3 w-3 text-amber-400/70" /> {t.owner.name}</span>}
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Detail sheet */}
+      <TeamDetailSheet
+        team={detail} campaigns={campaigns}
+        onClose={() => setDetail(null)}
+        onChanged={() => { void load() }}
+        onReload={async (id) => { try { setDetail(await getTeam(id)) } catch { /* ignore */ } }}
+        onEdit={(t) => { setDetail(null); setModal({ kind: "edit", t }) }}
+        onDelete={(t) => { setDetail(null); setConfirmDel(t) }}
+      />
+
+      {/* Create / edit modal */}
+      <TeamModal modal={modal} campaigns={campaigns} onClose={() => setModal(null)} onSaved={() => { setModal(null); void load() }} />
+
+      {/* Delete confirm */}
+      <AnimatePresence>
+        {confirmDel && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(5,8,16,0.65)", backdropFilter: "blur(3px)" }} onClick={() => setConfirmDel(null)}>
+            <motion.div initial={{ scale: 0.97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.97, opacity: 0 }} onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl border border-white/12 bg-[#0d1528] p-5 shadow-2xl">
+              <h2 className="text-lg font-bold text-white mb-1">Slett team?</h2>
+              <p className="text-sm text-white/55 mb-5">«{confirmDel.name}» slettes permanent. Medlemmene beholdes, men teamet forsvinner.</p>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setConfirmDel(null)} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
+                <button onClick={async () => { const t = confirmDel; setConfirmDel(null); try { await deleteTeam(t.id); toast({ title: "Team slettet" }); void load() } catch (e) { toast({ title: "Sletting feilet", description: e instanceof Error ? e.message : "", variant: "destructive" }) } }}
+                  className="cursor-pointer rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-500">Slett</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Leaderboard ──────────────────────────────────────────────────────────────
+function LeaderboardPanel({ campaignId, campaignName }: { campaignId: string; campaignName: string }) {
+  const [metric, setMetric] = useState<LeaderboardMetric>("ja_rate")
+  const [entries, setEntries] = useState<LeaderboardEntry[] | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!campaignId) { setEntries(null); return }
+    let cancelled = false
+    setLoading(true)
+    fetchTeamLeaderboard({ campaignId, metric })
+      .then(res => { if (!cancelled) setEntries(res.entries) })
+      .catch(() => { if (!cancelled) setEntries([]) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [campaignId, metric])
+
+  if (!campaignId) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex items-center gap-3 text-sm text-white/40">
+        <Trophy className="h-4 w-4 text-amber-400/60" /> Velg en kampanje for å se ledertavlen mellom team.
+      </div>
+    )
+  }
+  const max = Math.max(...(entries ?? []).map(e => e.value), 1)
+  const RANK_COLORS = ["#f59e0b", "#94a3b8", "#cd7f32"]
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-5 w-5 text-amber-400" />
+          <h3 className="text-base font-semibold text-white">Ledertavle · {campaignName}</h3>
+        </div>
+        <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+          {METRICS.map(m => (
+            <button key={m.key} onClick={() => setMetric(m.key)} className={cn("cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-all", metric === m.key ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{m.label}</button>
+          ))}
+        </div>
+      </div>
+      {loading ? <PanelLoading label="Laster ledertavle…" /> : !entries || entries.length === 0 ? (
+        <PanelEmpty msg="Ingen team i denne kampanjen" />
+      ) : (
+        <div className="space-y-3">
+          {entries.map(e => (
+            <div key={e.team_id} className="flex items-center gap-3">
+              <span className="w-5 text-center font-mono text-sm font-bold" style={{ color: RANK_COLORS[e.rank - 1] ?? "rgba(255,255,255,0.3)" }}>{e.rank}</span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base" style={{ background: `${e.color}22`, border: `1px solid ${e.color}55` }}>{e.icon || "👥"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-white/90 truncate">{e.name}</p>
+                  <span className="font-mono text-sm font-bold text-white">{fmtMetric(metric, e.value)}</span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full" style={{ width: `${(e.value / max) * 100}%`, background: e.color }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Detail sheet ─────────────────────────────────────────────────────────────
+function TeamDetailSheet({ team, campaigns, onClose, onChanged, onReload, onEdit, onDelete }: {
+  team: TeamDetail | null
+  campaigns: CampaignVM[]
+  onClose: () => void
+  onChanged: () => void
+  onReload: (id: string) => Promise<void>
+  onEdit: (t: TeamDetail) => void
+  onDelete: (t: TeamDetail) => void
+}) {
+  const { toast } = useToast()
+  const [analytics, setAnalytics] = useState<TeamAnalytics | null>(null)
+  const [anLoading, setAnLoading] = useState(false)
+  const [manageOpen, setManageOpen] = useState(false)
+  const [busy, setBusy] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!team) { setAnalytics(null); return }
+    let cancelled = false
+    setAnLoading(true)
+    fetchTeamAnalytics(team.id).then(a => { if (!cancelled) setAnalytics(a) }).catch(() => { if (!cancelled) setAnalytics(null) }).finally(() => { if (!cancelled) setAnLoading(false) })
+    return () => { cancelled = true }
+  }, [team])
+
+  const reloadAll = async (id: string) => {
+    await onReload(id)
+    onChanged()
+    fetchTeamAnalytics(id).then(setAnalytics).catch(() => {})
+  }
+
+  const remove = async (memberId: string, personType: "employee" | "manager") => {
+    if (!team) return
+    setBusy(memberId)
+    try { await removeTeamMember(team.id, { id: memberId, person_type: personType }); await reloadAll(team.id) }
+    catch (e) { toast({ title: "Kunne ikke fjerne", description: e instanceof TeamMemberError ? e.message : "", variant: "destructive" }) }
+    finally { setBusy(null) }
+  }
+
+  return (
+    <AnimatePresence>
+      {team && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
+          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 280 }}
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-[460px] bg-[#0d1528] border-l border-white/10 overflow-y-auto">
+            {/* Header */}
+            <div className="relative p-6 border-b border-white/8">
+              <button onClick={onClose} className="cursor-pointer absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl" style={{ background: `${team.color}22`, border: `1px solid ${team.color}55` }}>{team.icon || "👥"}</div>
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold text-white truncate">{team.name}</h2>
+                  <p className="text-xs text-white/45">{team.campaign?.name ?? "Ingen kampanje"} · {team.member_count} medlemmer</p>
+                </div>
+              </div>
+              {team.description && <p className="mt-3 text-sm text-white/55">{team.description}</p>}
+              {team.owner && <p className="mt-2 flex items-center gap-1.5 text-xs text-white/35"><Crown className="h-3 w-3 text-amber-400/70" /> Opprettet av {team.owner.name}</p>}
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Analytics */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3 flex items-center gap-1.5"><ActivityIcon className="h-3.5 w-3.5" /> Analyse (30 dager)</p>
+                {anLoading ? <div className="py-6 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-white/40" /></div> : analytics ? (
+                  <>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { l: "Dører", v: nbFmt.format(analytics.total_doors), c: "#3b82f6" },
+                        { l: "Ja-rate", v: `${analytics.ja_rate.toFixed(1)}%`, c: "#10b981" },
+                        { l: "Kontakt", v: `${analytics.contact_rate.toFixed(0)}%`, c: "#8b5cf6" },
+                      ].map(k => (
+                        <div key={k.l} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
+                          <p className="font-mono text-lg font-bold" style={{ color: k.c }}>{k.v}</p>
+                          <p className="text-[11px] text-white/40">{k.l}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex items-center gap-3 text-[11px] text-white/40">
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {analytics.work.total_minutes ? `${Math.round(analytics.work.total_minutes)}m arbeid` : "Ingen arbeidstid"}</span>
+                      <span>·</span><span>{analytics.work.active_members} aktive</span>
+                    </div>
+                  </>
+                ) : <p className="text-sm text-white/30">Ingen analyse.</p>}
+              </div>
+
+              {/* Members */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/40">Medlemmer ({team.members.length})</p>
+                </div>
+                {team.members.length === 0 ? <p className="text-sm text-white/30">Ingen medlemmer ennå.</p> : (
+                  <div className="space-y-2">
+                    {team.members.map(m => (
+                      <div key={m.id} className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2">
+                        <span className={cn("h-2 w-2 rounded-full", m.online ? "bg-emerald-500" : "bg-white/20")} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-white/90 truncate">{m.name}</p>
+                          <p className="text-[11px] text-white/35 truncate">{m.email}</p>
+                        </div>
+                        {m.person_type === "manager" && <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-300">Leder</span>}
+                        {team.can_edit && (
+                          <button onClick={() => remove(m.id, m.person_type)} disabled={busy === m.id} className="cursor-pointer h-7 w-7 inline-flex items-center justify-center rounded-lg text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/10">
+                            {busy === m.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Manage members */}
+              {team.can_edit && (
+                <button onClick={() => setManageOpen(true)} className="cursor-pointer flex items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-600/15 px-3.5 py-2.5 text-sm font-semibold text-blue-200 hover:bg-blue-600/25 transition-all w-full justify-center">
+                  <UserPlus className="h-4 w-4" /> Legg til / administrer medlemmer
+                </button>
+              )}
+            </div>
+
+            {team.can_edit && (
+              <ManageMembersModal open={manageOpen} team={team} onClose={() => setManageOpen(false)} onChanged={() => reloadAll(team.id)} />
+            )}
+
+            {/* Actions */}
+            {team.can_edit && (
+              <div className="sticky bottom-0 flex gap-2 p-4 border-t border-white/8 bg-[#0d1528]">
+                <button onClick={() => onEdit(team)} className="cursor-pointer flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/80 hover:bg-white/10 transition-all"><Pencil className="h-4 w-4" /> Rediger</button>
+                <button onClick={() => onDelete(team)} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-sm font-semibold text-rose-400 hover:bg-rose-500/20 transition-all"><Trash2 className="h-4 w-4" /></button>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ─── Create / edit modal ──────────────────────────────────────────────────────
+function TeamModal({ modal, campaigns, onClose, onSaved }: {
+  modal: null | { kind: "create" } | { kind: "edit"; t: TeamListItem | TeamDetail }
+  campaigns: CampaignVM[]
+  onClose: () => void; onSaved: () => void
+}) {
+  const { toast } = useToast()
+  const editing = modal?.kind === "edit" ? modal.t : null
+  const [name, setName] = useState("")
+  const [desc, setDesc] = useState("")
+  const [color, setColor] = useState(COLORS[0])
+  const [icon, setIcon] = useState(ICONS[0])
+  const [campaign, setCampaign] = useState("")
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!modal) return
+    if (editing) { setName(editing.name); setDesc(editing.description || ""); setColor(editing.color || COLORS[0]); setIcon(editing.icon || ICONS[0]); setCampaign(editing.campaign?.id || "") }
+    else { setName(""); setDesc(""); setColor(COLORS[Math.floor(Math.random() * COLORS.length)]); setIcon(ICONS[Math.floor(Math.random() * ICONS.length)]); setCampaign("") }
+  }, [modal]) // eslint-disable-line
+
+  if (!modal) return null
+  const isCreate = modal.kind === "create"
+  const valid = name.trim() && (!isCreate || campaign)
+
+  const submit = async () => {
+    if (!valid || saving) return
+    setSaving(true)
+    try {
+      if (isCreate) await createTeam({ name: name.trim(), campaign_id: campaign, description: desc.trim(), color, icon })
+      else if (editing) await updateTeam(editing.id, { name: name.trim(), description: desc.trim(), color, icon })
+      toast({ title: isCreate ? "Team opprettet" : "Team oppdatert" })
+      onSaved()
+    } catch (e) {
+      toast({ title: "Lagring feilet", description: e instanceof Error ? e.message : "Ukjent feil", variant: "destructive" })
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <AnimatePresence>
+      {modal && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4" style={{ background: "rgba(5,8,16,0.65)", backdropFilter: "blur(3px)" }} onClick={onClose}>
+          <motion.div initial={{ opacity: 0, scale: 0.97, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 10 }} transition={{ duration: 0.16 }} onClick={e => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-white/12 bg-[#0d1528] shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+              <h2 className="text-lg font-bold text-white">{isCreate ? "Nytt team" : "Rediger team"}</h2>
+              <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div><label className="block text-xs font-medium text-white/45 mb-1.5">Navn</label><input value={name} onChange={e => setName(e.target.value)} autoFocus placeholder="Teamnavn" className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" /></div>
+              <div><label className="block text-xs font-medium text-white/45 mb-1.5">Beskrivelse</label><textarea value={desc} onChange={e => setDesc(e.target.value)} rows={2} placeholder="Kort beskrivelse…" className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 resize-none" /></div>
+              {isCreate && (
+                <div>
+                  <label className="block text-xs font-medium text-white/45 mb-1.5">Kampanje</label>
+                  <select value={campaign} onChange={e => setCampaign(e.target.value)} className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]">
+                    <option value="" className="bg-[#0d1528]">Velg kampanje…</option>
+                    {campaigns.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-white/45 mb-1.5">Farge</label>
+                  <div className="flex flex-wrap gap-1.5">{COLORS.map(c => <button key={c} onClick={() => setColor(c)} className={cn("cursor-pointer h-7 w-7 rounded-lg transition-transform hover:scale-110", color === c && "ring-2 ring-white/60 ring-offset-2 ring-offset-[#0d1528]")} style={{ background: c }} />)}</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-white/45 mb-1.5">Ikon</label>
+                  <div className="flex flex-wrap gap-1">{ICONS.map(ic => <button key={ic} onClick={() => setIcon(ic)} className={cn("cursor-pointer h-7 w-7 rounded-lg text-base flex items-center justify-center transition-transform hover:scale-110", icon === ic ? "bg-white/15 ring-1 ring-white/40" : "bg-white/5")}>{ic}</button>)}</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/8">
+              <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
+              <button onClick={submit} disabled={!valid || saving} className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed">
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />} {isCreate ? "Opprett" : "Lagre"}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ─── Manage members modal (searchable add/remove) ───────────────────────────
+function ManageMembersModal({ open, team, onClose, onChanged }: {
+  open: boolean; team: TeamDetail; onClose: () => void; onChanged: () => void
+}) {
+  const { toast } = useToast()
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [available, setAvailable] = useState<AssignableMember[] | null>(null)
+  const [search, setSearch] = useState("")
+  const [busy, setBusy] = useState<string | null>(null)
+
+  const refresh = useCallback(() => {
+    getTeam(team.id).then(t => setMembers(t.members)).catch(() => {})
+    fetchAssignableMembers(team.id).then(r => setAvailable(r.results)).catch(() => setAvailable([]))
+  }, [team.id])
+
+  useEffect(() => {
+    if (!open) return
+    setSearch(""); setMembers(team.members); setAvailable(null)
+    refresh()
+  }, [open, team.members, refresh])
+
+  const match = (n: string, e: string) => { const q = search.trim().toLowerCase(); return !q || n.toLowerCase().includes(q) || (e ?? "").toLowerCase().includes(q) }
+  const shownMembers = useMemo(() => members.filter(m => match(m.name, m.email)), [members, search])
+  const shownAvail = useMemo(() => (available ?? []).filter(m => match(m.name, m.email)), [available, search])
+
+  const add = async (m: AssignableMember) => {
+    setBusy(m.id)
+    try { await addTeamMember(team.id, { id: m.id, person_type: m.person_type }); refresh(); onChanged() }
+    catch (e) { toast({ title: "Kunne ikke legge til", description: e instanceof TeamMemberError ? e.message : "", variant: "destructive" }) }
+    finally { setBusy(null) }
+  }
+  const remove = async (m: TeamMember) => {
+    setBusy(m.id)
+    try { await removeTeamMember(team.id, { id: m.id, person_type: m.person_type }); refresh(); onChanged() }
+    catch (e) { toast({ title: "Kunne ikke fjerne", description: e instanceof TeamMemberError ? e.message : "", variant: "destructive" }) }
+    finally { setBusy(null) }
+  }
+
+  const Row = ({ name, email, online, personType, action }: { name: string; email: string; online: boolean; personType: PersonType; action: React.ReactNode }) => (
+    <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2">
+      <span className={cn("h-2 w-2 rounded-full shrink-0", online ? "bg-emerald-500" : "bg-white/20")} />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-white/90 truncate">{name}</p>
+        <p className="text-[11px] text-white/35 truncate">{email}</p>
+      </div>
+      {personType === "manager" && <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-300 shrink-0">Leder</span>}
+      {action}
+    </div>
+  )
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-start justify-center pt-[8vh] px-4" style={{ background: "rgba(5,8,16,0.7)", backdropFilter: "blur(3px)" }} onClick={onClose}>
+          <motion.div initial={{ opacity: 0, scale: 0.97, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 10 }} transition={{ duration: 0.16 }} onClick={e => e.stopPropagation()}
+            className="w-full max-w-2xl rounded-2xl border border-white/12 bg-[#0d1528] shadow-2xl flex flex-col max-h-[80vh]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg text-lg shrink-0" style={{ background: `${team.color}22`, border: `1px solid ${team.color}55` }}>{team.icon || "👥"}</div>
+                <div className="min-w-0"><h2 className="text-base font-bold text-white truncate">Medlemmer · {team.name}</h2><p className="text-[11px] text-white/40 truncate">{team.campaign?.name ?? "Ingen kampanje"}</p></div>
+              </div>
+              <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8 shrink-0"><X className="h-4 w-4" /></button>
+            </div>
+
+            {/* Search */}
+            <div className="px-5 pt-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                <input value={search} onChange={e => setSearch(e.target.value)} autoFocus placeholder="Søk navn eller e-post…" className="w-full h-10 rounded-xl border border-white/10 bg-white/5 pl-9 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+              </div>
+            </div>
+
+            {/* Two columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 overflow-hidden flex-1">
+              {/* On team */}
+              <div className="flex flex-col min-h-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-emerald-400" /> På teamet ({members.length})</p>
+                <div className="space-y-2 overflow-y-auto pr-1 flex-1">
+                  {shownMembers.length === 0 ? <p className="text-xs text-white/30 py-6 text-center">{members.length === 0 ? "Ingen medlemmer ennå." : "Ingen treff."}</p> : shownMembers.map(m => (
+                    <Row key={m.id} name={m.name} email={m.email} online={m.online} personType={m.person_type}
+                      action={<button onClick={() => remove(m)} disabled={busy === m.id} className="cursor-pointer h-7 w-7 inline-flex items-center justify-center rounded-lg text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/10 shrink-0">{busy === m.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}</button>} />
+                  ))}
+                </div>
+              </div>
+              {/* Available */}
+              <div className="flex flex-col min-h-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 flex items-center gap-1.5"><UserPlus className="h-3.5 w-3.5 text-blue-400" /> Tilgjengelige ({available?.length ?? 0})</p>
+                <div className="space-y-2 overflow-y-auto pr-1 flex-1">
+                  {available === null ? <div className="py-6 flex justify-center"><Loader2 className="h-4 w-4 animate-spin text-white/40" /></div>
+                    : shownAvail.length === 0 ? <p className="text-xs text-white/30 py-6 text-center">{(available?.length ?? 0) === 0 ? "Ingen tilgjengelige — alle i kampanjen er på et team." : "Ingen treff."}</p>
+                    : shownAvail.map(m => (
+                      <Row key={m.id} name={m.name} email={m.email} online={m.online} personType={m.person_type}
+                        action={<button onClick={() => add(m)} disabled={busy === m.id} className="cursor-pointer h-7 w-7 inline-flex items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 shrink-0">{busy === m.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}</button>} />
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-5 py-3 border-t border-white/8 flex justify-end">
+              <button onClick={onClose} className="cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white/80 hover:bg-white/15">Ferdig</button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+export default TeamsView

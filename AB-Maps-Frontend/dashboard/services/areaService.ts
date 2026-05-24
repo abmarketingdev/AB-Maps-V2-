@@ -17,6 +17,9 @@ export interface Area {
   status?: string;
   fylke?: string;
   house_count?: number;
+  apartment_count?: number;
+  doors?: number; // = house_count + apartment_count, auto-computed (Module 1)
+  bbox?: [number, number, number, number]; // [minx,miny,maxx,maxy] WGS84 (lightweight list rows)
   campaign?: {
     id: string;
     name: string;
@@ -156,5 +159,66 @@ export async function getAreasWithCampaigns(): Promise<Area[]> {
   } catch (error) {
     console.error('Error fetching areas with campaigns:', error);
     return [];
+  }
+}
+
+export interface PaginatedAreas {
+  results: Area[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}
+
+// Get a SINGLE campaign's areas (JSON, for the cards/dock list — not the map,
+// which uses MVT tiles). Campaign is passed via the X-Campaign-ID header.
+// Server-side paginated; rows are lightweight (no polygon_geometry, include bbox).
+// Tolerates a plain array response (wraps it as a single page).
+export async function getCampaignAreas(
+  campaignId: string,
+  page = 1,
+  pageSize = 50,
+): Promise<PaginatedAreas> {
+  try {
+    const url = buildApiUrl('/api/areas/areas/campaign_areas/') + `?page=${page}&page_size=${pageSize}`;
+    const response = await makeAuthenticatedRequest(url, {
+      headers: { 'X-Campaign-ID': campaignId },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch campaign areas: ${response.status}`);
+    }
+    const data = await response.json();
+    if (Array.isArray(data)) {
+      return { results: data, count: data.length, next: null, previous: null };
+    }
+    return {
+      results: Array.isArray(data?.results) ? data.results : [],
+      count: typeof data?.count === 'number' ? data.count : (data?.results?.length ?? 0),
+      next: data?.next ?? null,
+      previous: data?.previous ?? null,
+    };
+  } catch (error) {
+    console.error('Error fetching campaign areas:', error);
+    return { results: [], count: 0, next: null, previous: null };
+  }
+}
+
+// Get the WGS84 bounding box [minx, miny, maxx, maxy] covering all of a
+// campaign's areas (for the initial map fitBounds), or null if it has none.
+export async function getCampaignExtent(
+  campaignId: string,
+): Promise<[number, number, number, number] | null> {
+  try {
+    const url = buildApiUrl('/api/areas/areas/campaign_extent/');
+    const response = await makeAuthenticatedRequest(url, {
+      headers: { 'X-Campaign-ID': campaignId },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch campaign extent: ${response.status}`);
+    }
+    const data = await response.json();
+    return Array.isArray(data?.bbox) && data.bbox.length === 4 ? data.bbox : null;
+  } catch (error) {
+    console.error('Error fetching campaign extent:', error);
+    return null;
   }
 } 

@@ -1,91 +1,61 @@
+// Authed fetch for live backend calls. Injects the Bearer access token, and on
+// a 401 refreshes once and retries. If the refresh itself fails (token
+// blacklisted/expired), it forces a re-login. All requests hit the real backend.
+
 import { authService } from './authService';
+import { API_CONFIG } from '@/lib/config/apiConfig';
 
-let isRefreshing = false;
-let refreshPromise: Promise<void> | null = null;
-type QueueItem = { resolve: (token: string) => void; reject: (err: Error) => void };
-let failedQueue: QueueItem[] = [];
-
-function processQueue(error: Error | null, token: string | null) {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(token!);
-    }
-  });
-  failedQueue = [];
-}
-
-async function getValidToken(): Promise<string> {
-  const token = authService.getAccessToken();
-  if (token) return token;
-  throw new Error('No access token available. Please login.');
-}
-
-async function refreshAndQueue(): Promise<string> {
-  if (isRefreshing && refreshPromise) {
-    return new Promise<string>((resolve, reject) => {
-      failedQueue.push({ resolve, reject });
-    });
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Session expired');
+    this.name = 'SessionExpiredError';
   }
-
-  isRefreshing = true;
-  refreshPromise = authService.refreshToken()
-    .then(() => {
-      const newToken = authService.getAccessToken();
-      if (!newToken) throw new Error('No access token after refresh');
-      processQueue(null, newToken);
-    })
-    .catch((err) => {
-      processQueue(err, null);
-      throw err;
-    })
-    .finally(() => {
-      isRefreshing = false;
-      refreshPromise = null;
-    });
-
-  await refreshPromise;
-  const token = authService.getAccessToken();
-  if (!token) throw new Error('No access token after refresh');
-  return token;
 }
 
-/**
- * Centralized authenticated fetch with 401 retry queue.
- * Only ONE refresh call is made even if multiple requests get 401 simultaneously.
- */
-export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = await getValidToken();
+function forceReLogin(): void {
+  authService.logout().catch(() => { /* ignore */ });
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login';
+  }
+}
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-      'Authorization': `Bearer ${token}`,
-    },
-  });
+/** Build a full URL from a relative `/api/...` path, or pass through absolutes. */
+export function apiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${API_CONFIG.BASE_URL ?? ''}${path}`;
+}
 
-  if (response.status === 401) {
+async function authedRequest(url: string, options: RequestInit, isRetry: boolean): Promise<Response> {
+  const token = authService.getAccessToken();
+  const headers = new Headers(options.headers);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (!headers.has('Content-Type') && options.body) headers.set('Content-Type', 'application/json');
+
+  const res = await fetch(apiUrl(url), { ...options, headers });
+
+  if (res.status === 401 && !isRetry) {
     try {
-      const newToken = await refreshAndQueue();
-      const retryResponse = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-          'Authorization': `Bearer ${newToken}`,
-        },
-      });
-      return retryResponse;
+      await authService.refreshToken();
     } catch {
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
-      throw new Error('Authentication failed. Please login again.');
+      forceReLogin();
+      throw new SessionExpiredError();
     }
+    return authedRequest(url, options, true);
   }
 
-  return response;
+  return res;
+}
+
+/** Authed fetch with one transparent refresh-and-retry on 401. */
+export function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  return authedRequest(url, options, false);
+}
+
+/** Authed GET returning parsed JSON; throws on non-2xx. */
+export async function getJSON<T>(path: string): Promise<T> {
+  const res = await fetchWithAuth(path, { method: 'GET' });
+  if (!res.ok) {
+    throw new Error(`Request failed (${res.status}): ${path}`);
+  }
+  return res.json() as Promise<T>;
 }

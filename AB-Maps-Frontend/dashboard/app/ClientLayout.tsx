@@ -55,6 +55,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command"
 import CampaignSelector from "@/components/CampaignSelector"
+import { CampaignPicker, getStoredCampaign } from "@/components/dashboard/v2/CampaignPicker"
 import StandaloneCampaignModal from "@/components/campaign/StandaloneCampaignModal"
 import { useAuth } from "@/lib/auth/AuthContext"
 import type { Campaign } from "../services/campaignService"
@@ -83,9 +84,11 @@ type NavGroup = "ARBEIDSFLATE" | "TERRITORIUM" | "TEAM" | "LÆRING" | "ADMIN" | 
 const GROUP_ORDER: NavGroup[] = ["ARBEIDSFLATE", "TERRITORIUM", "TEAM", "LÆRING", "ADMIN", "FORHÅNDSVISNING"]
 
 const PAGE_TITLES: Record<string, string> = {
-  "/": "Dashbord",
+  "/": "Hjem",
+  "/dashbord": "Dashbord",
   "/sales": "Statistikk",
   "/rapport": "Rapport",
+  "/statistikk": "Geografi",
   "/todo": "Oppgaver",
   "/map": "Kart",
   "/areas": "Områder",
@@ -101,6 +104,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/tasks": "Tildel oppgaver",
   "/uploaded-addresses": "Legg til adresse",
   "/salgssjef-team": "Salgssjef-team",
+  "/teams": "Team",
 }
 
 export const CampaignContext = createContext({
@@ -113,8 +117,18 @@ export function useCampaignContext() {
 }
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false) // pinned-open; default = slim rail
+  const [sidebarHovered, setSidebarHovered] = useState(false)
+  const expanded = sidebarOpen || sidebarHovered // visual expansion (hover floats over content)
   const [campaignModalOpen, setCampaignModalOpen] = useState(false)
+  // Selected-campaign color → drives the subtle ambient accent in the chrome.
+  const [campaignColor, setCampaignColor] = useState<string | null>(null)
+  useEffect(() => {
+    setCampaignColor(getStoredCampaign()?.color ?? null)
+    const onChange = (e: Event) => setCampaignColor((e as CustomEvent)?.detail?.color ?? null)
+    window.addEventListener("ab:campaign-changed", onChange)
+    return () => window.removeEventListener("ab:campaign-changed", onChange)
+  }, [])
   const [isSuperuser, setIsSuperuser] = useState(false)
   const [isCheckingSuperuser, setIsCheckingSuperuser] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
@@ -134,7 +148,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
-  const { user, logout: authLogout, isAuthenticated, isLoading, isSuperuser: authIsSuperuser, isSalesChief } = useAuth()
+  const { user, logout: authLogout, isAuthenticated, isLoading, isSuperuser: authIsSuperuser, isSalesChief, isStaff } = useAuth()
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
   const [completionStatus, setCompletionStatus] = useState<CampaignCompletionResponse | null>(null)
   const [isCheckingCompletion, setIsCheckingCompletion] = useState(false)
@@ -384,9 +398,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
-      { href: "/",          title: "Dashbord",  icon: <Home className="h-4 w-4" />,        group: "ARBEIDSFLATE" },
+      { href: "/dashbord",  title: "Dashbord",  icon: <Home className="h-4 w-4" />,        group: "ARBEIDSFLATE" },
       { href: "/sales",     title: "Statistikk",icon: <DollarSign className="h-4 w-4" />,  group: "ARBEIDSFLATE" },
       { href: "/rapport",   title: "Rapport",   icon: <FileText className="h-4 w-4" />,    group: "ARBEIDSFLATE" },
+      { href: "/statistikk", title: "Geografi", icon: <MapIcon className="h-4 w-4" />,     group: "ARBEIDSFLATE" },
       { href: "/todo",      title: "Oppgaver",  icon: <CheckSquare className="h-4 w-4" />, group: "ARBEIDSFLATE" },
     ]
     // Hidden per request — route still exists at /admin/tasks but not surfaced
@@ -403,6 +418,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       // { href: "/las-opp-las-omrader",  title: "Lås opp/lås områder",  icon: <Lock className="h-4 w-4" />,      group: "TERRITORIUM" },
       { href: "/campaigns",            title: "Kampanje",             icon: <MapPinned className="h-4 w-4" />, group: "TERRITORIUM" },
     )
+    // Campaign teams — managers (own teams), sales chiefs + admins (all teams).
+    if (isStaff || isSuperuser || isSalesChief) {
+      items.push({ href: "/teams", title: "Team", icon: <Users className="h-4 w-4" />, group: "TEAM" })
+    }
     if (isSalesChief) {
       items.push({ href: "/salgssjef-team", title: "Salgssjef-team", icon: <Users className="h-4 w-4" />, group: "TEAM" })
     }
@@ -419,15 +438,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         { href: "/uploaded-addresses",  title: "Legg til adresse", icon: <Plus className="h-4 w-4" />,      group: "ADMIN" },
       )
     }
-    // POC preview — Mood-mascots sandbox demo (intentionally at the end).
-    items.push({
-      href: "/mood-mascots-preview",
-      title: "Mood-maskoter",
-      icon: <Sparkles className="h-4 w-4" />,
-      group: "FORHÅNDSVISNING",
-    })
     return items
-  }, [isSuperuser, isSalesChief])
+  }, [isSuperuser, isSalesChief, isStaff])
 
   const groupedNav = useMemo(() => {
     const groups = new Map<NavGroup, NavItem[]>()
@@ -505,13 +517,16 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <CampaignContext.Provider value={{ currentCampaign: "", managerId }}>
       <div className="flex min-h-screen bg-ab-base text-ab-fg">
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar — slim rail that expands on hover (floats over content) */}
         <aside
+          onMouseEnter={() => setSidebarHovered(true)}
+          onMouseLeave={() => setSidebarHovered(false)}
           className={cn(
             "fixed inset-y-0 z-50 hidden md:flex h-full flex-col overflow-hidden",
             "bg-ab-canvas border-r border-ab-line-1",
-            "transition-[width] duration-200 ease-out-cubic",
-            sidebarOpen ? "w-64" : "w-14",
+            "transition-[width,box-shadow] duration-200 ease-out-cubic",
+            expanded ? "w-64" : "w-16",
+            sidebarHovered && !sidebarOpen && "shadow-[12px_0_40px_-12px_rgba(0,0,0,0.55)]",
           )}
         >
           {/* Subtle top-left accent glow — premium depth.
@@ -520,49 +535,50 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               (which would otherwise alphabetically override `fixed` in Tailwind). */}
           <span
             aria-hidden
-            className="pointer-events-none absolute top-0 left-0 h-60 w-60 bg-ab-accent/[0.06] dark:bg-ab-accent/[0.10] rounded-full blur-3xl opacity-60"
+            className="pointer-events-none absolute top-0 left-0 h-60 w-60 bg-ab-accent/[0.06] dark:bg-ab-accent/[0.10] rounded-full blur-3xl opacity-60 transition-colors duration-700"
+            style={campaignColor ? { background: `${campaignColor}1f` } : undefined}
           />
-          <div className="h-12 px-3 flex items-center justify-between border-b border-ab-line-1">
-            <Link href="/" className="flex items-center gap-2 min-w-0">
-              <div className="h-7 w-7 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center flex-shrink-0">
+          <div className={cn("h-14 flex items-center justify-between border-b border-ab-line-1", expanded ? "px-3" : "px-0 justify-center")}>
+            <Link href="/dashbord" className={cn("flex items-center gap-2.5 min-w-0", !expanded && "justify-center")}>
+              <div className="h-8 w-8 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center flex-shrink-0">
                 <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" priority />
               </div>
-              {sidebarOpen && (
+              {expanded && (
                 <div className="min-w-0">
-                  <div className="text-[13px] font-semibold text-ab-fg leading-none">AB Marketing</div>
+                  <div className="text-[13px] font-semibold text-ab-fg leading-tight">AB Marketing</div>
                   <div className="eyebrow mt-0.5">Oslo Øst</div>
                 </div>
               )}
             </Link>
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="h-7 w-7 inline-flex items-center justify-center rounded-ab-sm text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-colors"
-              aria-label={sidebarOpen ? "Skjul meny" : "Vis meny"}
-            >
-              {sidebarOpen ? <ChevronsLeft className="h-3.5 w-3.5" /> : <ChevronsRight className="h-3.5 w-3.5" />}
-            </button>
+            {expanded && (
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="h-7 w-7 inline-flex items-center justify-center rounded-ab-sm text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-colors shrink-0"
+                aria-label={sidebarOpen ? "Lås opp meny" : "Lås meny åpen"}
+                title={sidebarOpen ? "Lås opp meny" : "Lås meny åpen"}
+              >
+                {sidebarOpen ? <ChevronsLeft className="h-3.5 w-3.5" /> : <ChevronsRight className="h-3.5 w-3.5" />}
+              </button>
+            )}
           </div>
 
-          {sidebarOpen ? (
+          {expanded ? (
             <div className="px-2 pt-3">
-              <CampaignSelector
-                onCampaignSelect={changeCampaign}
-                selectedCampaign={selectedCampaign}
-                useCurrentCampaign={true}
-                className="w-full"
-              />
+              <CampaignPicker className="w-full" />
             </div>
           ) : (
             <div className="pt-3" />
           )}
 
           <nav className="relative z-10 flex-1 overflow-y-auto px-2 pt-4 pb-3 space-y-5 scrollbar-thin">
-            {groupedNav.map(({ group, items }) => (
+            {groupedNav.map(({ group, items }, gi) => (
               <div key={group}>
-                {sidebarOpen && <div className="eyebrow px-3 pb-2">{group}</div>}
-                <div className="space-y-1.5">
+                {expanded
+                  ? <div className="eyebrow px-3 pb-2">{group}</div>
+                  : gi > 0 && <div className="mx-3 mb-2 h-px bg-ab-line-1/70" />}
+                <div className="space-y-1">
                   {items.map((item, idx) => (
-                    <div key={`${item.href}-${idx}`}>{renderNavItem(item, sidebarOpen)}</div>
+                    <div key={`${item.href}-${idx}`}>{renderNavItem(item, expanded)}</div>
                   ))}
                 </div>
               </div>
@@ -576,6 +592,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                   className={cn(
                     "w-full flex items-center gap-2 p-1.5 rounded-ab-md",
                     "hover:bg-ab-hover transition-colors text-left",
+                    !expanded && "justify-center",
                   )}
                 >
                   <Avatar className="h-7 w-7 ring-1 ring-ab-line">
@@ -584,7 +601,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
-                  {sidebarOpen && (
+                  {expanded && (
                     <div className="min-w-0 flex-1">
                       <div className="text-[12px] font-medium text-ab-fg leading-tight truncate">{userName}</div>
                       <div className="text-[10px] text-ab-fg-3 truncate capitalize">{user?.user_type || "Bruker"}</div>
@@ -639,7 +656,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <SheetContent side="left" className="w-72 p-0 bg-ab-canvas border-ab-line">
             <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <div className="h-12 px-3 flex items-center border-b border-ab-line-1">
-              <Link href="/" className="flex items-center gap-2">
+              <Link href="/dashbord" className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center">
                   <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" />
                 </div>
@@ -650,11 +667,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               </Link>
             </div>
             <div className="px-2 pt-3">
-              <CampaignSelector
-                onCampaignSelect={changeCampaign}
-                selectedCampaign={selectedCampaign}
-                className="w-full"
-              />
+              <CampaignPicker className="w-full" />
             </div>
             <nav className="px-2 pt-4 pb-3 space-y-5 overflow-y-auto">
               {groupedNav.map(({ group, items }) => (
@@ -672,9 +685,18 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         </Sheet>
 
         {/* Main column */}
-        <div className={cn("flex flex-1 flex-col min-w-0", sidebarOpen ? "md:pl-64" : "md:pl-14")}>
-          <header className="sticky top-0 z-30 h-12 flex items-center gap-3 px-3 md:px-5 bg-ab-base/85 backdrop-blur-md border-b border-ab-line-1">
-            <div className="hidden md:flex items-center gap-2 min-w-0">
+        <div className={cn("flex flex-1 flex-col min-w-0 transition-[padding] duration-200 ease-out-cubic", sidebarOpen ? "md:pl-64" : "md:pl-16")}>
+          <header className="relative overflow-hidden sticky top-0 z-30 h-12 flex items-center gap-3 px-3 md:px-5 bg-ab-base/85 backdrop-blur-md border-b border-ab-line-1">
+            {/* Subtle campaign-color accent — ambient identity, not branding */}
+            {campaignColor && (
+              <>
+                <span aria-hidden className="pointer-events-none absolute inset-0 transition-opacity duration-700"
+                  style={{ background: `linear-gradient(90deg, ${campaignColor}14, transparent 42%)` }} />
+                <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] transition-opacity duration-700"
+                  style={{ background: `linear-gradient(90deg, ${campaignColor}, ${campaignColor}55 35%, transparent 70%)` }} />
+              </>
+            )}
+            <div className="relative hidden md:flex items-center gap-2 min-w-0">
               <span className="text-[12px] text-ab-fg-3">AB Marketing</span>
               <span className="text-ab-fg-4">/</span>
               <span className="text-[12px] text-ab-fg-3">Oslo Øst</span>

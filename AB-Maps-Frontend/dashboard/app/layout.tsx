@@ -5,6 +5,7 @@ import { CampaignsProvider } from "@/components/campaign/CampaignsContext";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import { CompletionProvider } from "@/contexts/CompletionContext";
 import CampaignGuard from "@/components/campaign/CampaignGuard";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata = {
   generator: "v0.dev",
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <CampaignGuard>
                   {children}
                 </CampaignGuard>
+                <Toaster />
               </CampaignsProvider>
             </CompletionProvider>
           </AuthProvider>

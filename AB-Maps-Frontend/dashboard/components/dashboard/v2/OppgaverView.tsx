@@ -1,0 +1,895 @@
+"use client"
+
+/**
+ * Oppgaver — unified task page (replaces the split "Mine oppgaver" + "Tildel
+ * oppgaver" pages). One page, three perspectives via a switch:
+ *   - Mine oppgaver   : tasks assigned TO me (everyone)
+ *   - Tildelt av meg  : tasks I delegated, grouped by person (manager/admin)
+ *   - Team            : everything across the team (manager/admin)
+ *
+ * Assignment happens inside the "Ny oppgave" modal with a ROLE-AWARE picker:
+ *   - Admin   → admins, managers, employees
+ *   - Manager → managers, employees
+ *   - Employee→ self only
+ *
+ * Layouts: Board (Kanban, drag to move) + Liste toggle.
+ * Runs entirely on MOCK DATA. A "Vis som" demo switcher lets you test each role.
+ */
+
+import React, { useState, useMemo } from "react"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import {
+  Plus, Search, LayoutGrid, List as ListIcon, Calendar as CalIcon, X, Check,
+  Flag, Clock, AlertTriangle, CheckCircle2, Circle, CircleDot, Users, ChevronDown,
+  Hash, UserPlus, CornerDownLeft,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { RoyMascot, type RoyState } from "@/components/gamification/RoyMascot"
+import { useAuth } from "@/lib/auth/AuthContext"
+import { fetchAssignable } from "@/lib/api/users"
+import {
+  listTasks, createTask as apiCreateTask, deleteTask as apiDeleteTask,
+  startTask, completeTask, patchTask,
+  type Task as ApiTask, type Perspective as ApiPerspective,
+} from "@/lib/api/tasks"
+import { PanelLoading, PanelEmpty, PanelError } from "./_states"
+
+// ─── People & roles ───────────────────────────────────────────────────────────
+
+type Role = "admin" | "manager" | "employee"
+
+interface Person { id: string; name: string; role: Role }
+
+// Assignable users are loaded live (/api/users/assignable/). A module-level
+// registry lets the leaf components (avatars/lookups) resolve names by id
+// without prop-drilling; tolerant fallback avoids crashes on unknown ids.
+let peopleRegistry: Person[] = []
+const byId = (id: string): Person => peopleRegistry.find(p => p.id === id) ?? { id, name: "Bruker", role: "employee" }
+
+const ROLE_LABEL: Record<Role, string> = { admin: "Admin", manager: "Manager", employee: "Ansatt" }
+const ROLE_ORDER: Role[] = ["admin", "manager", "employee"]
+
+const ROY_STATES: RoyState[] = ["ready", "idle", "win-small", "greeting", "thinking", "win-big"]
+function personRoy(id: string): RoyState {
+  const h = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0)
+  return ROY_STATES[h % ROY_STATES.length]
+}
+
+// who can a role assign to
+function assignableRoles(role: Role): Role[] {
+  if (role === "admin") return ["admin", "manager", "employee"]
+  if (role === "manager") return ["manager", "employee"]
+  return []
+}
+
+// ─── Tasks ────────────────────────────────────────────────────────────────────
+
+type TaskStatus = "todo" | "in_progress" | "done"
+type Priority = "high" | "medium" | "low"
+
+interface Task {
+  id: string
+  title: string
+  description?: string
+  assignerId: string
+  assigneeIds: string[]
+  status: TaskStatus
+  priority: Priority
+  due: Date
+  campaign?: string
+}
+
+const STATUS_META: Record<TaskStatus, { label: string; color: string; Icon: React.ElementType }> = {
+  todo:        { label: "Å gjøre", color: "#60a5fa", Icon: Circle },
+  in_progress: { label: "Pågår",   color: "#f59e0b", Icon: CircleDot },
+  done:        { label: "Ferdig",  color: "#10b981", Icon: CheckCircle2 },
+}
+const STATUS_ORDER: TaskStatus[] = ["todo", "in_progress", "done"]
+
+const PRIORITY_META: Record<Priority, { label: string; color: string; bg: string }> = {
+  high:   { label: "Høy",    color: "#f43f5e", bg: "bg-rose-500/15" },
+  medium: { label: "Medium", color: "#f59e0b", bg: "bg-amber-500/15" },
+  low:    { label: "Lav",    color: "#60a5fa", bg: "bg-blue-500/15" },
+}
+
+function dShift(days: number) { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(17, 0, 0, 0); return d }
+function startOfDay(d: Date) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
+const isSameDay = (a: Date, b: Date) => startOfDay(a).getTime() === startOfDay(b).getTime()
+const isOverdue = (t: Task) => t.status !== "done" && startOfDay(t.due).getTime() < startOfDay(new Date()).getTime()
+
+// No due date → far-future sentinel so the task is never "overdue"/"today".
+const NO_DUE = new Date(4102444800000) // 2100-01-01
+function toViewTask(t: ApiTask): Task {
+  return {
+    id: t.id, title: t.title, description: t.description || undefined,
+    assignerId: t.assigner_id ?? "", assigneeIds: t.assignee_ids ?? [],
+    status: t.status, priority: t.priority,
+    due: t.due ? new Date(t.due) : NO_DUE,
+    // Display the human campaign name (backend returns campaign_name); fall back
+    // to the id only if a name isn't present.
+    campaign: t.campaign_name ?? (t.campaign ?? undefined),
+  }
+}
+const toApiPerspective = (p: Perspective): ApiPerspective => p === "tildelt" ? "assigned_by_me" : p === "team" ? "team" : "mine"
+
+// ─── Small components ─────────────────────────────────────────────────────────
+
+function Avatar({ id, size = 30 }: { id: string; size?: number }) {
+  return <RoyMascot state={personRoy(id)} size={size} />
+}
+
+function AvatarStack({ ids, size = 26 }: { ids: string[]; size?: number }) {
+  return (
+    <div className="flex -space-x-2">
+      {ids.slice(0, 3).map(id => (
+        <div key={id} className="rounded-full ring-2 ring-[#0d1528]" title={byId(id).name}>
+          <Avatar id={id} size={size} />
+        </div>
+      ))}
+      {ids.length > 3 && (
+        <div className="flex items-center justify-center rounded-full bg-white/10 ring-2 ring-[#0d1528] text-[10px] font-bold text-white/70" style={{ width: size, height: size }}>
+          +{ids.length - 3}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PriorityPill({ p }: { p: Priority }) {
+  const m = PRIORITY_META[p]
+  return (
+    <span className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold", m.bg)} style={{ color: m.color }}>
+      <Flag className="h-2.5 w-2.5" /> {m.label}
+    </span>
+  )
+}
+
+// Compact priority glyph — three signal bars (Linear-style)
+function PriorityBars({ p }: { p: Priority }) {
+  const m = PRIORITY_META[p]
+  const active = p === "high" ? 3 : p === "medium" ? 2 : 1
+  return (
+    <span className="flex items-end gap-[2px] h-3.5 shrink-0" title={`Prioritet: ${m.label}`}>
+      {[0, 1, 2].map(i => (
+        <span key={i} className="w-[3px] rounded-[1px]" style={{ height: `${5 + i * 4}px`, background: i < active ? m.color : "rgba(255,255,255,0.15)" }} />
+      ))}
+    </span>
+  )
+}
+
+function DueBadge({ due, status }: { due: Date; status: TaskStatus }) {
+  const overdue = status !== "done" && startOfDay(due).getTime() < startOfDay(new Date()).getTime()
+  const today = isSameDay(due, new Date())
+  const label = today ? "I dag" : due.toLocaleDateString("nb-NO", { day: "numeric", month: "short" })
+  return (
+    <span className={cn("flex items-center gap-1 text-[11px] font-medium",
+      overdue ? "text-rose-400" : today ? "text-amber-400" : "text-white/40")}>
+      {overdue ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+      {overdue ? `Forsinket · ${label}` : label}
+    </span>
+  )
+}
+
+// ─── Task card ────────────────────────────────────────────────────────────────
+
+function TaskCard({ task, onDragStart, onDragEnd, showAssignees = true, draggable = false, dragging = false }: {
+  task: Task; onDragStart?: () => void; onDragEnd?: () => void; showAssignees?: boolean; draggable?: boolean; dragging?: boolean
+}) {
+  const overdue = isOverdue(task)
+  return (
+    <div
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      className={cn(
+        "group relative rounded-lg border bg-white/[0.035] p-3 transition-[background,border-color,box-shadow] duration-150 hover:bg-white/[0.06] hover:border-white/20",
+        draggable && "cursor-grab active:cursor-grabbing",
+        overdue ? "border-rose-500/25" : "border-white/[0.08]",
+        dragging && "opacity-50 rotate-[1.5deg] shadow-2xl ring-1 ring-blue-500/40"
+      )}
+    >
+      {/* high-priority left accent */}
+      {task.priority === "high" && (
+        <span className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full bg-rose-500/70" />
+      )}
+
+      {/* Title row */}
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5"><PriorityBars p={task.priority} /></span>
+        <p className="flex-1 text-[13px] font-medium text-white/90 leading-snug">{task.title}</p>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {task.campaign && (
+            <span className="truncate rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-white/45">{task.campaign}</span>
+          )}
+          <DueBadge due={task.due} status={task.status} />
+        </div>
+        {showAssignees && <AvatarStack ids={task.assigneeIds} size={24} />}
+      </div>
+    </div>
+  )
+}
+
+// ─── Board (Kanban, drag to move) ────────────────────────────────────────────
+
+function Board({ tasks, onMove, onQuickAdd }: {
+  tasks: Task[]; onMove: (id: string, status: TaskStatus) => void; onQuickAdd: (status: TaskStatus) => void
+}) {
+  const reduced = useReducedMotion()
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overCol, setOverCol] = useState<TaskStatus | null>(null)
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {STATUS_ORDER.map((status, ci) => {
+        const colTasks = tasks.filter(t => t.status === status)
+        const m = STATUS_META[status]
+        const isOver = overCol === status && dragId !== null
+        return (
+          <motion.div
+            key={status}
+            initial={reduced ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: ci * 0.05 }}
+            onDragOver={(e) => { e.preventDefault(); if (overCol !== status) setOverCol(status) }}
+            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOverCol(c => c === status ? null : c) }}
+            onDrop={() => { if (dragId) onMove(dragId, status); setDragId(null); setOverCol(null) }}
+            className={cn(
+              "rounded-2xl border bg-white/[0.025] p-3 transition-colors min-h-[320px]",
+              isOver ? "border-blue-500/40 bg-blue-500/[0.04]" : "border-white/[0.08]"
+            )}
+          >
+            {/* Column header */}
+            <div className="flex items-center justify-between px-1.5 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full" style={{ background: m.color }} />
+                <h3 className="text-[13px] font-semibold text-white/90">{m.label}</h3>
+                <span className="font-mono text-xs text-white/35">{colTasks.length}</span>
+              </div>
+              <button
+                onClick={() => onQuickAdd(status)}
+                className="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-white/35 hover:text-white hover:bg-white/10 transition-colors"
+                title="Legg til oppgave"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Cards */}
+            <div className="space-y-2">
+              {colTasks.map(t => (
+                <TaskCard
+                  key={t.id}
+                  task={t}
+                  draggable
+                  dragging={dragId === t.id}
+                  onDragStart={() => setDragId(t.id)}
+                  onDragEnd={() => { setDragId(null); setOverCol(null) }}
+                />
+              ))}
+
+              {/* Drop placeholder */}
+              {isOver && (
+                <div className="rounded-lg border border-dashed border-blue-500/50 bg-blue-500/[0.06] h-10 flex items-center justify-center text-[11px] font-medium text-blue-300/70">
+                  Slipp her
+                </div>
+              )}
+
+              {colTasks.length === 0 && !isOver && (
+                <button
+                  onClick={() => onQuickAdd(status)}
+                  className="cursor-pointer w-full rounded-lg border border-dashed border-white/[0.08] py-6 text-center text-xs text-white/25 hover:text-white/50 hover:border-white/15 transition-colors"
+                >
+                  + Legg til oppgave
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── List view ────────────────────────────────────────────────────────────────
+
+function TaskList({ tasks }: { tasks: Task[] }) {
+  const reduced = useReducedMotion()
+  if (tasks.length === 0) return <EmptyState />
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl divide-y divide-white/5 overflow-hidden">
+      {tasks.map((t, i) => {
+        const m = STATUS_META[t.status]
+        return (
+          <motion.div key={t.id}
+            initial={reduced ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i, 12) * 0.02 }}
+            className="flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors">
+            <m.Icon className="h-4 w-4 shrink-0" style={{ color: m.color }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white/90 truncate">{t.title}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {t.campaign && <span className="text-[10px] text-white/35">{t.campaign}</span>}
+                <DueBadge due={t.due} status={t.status} />
+              </div>
+            </div>
+            <PriorityPill p={t.priority} />
+            <AvatarStack ids={t.assigneeIds} />
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col items-center justify-center py-20 text-center">
+      <CheckCircle2 className="h-8 w-8 text-white/15 mb-3" />
+      <p className="text-sm text-white/35">Ingen oppgaver i denne visningen</p>
+    </div>
+  )
+}
+
+// ─── Delegation view (grouped by person) ─────────────────────────────────────
+
+function DelegationView({ tasks, currentUserId }: { tasks: Task[]; currentUserId: string }) {
+  const reduced = useReducedMotion()
+  // Tasks I assigned to others → group by each assignee (excluding myself)
+  const groups = useMemo(() => {
+    const map = new Map<string, Task[]>()
+    tasks.forEach(t => {
+      t.assigneeIds.forEach(aid => {
+        if (aid === currentUserId) return
+        if (!map.has(aid)) map.set(aid, [])
+        map.get(aid)!.push(t)
+      })
+    })
+    return Array.from(map.entries())
+      .map(([id, ts]) => ({
+        id, tasks: ts,
+        done: ts.filter(t => t.status === "done").length,
+        overdue: ts.filter(isOverdue).length,
+      }))
+      .sort((a, b) => b.tasks.length - a.tasks.length)
+  }, [tasks, currentUserId])
+
+  if (groups.length === 0) return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col items-center justify-center py-20 text-center">
+      <Users className="h-8 w-8 text-white/15 mb-3" />
+      <p className="text-sm text-white/35">Du har ikke tildelt oppgaver til andre ennå</p>
+      <p className="text-xs text-white/25 mt-1">Bruk "Ny oppgave" for å delegere</p>
+    </div>
+  )
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {groups.map((g, gi) => {
+        const person = byId(g.id)
+        const pct = Math.round(g.done / g.tasks.length * 100)
+        return (
+          <motion.div key={g.id}
+            initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: gi * 0.05 }}
+            className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">
+            {/* Person header */}
+            <div className="flex items-center gap-3 mb-4">
+              <Avatar id={g.id} size={42} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white">{person.name}</p>
+                <p className="text-xs text-white/40">{ROLE_LABEL[person.role]} · {g.tasks.length} oppgaver</p>
+              </div>
+              {g.overdue > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-400">
+                  <AlertTriangle className="h-3 w-3" /> {g.overdue} forsinket
+                </span>
+              )}
+            </div>
+            {/* Progress */}
+            <div className="mb-4">
+              <div className="flex justify-between text-xs mb-1.5">
+                <span className="text-white/40">Fremdrift</span>
+                <span className="font-mono text-white/60">{g.done}/{g.tasks.length} ferdig</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                <motion.div className="h-full rounded-full bg-emerald-500" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, delay: gi * 0.05 }} />
+              </div>
+            </div>
+            {/* Their tasks */}
+            <div className="space-y-2">
+              {g.tasks.map(t => (
+                <TaskCard key={t.id} task={t} showAssignees={false} />
+              ))}
+            </div>
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Ny oppgave modal (role-aware assignee picker) ───────────────────────────
+
+// Small inline property pill used in the composer's bottom toolbar.
+function PropPill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "cursor-pointer flex items-center gap-1.5 rounded-lg border h-8 px-2.5 text-[13px] font-medium transition-colors whitespace-nowrap",
+        active ? "border-white/25 bg-white/[0.1] text-white" : "border-white/10 bg-white/[0.04] text-white/55 hover:text-white/90 hover:border-white/20"
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+function PopPanel({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "right" }) {
+  return (
+    <div className={cn("absolute bottom-full mb-2 z-20 rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl overflow-hidden", align === "left" ? "left-0" : "right-0")}>
+      {children}
+    </div>
+  )
+}
+
+type PropKey = "priority" | "assignee" | "due" | "campaign"
+
+function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCreate, people }: {
+  open: boolean; onClose: () => void; role: Role; currentUserId: string
+  initialStatus: TaskStatus; onCreate: (t: Omit<Task, "id">) => void; people: Person[]
+}) {
+  const [title, setTitle] = useState("")
+  const [desc, setDesc] = useState("")
+  const [priority, setPriority] = useState<Priority>("medium")
+  const [due, setDue] = useState<Date | null>(null)
+  const [campaign, setCampaign] = useState("")
+  const [assignees, setAssignees] = useState<string[]>([])
+  const [openProp, setOpenProp] = useState<PropKey | null>(null)
+  const [search, setSearch] = useState("")
+  const canAssignOthers = assignableRoles(role).length > 0
+
+  const grouped = useMemo(() => {
+    const roles = assignableRoles(role)
+    const targets = people.filter(p => roles.includes(p.role) && p.name.toLowerCase().includes(search.toLowerCase()))
+    const g: Record<Role, Person[]> = { admin: [], manager: [], employee: [] }
+    targets.forEach(p => g[p.role].push(p))
+    return g
+  }, [role, search, people])
+
+  const toggle = (id: string) => setAssignees(a => a.includes(id) ? a.filter(x => x !== id) : [...a, id])
+  const reset = () => { setTitle(""); setDesc(""); setPriority("medium"); setDue(null); setCampaign(""); setAssignees([]); setSearch(""); setOpenProp(null) }
+  const submit = () => {
+    if (!title.trim()) return
+    const finalAssignees = assignees.length > 0 ? assignees : [currentUserId]
+    onCreate({
+      title: title.trim(), description: desc.trim() || undefined,
+      assignerId: currentUserId, assigneeIds: finalAssignees,
+      status: initialStatus, priority, due: due ?? dShift(0), campaign: campaign || undefined,
+    })
+    reset(); onClose()
+  }
+  const close = () => { reset(); onClose() }
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { e.stopPropagation(); if (openProp) setOpenProp(null); else close() }
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit() }
+  }
+
+  // Quick due options
+  const dueOptions: { label: string; date: Date }[] = [
+    { label: "I dag", date: dShift(0) },
+    { label: "I morgen", date: dShift(1) },
+    { label: "Om 3 dager", date: dShift(3) },
+    { label: "Neste uke", date: dShift(7) },
+  ]
+  const dueLabel = due
+    ? (isSameDay(due, new Date()) ? "I dag" : due.toLocaleDateString("nb-NO", { day: "numeric", month: "short" }))
+    : "Frist"
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4"
+          style={{ background: "rgba(5,8,16,0.65)", backdropFilter: "blur(3px)" }}
+          onClick={close}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 10 }}
+            transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
+            onClick={e => e.stopPropagation()}
+            onKeyDown={onKeyDown}
+            className="w-full max-w-[560px] rounded-2xl border border-white/12 bg-[#0d1528] shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)] overflow-visible"
+          >
+            {/* Top strip */}
+            <div className="flex items-center justify-between px-5 pt-4 pb-1">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 rounded-md bg-white/[0.06] px-2 py-1 text-xs font-medium text-white/55">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: STATUS_META[initialStatus].color }} />
+                  {STATUS_META[initialStatus].label}
+                </span>
+                <span className="text-xs text-white/30">Ny oppgave</span>
+              </div>
+              <button onClick={close} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8 transition-all"><X className="h-4 w-4" /></button>
+            </div>
+
+            {/* Title + description (borderless, Linear-style) */}
+            <div className="px-5 pt-2 pb-4">
+              <input
+                value={title} onChange={e => setTitle(e.target.value)} autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); submit() } }}
+                placeholder="Oppgavetittel"
+                className="w-full bg-transparent text-lg font-semibold text-white placeholder:text-white/30 outline-none"
+              />
+              <textarea
+                value={desc} onChange={e => setDesc(e.target.value)} rows={2}
+                placeholder="Legg til beskrivelse…"
+                className="mt-2 w-full bg-transparent text-sm text-white/75 placeholder:text-white/25 outline-none resize-none leading-relaxed"
+              />
+            </div>
+
+            {/* Property toolbar */}
+            <div className="relative px-5 pb-4">
+              {/* outside-click backdrop for popovers */}
+              {openProp && <div className="fixed inset-0 z-10" onClick={() => setOpenProp(null)} />}
+
+              <div className="flex flex-wrap gap-2">
+                {/* Priority */}
+                <div className="relative">
+                  <PropPill active={openProp === "priority"} onClick={() => setOpenProp(openProp === "priority" ? null : "priority")}>
+                    <Flag className="h-3.5 w-3.5" style={{ color: PRIORITY_META[priority].color }} />
+                    {PRIORITY_META[priority].label}
+                  </PropPill>
+                  {openProp === "priority" && (
+                    <PopPanel>
+                      <div className="w-44 py-1">
+                        {(["high", "medium", "low"] as Priority[]).map(p => (
+                          <button key={p} onClick={() => { setPriority(p); setOpenProp(null) }}
+                            className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left">
+                            <Flag className="h-3.5 w-3.5" style={{ color: PRIORITY_META[p].color }} />
+                            <span className="flex-1 text-white/85">{PRIORITY_META[p].label}</span>
+                            {priority === p && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                          </button>
+                        ))}
+                      </div>
+                    </PopPanel>
+                  )}
+                </div>
+
+                {/* Assignee */}
+                <div className="relative">
+                  <PropPill active={openProp === "assignee"} onClick={() => setOpenProp(openProp === "assignee" ? null : "assignee")}>
+                    {assignees.length === 0 ? (
+                      <><UserPlus className="h-3.5 w-3.5" /> Tildel</>
+                    ) : (
+                      <><AvatarStack ids={assignees} size={18} /> {assignees.length === 1 ? byId(assignees[0]).name.split(" ")[0] : `${assignees.length} personer`}</>
+                    )}
+                  </PropPill>
+                  {openProp === "assignee" && (
+                    <PopPanel>
+                      <div className="w-64">
+                        <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+                          <span className="text-[11px] font-semibold text-white/40">Tildel til</span>
+                          <button onClick={() => toggle(currentUserId)} className="cursor-pointer text-[11px] font-medium text-blue-400 hover:text-blue-300">
+                            {assignees.includes(currentUserId) ? "Fjern meg" : "Meg selv"}
+                          </button>
+                        </div>
+                        {!canAssignOthers ? (
+                          <p className="px-3 py-3 text-xs text-white/40">Ansatte kan kun tildele seg selv.</p>
+                        ) : (
+                          <>
+                            <div className="px-2 pb-2">
+                              <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk…"
+                                  className="w-full h-8 rounded-lg border border-white/10 bg-white/5 pl-8 pr-2 text-[13px] text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+                              </div>
+                            </div>
+                            <div className="max-h-56 overflow-y-auto pb-1">
+                              {ROLE_ORDER.filter(r => assignableRoles(role).includes(r) && grouped[r].length > 0).map(r => (
+                                <div key={r}>
+                                  <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/25">{ROLE_LABEL[r]}</p>
+                                  {grouped[r].map(p => {
+                                    const on = assignees.includes(p.id)
+                                    return (
+                                      <button key={p.id} onClick={() => toggle(p.id)}
+                                        className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-white/5 transition-colors text-left">
+                                        <Avatar id={p.id} size={24} />
+                                        <span className="flex-1 text-[13px] text-white/80 truncate">{p.name}</span>
+                                        <span className={cn("flex h-4 w-4 items-center justify-center rounded border transition-colors", on ? "bg-blue-600 border-blue-600" : "border-white/20")}>
+                                          {on && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                                        </span>
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </PopPanel>
+                  )}
+                </div>
+
+                {/* Due */}
+                <div className="relative">
+                  <PropPill active={openProp === "due"} onClick={() => setOpenProp(openProp === "due" ? null : "due")}>
+                    <CalIcon className="h-3.5 w-3.5" /> {dueLabel}
+                  </PropPill>
+                  {openProp === "due" && (
+                    <PopPanel>
+                      <div className="w-52 py-1">
+                        {dueOptions.map(o => (
+                          <button key={o.label} onClick={() => { setDue(o.date); setOpenProp(null) }}
+                            className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left">
+                            <CalIcon className="h-3.5 w-3.5 text-white/40" />
+                            <span className="flex-1 text-white/85">{o.label}</span>
+                            <span className="text-[11px] text-white/30">{o.date.toLocaleDateString("nb-NO", { day: "numeric", month: "short" })}</span>
+                          </button>
+                        ))}
+                        <div className="border-t border-white/8 mt-1 px-3 py-2">
+                          <input type="date" value={due ? due.toISOString().slice(0, 10) : ""}
+                            onChange={e => { if (e.target.value) { const d = new Date(e.target.value); d.setHours(17, 0, 0, 0); setDue(d); setOpenProp(null) } }}
+                            className="w-full h-8 rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] text-white outline-none focus:border-blue-500/50 [color-scheme:dark]" />
+                        </div>
+                      </div>
+                    </PopPanel>
+                  )}
+                </div>
+
+                {/* Campaign */}
+                <div className="relative">
+                  <PropPill active={openProp === "campaign"} onClick={() => setOpenProp(openProp === "campaign" ? null : "campaign")}>
+                    <Hash className="h-3.5 w-3.5" /> {campaign || "Kampanje"}
+                  </PropPill>
+                  {openProp === "campaign" && (
+                    <PopPanel>
+                      <div className="w-52 py-1">
+                        {["Norsk Folkehjelp", "Talkmore", "CARE", "Blå Kors"].map(c => (
+                          <button key={c} onClick={() => { setCampaign(campaign === c ? "" : c); setOpenProp(null) }}
+                            className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left">
+                            <Hash className="h-3.5 w-3.5 text-white/40" />
+                            <span className="flex-1 text-white/85">{c}</span>
+                            {campaign === c && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                          </button>
+                        ))}
+                      </div>
+                    </PopPanel>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-5 py-3 border-t border-white/8">
+              <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-white/30">
+                <kbd className="rounded bg-white/8 px-1.5 py-0.5 font-mono">⌘</kbd>
+                <CornerDownLeft className="h-3 w-3" />
+                for å opprette
+              </span>
+              <div className="flex items-center gap-2 ml-auto">
+                <button onClick={close} className="cursor-pointer rounded-lg px-3.5 py-2 text-[13px] font-medium text-white/50 hover:text-white hover:bg-white/8 transition-all">Avbryt</button>
+                <button onClick={submit} disabled={!title.trim()}
+                  className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-blue-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  Opprett oppgave
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+type Perspective = "mine" | "tildelt" | "team"
+type StatusTab = "aktive" | "idag" | "forsinket" | "ferdig" | "alle"
+type LayoutMode = "board" | "liste"
+
+export function OppgaverView() {
+  const reduced = useReducedMotion()
+  const { user, isAdmin } = useAuth()
+  const role: Role = isAdmin ? "admin" : user?.user_type === "employee" ? "employee" : "manager"
+  const currentUserId = user?.user_info?.id ?? ""
+
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [people, setPeople] = useState<Person[]>([])
+  const [loading, setLoading] = useState(true)
+  const [errored, setErrored] = useState(false)
+
+  const perspectives: { key: Perspective; label: string }[] = role === "employee"
+    ? [{ key: "mine", label: "Mine oppgaver" }]
+    : [
+        { key: "mine", label: "Mine oppgaver" },
+        { key: "tildelt", label: "Tildelt av meg" },
+        { key: "team", label: "Team" },
+      ]
+
+  const [perspective, setPerspective] = useState<Perspective>("mine")
+  const [statusTab, setStatusTab] = useState<StatusTab>("alle")
+  const [layout, setLayout] = useState<LayoutMode>("board")
+  const [search, setSearch] = useState("")
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalStatus, setModalStatus] = useState<TaskStatus>("todo")
+  const openModal = (status: TaskStatus = "todo") => { setModalStatus(status); setModalOpen(true) }
+
+  // Reset perspective if role change makes it invalid
+  React.useEffect(() => {
+    if (!perspectives.find(p => p.key === perspective)) setPerspective("mine")
+  }, [role]) // eslint-disable-line
+
+  // Load assignable users (for the picker + name lookups).
+  React.useEffect(() => {
+    fetchAssignable()
+      .then(({ results }) => {
+        const mapped: Person[] = results.map(u => ({
+          id: u.id, name: u.name || u.username,
+          role: (u.user_type === "superuser" || u.user_type === "admin" || u.is_superuser) ? "admin" : u.user_type === "manager" ? "manager" : "employee",
+        }))
+        peopleRegistry = mapped
+        setPeople(mapped)
+      })
+      .catch(() => { /* leave empty */ })
+  }, [])
+
+  // Load tasks for the selected perspective (server-scoped).
+  const loadTasks = React.useCallback(() => {
+    setLoading(true); setErrored(false)
+    return listTasks({ perspective: toApiPerspective(perspective) })
+      .then((page) => setTasks(page.results.map(toViewTask)))
+      .catch(() => setErrored(true))
+      .finally(() => setLoading(false))
+  }, [perspective])
+  React.useEffect(() => { void loadTasks() }, [loadTasks])
+
+  // Server already scopes by perspective.
+  const perspectiveTasks = tasks
+
+  // Status tab + search filter
+  const filtered = useMemo(() => {
+    let out = perspectiveTasks
+    if (search) out = out.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
+    const now = new Date()
+    if (statusTab === "aktive")    out = out.filter(t => t.status !== "done")
+    else if (statusTab === "idag") out = out.filter(t => isSameDay(t.due, now))
+    else if (statusTab === "forsinket") out = out.filter(isOverdue)
+    else if (statusTab === "ferdig")    out = out.filter(t => t.status === "done")
+    return out
+  }, [perspectiveTasks, search, statusTab])
+
+  // Tab counts (from perspective tasks, ignoring status tab)
+  const counts = useMemo(() => {
+    const now = new Date()
+    return {
+      aktive: perspectiveTasks.filter(t => t.status !== "done").length,
+      idag: perspectiveTasks.filter(t => isSameDay(t.due, now)).length,
+      forsinket: perspectiveTasks.filter(isOverdue).length,
+      ferdig: perspectiveTasks.filter(t => t.status === "done").length,
+      alle: perspectiveTasks.length,
+    }
+  }, [perspectiveTasks])
+
+  // Optimistic move + live status transition, then refetch.
+  const moveTask = (id: string, status: TaskStatus) => {
+    setTasks(ts => ts.map(t => t.id === id ? { ...t, status } : t))
+    const op = status === "in_progress" ? startTask(id) : status === "done" ? completeTask(id) : patchTask(id, { status: "todo" })
+    Promise.resolve(op).then(() => loadTasks()).catch(() => loadTasks())
+  }
+  const createTask = (t: Omit<Task, "id">) => {
+    apiCreateTask({
+      title: t.title, description: t.description, priority: t.priority,
+      due: t.due && t.due.getTime() !== NO_DUE.getTime() ? t.due.toISOString().slice(0, 10) : null,
+      campaign: t.campaign ?? null, status: t.status, assignee_ids: t.assigneeIds,
+    }).then(() => loadTasks()).catch(() => { /* surfaced by reload */ })
+  }
+  const deleteTaskById = (id: string) => { apiDeleteTask(id).then(() => loadTasks()).catch(() => loadTasks()) }
+  void deleteTaskById
+
+  const TABS: { key: StatusTab; label: string; color?: string }[] = [
+    { key: "aktive", label: "Aktive" },
+    { key: "idag", label: "I dag", color: "#60a5fa" },
+    { key: "forsinket", label: "Forsinket", color: "#f43f5e" },
+    { key: "ferdig", label: "Ferdig", color: "#10b981" },
+    { key: "alle", label: "Alle" },
+  ]
+
+  return (
+    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-blue-600/8 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-purple-600/8 blur-3xl" />
+      </div>
+
+      <div className="relative px-6 py-6 max-w-[1600px] mx-auto space-y-5">
+        {/* Header */}
+        <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Oppgaver · {ROLE_LABEL[role]}</p>
+            <h1 className="text-3xl font-bold text-white">Oppgaver</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => openModal("todo")}
+              className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.35)] hover:bg-blue-500 transition-all">
+              <Plus className="h-4 w-4" /> Ny oppgave
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Perspective switch */}
+        <motion.div initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="flex gap-1 rounded-2xl bg-white/5 border border-white/8 p-1 w-fit">
+          {perspectives.map(p => (
+            <button key={p.key} onClick={() => setPerspective(p.key)}
+              className={cn("cursor-pointer rounded-xl px-5 py-2.5 text-sm font-semibold transition-all", perspective === p.key ? "bg-white/15 text-white shadow-sm" : "text-white/45 hover:text-white/80")}>
+              {p.label}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Toolbar */}
+        {perspective !== "tildelt" && (
+          <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+            className="flex flex-wrap items-center justify-between gap-3">
+            {/* Status tabs */}
+            <div className="flex flex-wrap gap-1">
+              {TABS.map(t => (
+                <button key={t.key} onClick={() => setStatusTab(t.key)}
+                  className={cn("cursor-pointer flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all",
+                    statusTab === t.key ? "bg-white/12 text-white" : "text-white/45 hover:text-white/75")}>
+                  {t.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: t.color }} />}
+                  {t.label}
+                  <span className="font-mono text-xs text-white/35">{counts[t.key]}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk i oppgaver…"
+                  className="h-9 w-48 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all" />
+              </div>
+              {/* Layout toggle */}
+              <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+                <button onClick={() => setLayout("board")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", layout === "board" ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+                  <LayoutGrid className="h-4 w-4" /> Tavle
+                </button>
+                <button onClick={() => setLayout("liste")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", layout === "liste" ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+                  <ListIcon className="h-4 w-4" /> Liste
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Content */}
+        <div>
+          {loading ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelLoading label="Laster oppgaver…" /></div>
+          ) : errored ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelError onRetry={() => void loadTasks()} /></div>
+          ) : filtered.length === 0 && perspective !== "tildelt" ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelEmpty msg="Ingen oppgaver" sub="Opprett en ny oppgave for å komme i gang." /></div>
+          ) : perspective === "tildelt" ? (
+            <DelegationView tasks={perspectiveTasks} currentUserId={currentUserId} />
+          ) : layout === "board" ? (
+            <Board tasks={filtered} onMove={moveTask} onQuickAdd={(s) => openModal(s)} />
+          ) : (
+            <TaskList tasks={filtered} />
+          )}
+        </div>
+      </div>
+
+      <NewTaskModal open={modalOpen} onClose={() => setModalOpen(false)} role={role} currentUserId={currentUserId} initialStatus={modalStatus} onCreate={createTask} people={people} />
+    </div>
+  )
+}
+
+export default OppgaverView

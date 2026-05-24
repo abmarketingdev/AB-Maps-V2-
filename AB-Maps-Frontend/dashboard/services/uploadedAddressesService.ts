@@ -345,6 +345,44 @@ export const updateAddressText = async (
   }
 };
 
+// Create a single uploaded address (manager inferred from token)
+export const createUploadedAddress = async (
+  addressText: string,
+  campaignId: string
+): Promise<UploadedAddress> => {
+  try {
+    const token = authService.getAccessToken();
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/uploaded-addresses/uploaded-addresses/`,
+      {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          address_text: addressText,
+          campaign_id: campaignId,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return (await response.json()) as UploadedAddress;
+  } catch (error) {
+    console.error('Error creating uploaded address:', error);
+    throw error;
+  }
+};
+
 export const uploadCsvFile = async (
   file: File,
   campaignId: string

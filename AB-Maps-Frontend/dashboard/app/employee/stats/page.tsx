@@ -2,7 +2,7 @@
 
 import { ProtectedRoute } from "@/lib/auth/ProtectedRoute";
 import { EmployeeLayout } from "@/components/employee/EmployeeLayout";
-import EmployeeStatsDashboard from "@/components/employee/EmployeeStatsDashboard";
+import { EmployeeStatsView } from "@/components/dashboard/v2/employee/EmployeeStatsView";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchAssignedCampaignsForEmployee } from '@/services/campaignService';
@@ -146,7 +146,7 @@ export default function EmployeeStatsPage() {
         onCampaignSelect={handleCampaignSelect}
         campaigns={campaigns}
       >
-        <EmployeeStatsDashboard />
+        <EmployeeStatsView />
       </EmployeeLayout>
       
       {/* Completion Check Popup */}

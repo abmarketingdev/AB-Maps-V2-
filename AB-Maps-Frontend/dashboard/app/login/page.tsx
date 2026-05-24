@@ -1,71 +1,96 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Lock, User as UserIcon, AlertCircle } from "lucide-react";
+import { Lock, User as UserIcon, AlertCircle, Mail, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
 import { StatusPill, Roy } from "@/components/ui-ab";
+import { requestPasswordReset } from "@/lib/api/passwordReset";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type Phase = "login" | "auth" | "loading";
 
 const LoginPage: React.FC = () => {
   const [userType, setUserType] = useState<"manager" | "employee">("manager");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("anna.berg");
+  const [password, setPassword] = useState("demo");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<Phase>("login");
+  const [progress, setProgress] = useState(0);
+  // Forgot-password sub-view
+  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSending, setForgotSending] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotError, setForgotError] = useState("");
   const router = useRouter();
   const { login, isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const targetRef = useRef<string>("/");
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated && user) {
-      if (user.user_type === "employee") {
-        router.push("/employee");
-      } else {
-        router.push("/");
-      }
+    if (!authLoading && isAuthenticated && user && phase === "login") {
+      router.push(user.user_type === "employee" ? "/employee" : "/");
     }
-  }, [isAuthenticated, authLoading, user, router]);
+  }, [isAuthenticated, authLoading, user, router, phase]);
+
+  // ─── Progress driver for the loading phase ───
+  useEffect(() => {
+    if (phase !== "loading") return;
+    let p = 0;
+    const iv = setInterval(() => {
+      p = Math.min(100, p + 7 + Math.random() * 9);
+      setProgress(Math.round(p));
+      if (p >= 100) {
+        clearInterval(iv);
+        setTimeout(() => router.push(targetRef.current), 350);
+      }
+    }, 110);
+    return () => clearInterval(iv);
+  }, [phase, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!username.trim() || !password.trim()) {
       setError("Vennligst skriv inn både brukernavn og passord");
       return;
     }
-
     setError("");
-    setLoading(true);
-
+    setPhase("auth");
     try {
-      const loginResponse = await login({
+      const response = await login({
         username: username.trim(),
         password: password.trim(),
         user_type: userType,
       });
-      if (loginResponse.user_type === "employee") {
-        router.push("/employee");
-      } else {
-        router.push("/");
-      }
+      targetRef.current = response.user_type === "employee" ? "/employee" : "/";
+      // brief "Autentiserer…" beat then move to the progress loader
+      setTimeout(() => setPhase("loading"), 700);
     } catch (err: any) {
       console.error("Login failed:", err);
-      if (err.message?.includes("401") || err.message?.includes("Unauthorized")) {
-        setError("Ugyldig brukernavn eller passord. Vennligst prøv igjen.");
-      } else if (err.message?.includes("403") || err.message?.includes("Forbidden")) {
-        setError("Tilgang nektet. Vennligst sjekk dine tillatelser.");
-      } else if (err.message?.includes("network") || err.message?.includes("fetch")) {
-        setError("Kunne ikke koble til serveren. Vennligst sjekk internettforbindelsen din.");
-      } else {
-        setError(err.message || "Innlogging feilet. Vennligst prøv igjen.");
-      }
-    } finally {
-      setLoading(false);
+      setError(err?.message || "Innlogging feilet. Vennligst prøv igjen.");
+      setPhase("login");
     }
   };
 
-  if (authLoading) {
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError("");
+    if (!EMAIL_RE.test(forgotEmail.trim())) { setForgotError("Skriv inn en gyldig e-postadresse."); return; }
+    setForgotSending(true);
+    const res = await requestPasswordReset(forgotEmail.trim());
+    setForgotSending(false);
+    if (res.rateLimited) { setForgotError(res.message); return; }
+    setForgotSent(true);
+  };
+  const backToLogin = () => { setMode("login"); setForgotSent(false); setForgotError(""); setForgotEmail(""); };
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Auth-checking spinner on first mount (before user state hydrates)
+  // ───────────────────────────────────────────────────────────────────────
+  if (authLoading && phase === "login") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-ab-base">
         <div className="text-center space-y-3">
@@ -76,6 +101,110 @@ const LoginPage: React.FC = () => {
     );
   }
 
+  // ───────────────────────────────────────────────────────────────────────
+  // LOADING SCREEN — Roy mascot + progress bar + step list (from redesign)
+  // ───────────────────────────────────────────────────────────────────────
+  if (phase === "auth" || phase === "loading") {
+    const steps = [
+      { l: "Verifiserer legitimasjon", done: progress > 5 || phase === "loading" },
+      { l: "Henter Oslo Øst-data", done: progress > 35 },
+      { l: "Synkroniserer salg & ruter", done: progress > 65 },
+      { l: "Klargjør dashbord", done: progress > 90 },
+    ];
+    return (
+      <div className="relative flex h-screen items-center justify-center overflow-hidden bg-ab-canvas">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 50% 40%, rgba(0,162,199,0.08) 0%, transparent 60%)",
+          }}
+        />
+        <div className="relative flex w-[340px] flex-col items-center gap-6">
+          {/* Roy + rotating dashed ring */}
+          <div className="relative">
+            <Roy state={phase === "auth" ? "thinking" : "ready"} size={140} />
+            <svg
+              width="200"
+              height="200"
+              className="pointer-events-none absolute -left-[30px] -top-[30px]"
+              aria-hidden
+            >
+              <circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="none"
+                stroke="var(--ab-accent-9, #00A2C7)"
+                strokeWidth="1.5"
+                strokeDasharray="3 6"
+                opacity="0.4"
+                style={{
+                  transformOrigin: "100px 100px",
+                  animation: "ab-spin-slow 8s linear infinite",
+                }}
+              />
+            </svg>
+          </div>
+
+          {/* Heading */}
+          <div className="text-center">
+            <div className="font-display text-[18px] font-semibold tracking-tight text-ab-fg">
+              {phase === "auth" ? "Autentiserer…" : "Klargjør arbeidsdagen"}
+            </div>
+            <div className="mono mt-1 text-[11px] text-ab-fg-3">
+              {username}@ab-marketing.no
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-1 w-full overflow-hidden rounded-full bg-ab-elevated">
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${progress}%`,
+                background:
+                  "linear-gradient(90deg, var(--ab-accent-9, #00A2C7), var(--ab-accent-11, #4DD0E1))",
+                transition: "width 220ms cubic-bezier(0.33, 1, 0.68, 1)",
+                boxShadow: "0 0 12px rgba(0,162,199,0.6)",
+              }}
+            />
+          </div>
+
+          {/* Step list */}
+          <div className="flex w-full flex-col gap-2">
+            {steps.map((s, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2.5 text-[12px] transition-opacity"
+                style={{
+                  color: s.done ? "var(--ab-fg-2, #c8d0db)" : "var(--ab-fg-4, #6b7484)",
+                  opacity: s.done ? 1 : 0.6,
+                }}
+              >
+                <div
+                  className="flex h-[14px] w-[14px] flex-shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-all"
+                  style={{
+                    border: `1.5px solid ${s.done ? "var(--ab-accent-9, #00A2C7)" : "var(--ab-line, #2a3340)"}`,
+                    background: s.done ? "var(--ab-accent-9, #00A2C7)" : "transparent",
+                    color: "#06181F",
+                  }}
+                >
+                  {s.done && "✓"}
+                </div>
+                {s.l}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // LOGIN SCREEN
+  // ───────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-ab-base text-ab-fg flex">
       {/* Left hero column */}
@@ -91,7 +220,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="relative z-10 max-w-md">
-          <Roy state={loading ? "thinking" : "greeting"} size={88} className="mb-6 -ml-2" />
+          <Roy state="greeting" size={96} className="mb-6 -ml-2" />
           <div className="eyebrow mb-3">Norsk dør-til-dør</div>
           <h2 className="font-display text-[40px] leading-[1.05] font-semibold tracking-tight text-ab-fg">
             Døren er din arbeidsplass.
@@ -115,7 +244,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between">
-          <StatusPill tone="live">SYSTEMER NORMALE</StatusPill>
+          <StatusPill tone="live">DEMO · INGEN BACKEND</StatusPill>
           <div className="text-[11px] text-ab-fg-4 mono">build · {new Date().getFullYear()}.05</div>
         </div>
 
@@ -132,6 +261,53 @@ const LoginPage: React.FC = () => {
 
       {/* Right form column */}
       <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
+        {mode === "forgot" ? (
+          <div className="w-full max-w-sm space-y-6 animate-ab-fade-in">
+            <button type="button" onClick={backToLogin} className="cursor-pointer flex items-center gap-1.5 text-[12px] font-medium text-ab-fg-3 hover:text-ab-fg">
+              <ArrowLeft className="h-3.5 w-3.5" /> Tilbake til innlogging
+            </button>
+            {forgotSent ? (
+              <div className="text-center space-y-4 py-4">
+                <Roy state="win-small" size={96} className="mx-auto" />
+                <div>
+                  <div className="eyebrow mb-1">Sjekk innboksen</div>
+                  <h1 className="font-display text-[24px] font-semibold tracking-tight text-ab-fg">Sjekk innboksen din</h1>
+                  <p className="text-[13px] text-ab-fg-2 mt-2 leading-relaxed">
+                    Hvis det finnes en konto med <span className="text-ab-fg">{forgotEmail}</span>, har vi sendt en lenke for å tilbakestille passordet. Lenken er gyldig i 48 timer.
+                  </p>
+                </div>
+                <button type="button" onClick={backToLogin} className="ab-btn primary lg w-full justify-center cursor-pointer">
+                  Tilbake til innlogging
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgot} className="space-y-6">
+                <div>
+                  <div className="eyebrow">Tilbakestill passord</div>
+                  <h1 className="font-display text-[28px] font-semibold tracking-tight text-ab-fg mt-1">Glemt passord?</h1>
+                  <p className="text-[13px] text-ab-fg-2 mt-1.5">
+                    Skriv inn e-posten din, så sender vi en lenke for å lage et nytt passord.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">E-post</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-3 pointer-events-none z-10" />
+                    <input type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="navn@firma.no" autoFocus required className="ab-input" style={{ paddingLeft: 36 }} />
+                  </div>
+                </div>
+                {forgotError && (
+                  <div className="flex items-start gap-2 px-3 py-2 rounded-ab-md border border-[rgba(224,128,112,0.18)] bg-ab-danger-bg text-ab-danger text-[12px]">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" /><span>{forgotError}</span>
+                  </div>
+                )}
+                <button type="submit" disabled={forgotSending || !forgotEmail.trim()} className="ab-btn primary lg w-full justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                  {forgotSending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sender…</> : "Send lenke"}
+                </button>
+              </form>
+            )}
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6 animate-ab-fade-in">
           <div className="lg:hidden flex items-center gap-2 mb-2">
             <div className="h-8 w-8 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center">
@@ -146,7 +322,7 @@ const LoginPage: React.FC = () => {
               Velkommen tilbake
             </h1>
             <p className="text-[13px] text-ab-fg-2 mt-1.5">
-              Få tilgang til AB Maps dashbordet ditt.
+              Demo-modus · enhver brukernavn/passord-kombinasjon fungerer.
             </p>
           </div>
 
@@ -160,9 +336,8 @@ const LoginPage: React.FC = () => {
                   key={t}
                   type="button"
                   onClick={() => setUserType(t)}
-                  disabled={loading}
                   className={cn(
-                    "h-8 text-[12px] font-medium rounded-[4px] transition-colors",
+                    "h-8 text-[12px] font-medium rounded-[4px] transition-colors cursor-pointer",
                     userType === t ? "bg-ab-hover text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg",
                   )}
                 >
@@ -183,7 +358,6 @@ const LoginPage: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="brukernavn"
-                disabled={loading}
                 autoFocus
                 required
                 className="ab-input"
@@ -193,9 +367,14 @@ const LoginPage: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">
-              Passord
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">
+                Passord
+              </label>
+              <button type="button" onClick={() => setMode("forgot")} className="cursor-pointer text-[11px] font-medium text-ab-accent hover:underline">
+                Glemt passord?
+              </button>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-3 pointer-events-none z-10" />
               <input
@@ -203,7 +382,6 @@ const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                disabled={loading}
                 required
                 className="ab-input"
                 style={{ paddingLeft: 36 }}
@@ -220,26 +398,20 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            disabled={loading || !username.trim() || !password.trim()}
+            disabled={!username.trim() || !password.trim()}
             className={cn(
-              "ab-btn primary lg w-full justify-center",
+              "ab-btn primary lg w-full justify-center cursor-pointer",
               "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
           >
-            {loading ? (
-              <>
-                <div className="h-3.5 w-3.5 rounded-full border-2 border-[var(--ab-text-on-accent)]/40 border-t-[var(--ab-text-on-accent)] animate-spin" />
-                <span>Logger inn…</span>
-              </>
-            ) : (
-              <>Logg inn <span className="kbd">↵</span></>
-            )}
+            Logg inn <span className="kbd">↵</span>
           </button>
 
           <p className="text-[11px] text-ab-fg-3 text-center">
-            Har du problemer? Kontakt systemadministratoren din.
+            Demo-modus · ingen API-er er koblet til.
           </p>
         </form>
+        )}
       </main>
     </div>
   );

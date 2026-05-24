@@ -30,19 +30,13 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
   // Get manager ID from authenticated user
   const managerId = user?.user_info?.manager_id || user?.user_info?.id || user?.user_id || "";
 
+  // Fetch all campaigns from the API (GET /api/campaigns/campaigns/all_campaigns/).
   const refresh = async () => {
-    if (!isAuthenticated || !managerId || user?.user_type !== "manager") {
-      setCampaigns([]);
-      setLoading(false);
-      return;
-    }
-    
     setLoading(true);
     try {
-      const data = await fetchAllCampaigns();
-      setCampaigns(data);
-    } catch (error) {
-      console.error("Failed to fetch campaigns:", error);
+      const list = await fetchAllCampaigns();
+      setCampaigns(list);
+    } catch {
       setCampaigns([]);
     } finally {
       setLoading(false);
@@ -50,6 +44,7 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) { setCampaigns([]); setLoading(false); return; }
     refresh();
   }, [isAuthenticated, managerId]);
 

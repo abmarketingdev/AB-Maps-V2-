@@ -507,7 +507,7 @@ export default function SalesScreen() {
     totalPages: 1,
     totalCount: 0,
   })
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(true) // DEMO: always authenticated
   const [registerSaleOpen, setRegisterSaleOpen] = useState(false)
   const [salesData, setSalesData] = useState<UnifiedSalesData[]>([])
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
@@ -541,21 +541,9 @@ export default function SalesScreen() {
 
   const isNorskFolkehjelp = currentCampaign?.name?.toLowerCase().trim() === "norsk folkehjelp"
 
-  // Check authentication on component mount
+  // DEMO MODE: authentication is hardcoded on; no token check.
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        if (authService.isAuthenticated()) {
-          await authService.verifyToken()
-          setIsAuthenticated(true)
-        }
-      } catch (error) {
-        console.error("Authentication check failed:", error)
-        setIsAuthenticated(false)
-      }
-    }
-
-    checkAuth()
+    setIsAuthenticated(true)
   }, [])
 
   // Clear invalid campaign data on mount
@@ -602,98 +590,63 @@ export default function SalesScreen() {
     console.log("isNorskFolkehjelp:", isNorskFolkehjelp)
   }, [currentCampaign, isNorskFolkehjelp])
 
-  // Load campaigns on component mount
+  // DEMO MODE: seed dummy campaigns instead of hitting the API.
   useEffect(() => {
-    const loadCampaigns = async () => {
-      try {
-        console.log("Loading campaigns...")
-        const campaignsData = await fetchCampaigns()
-        console.log("Campaigns loaded:", campaignsData)
-
-        if (!Array.isArray(campaignsData)) {
-          console.error("Campaigns data is not an array:", campaignsData)
-          setError("Ugyldig kampanje-data mottatt fra serveren.")
-          return
-        }
-
-        setCampaigns(campaignsData)
-
-        if (campaignsData.length === 0) {
-          setError("Ingen kampanjer tilgjengelig. Vennligst opprett kampanjer først.")
-          return
-        }
-
-        const storedCampaign = getSelectedCampaign()
-        console.log("Stored campaign from localStorage:", storedCampaign)
-
-        if (!storedCampaign && campaignsData.length > 0) {
-          const preferredCampaign =
-            campaignsData.find((c) => c.name === "NGO Campaign") || campaignsData[0]
-          console.log("No stored campaign, setting default:", preferredCampaign)
-          setSelectedCampaign(preferredCampaign)
-          setSelectedCampaignState(preferredCampaign.name)
-          setCurrentCampaign(preferredCampaign)
-        } else if (storedCampaign) {
-          const campaignExists = campaignsData.find((c) => c.id === storedCampaign.id)
-          console.log("Stored campaign exists in available campaigns:", campaignExists)
-
-          if (campaignExists) {
-            console.log("Using stored campaign:", storedCampaign)
-            setSelectedCampaignState(storedCampaign.name)
-            setCurrentCampaign(storedCampaign)
-          } else {
-            const preferredCampaign =
-              campaignsData.find((c) => c.name === "NGO Campaign") || campaignsData[0]
-            console.log("Stored campaign not found, setting default:", preferredCampaign)
-            setSelectedCampaign(preferredCampaign)
-            setSelectedCampaignState(preferredCampaign.name)
-            setCurrentCampaign(preferredCampaign)
-          }
-        }
-      } catch (error) {
-        console.error("Error loading campaigns:", error)
-        setError("Kunne ikke laste kampanjer. Vennligst sjekk tilkoblingen din.")
-      }
-    }
-
-    if (isAuthenticated) {
-      loadCampaigns()
-    }
+    if (!isAuthenticated) return
+    const demoCampaigns = [
+      { id: "demo-camp-001", name: "Norsk Folkehjelp" },
+      { id: "demo-camp-002", name: "Strømavtale Oslo Øst" },
+      { id: "demo-camp-003", name: "Bredbånd Vinter 2026" },
+      { id: "demo-camp-004", name: "NGO Campaign" },
+    ]
+    setCampaigns(demoCampaigns)
+    const stored = getSelectedCampaign()
+    const initial = stored && demoCampaigns.find((c) => c.id === stored.id)
+      ? stored
+      : demoCampaigns[0]
+    setSelectedCampaign(initial)
+    setSelectedCampaignState(initial.name)
+    setCurrentCampaign(initial)
   }, [isAuthenticated])
 
-  // Load sales data when campaign changes
+  // DEMO MODE: generate dummy sales data instead of fetching from API.
   useEffect(() => {
-    const loadSalesData = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        if (!currentCampaign) {
-          setSalesData([])
-          setLoading(false)
-          return
-        }
-
-        console.log("Loading sales data for campaign:", currentCampaign)
-        console.log("isNorskFolkehjelp:", isNorskFolkehjelp)
-
-        const newSalesData = await fetchSalesData(currentCampaign.id, startDate, endDate)
-
-        console.log("Received salesData:", newSalesData)
-        console.log("salesData type:", typeof newSalesData)
-        console.log("salesData is array:", Array.isArray(newSalesData))
-
-        setSalesData(newSalesData)
-      } catch (err: any) {
-        console.error("Error in loadSalesData:", err)
-        setError(err.message || "Kunne ikke hente salgsdata.")
-        setSalesData([])
-      } finally {
-        setLoading(false)
-      }
+    if (!isAuthenticated || campaigns.length === 0 || !currentCampaign) {
+      setSalesData([])
+      return
     }
-    if (isAuthenticated && campaigns.length > 0) {
-      loadSalesData()
+    setLoading(true)
+    setError(null)
+    const sellers = [
+      "Anna Berg", "Lars Holm", "Mia Solberg", "Erik Lund", "Nora Dahl",
+      "Jonas Vik", "Ida Aas", "Sondre Berg", "Kari Nilsen", "Petter Ruud",
+      "Henrik Strand",
+    ]
+    const today = new Date()
+    const rows: UnifiedSalesData[] = []
+    // 90 dummy sales spread across last 30 days
+    for (let i = 0; i < 90; i++) {
+      const daysAgo = Math.floor(Math.random() * 30)
+      const d = new Date(today)
+      d.setDate(d.getDate() - daysAgo)
+      d.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60), 0, 0)
+      const seller = sellers[Math.floor(Math.random() * sellers.length)]
+      const amount = isNorskFolkehjelp
+        ? null
+        : [2490, 3290, 3990, 4290, 4990, 5490, 6290, 7490][Math.floor(Math.random() * 8)]
+      rows.push({
+        seller,
+        campaign_name: currentCampaign.name,
+        date: d.toISOString(),
+        gavebelop: amount,
+      })
     }
+    // Brief simulated loading so the UI shows its loading state.
+    const t = setTimeout(() => {
+      setSalesData(rows)
+      setLoading(false)
+    }, 200)
+    return () => clearTimeout(t)
   }, [isAuthenticated, campaigns, currentCampaign, startDate, endDate, isNorskFolkehjelp])
 
   // Frontend date and search filtering for sales data

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -89,9 +90,11 @@ export function LockedNavItem({
           className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-28 rounded-full bg-ab-accent/30 blur-2xl"
         />
       )}
-      {/* Active left edge accent bar */}
+      {/* Active left edge accent bar — slides between items */}
       {isActive && (
-        <span
+        <motion.span
+          layoutId="nav-active-bar"
+          transition={{ type: "spring", stiffness: 500, damping: 34 }}
           aria-hidden
           className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-ab-accent"
           style={{ boxShadow: "0 0 8px hsl(var(--accent) / 0.6)" }}
@@ -139,42 +142,42 @@ export function LockedNavItem({
     );
   }
 
-  // Render external link
+  // Build the interactive element
+  let inner: React.ReactNode;
   if (isExternal && onClick) {
-    return (
-      <button
-        onClick={shouldBeLocked ? undefined : onClick}
-        className={merged}
-        disabled={shouldBeLocked}
-      >
+    inner = (
+      <button onClick={shouldBeLocked ? undefined : onClick} className={merged} disabled={shouldBeLocked}>
         {itemContent}
       </button>
     );
-  }
-
-  if (isExternal) {
-    return (
-      <a
-        href={shouldBeLocked ? '#' : href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={merged}
-        onClick={shouldBeLocked ? (e) => e.preventDefault() : undefined}
-      >
+  } else if (isExternal) {
+    inner = (
+      <a href={shouldBeLocked ? '#' : href} target="_blank" rel="noopener noreferrer" className={merged}
+        onClick={shouldBeLocked ? (e) => e.preventDefault() : undefined}>
         {itemContent}
       </a>
     );
+  } else {
+    inner = (
+      <Link href={shouldBeLocked ? '#' : href} className={merged}
+        onClick={shouldBeLocked ? (e) => e.preventDefault() : undefined}>
+        {itemContent}
+      </Link>
+    );
   }
 
-  // Render internal link
-  return (
-    <Link
-      href={shouldBeLocked ? '#' : href}
-      className={merged}
-      onClick={shouldBeLocked ? (e) => e.preventDefault() : undefined}
-    >
-      {itemContent}
-    </Link>
-  );
+  // Collapsed rail → reveal the label as a tooltip on hover.
+  if (collapsed && !shouldBeLocked) {
+    return (
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>{inner}</TooltipTrigger>
+          <TooltipContent side="right" sideOffset={10} className="font-medium">{title}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return inner;
 }
 
