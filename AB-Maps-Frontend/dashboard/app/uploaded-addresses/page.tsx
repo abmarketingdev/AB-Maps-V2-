@@ -6,7 +6,7 @@ import { AddAddressView } from "@/components/dashboard/v2/AddAddressView";
 
 export default function UploadedAddressesPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allow={({ isSuperuser, isSalesChief }) => isSuperuser || isSalesChief}>
       <ClientLayout>
         <AddAddressView />
       </ClientLayout>

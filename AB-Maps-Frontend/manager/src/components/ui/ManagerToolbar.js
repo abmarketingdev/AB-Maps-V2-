@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaMapMarkedAlt, FaChevronDown, FaChevronUp, FaSignOutAlt, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { areaService } from '../../services/areaService';
-import { getCampaignById } from '../../services/campaignFormService';
+import { getCampaignById, getCampaigns } from '../../services/campaignFormService';
 import './ManagerToolbar.css';
 
 
@@ -11,7 +11,8 @@ const ManagerSummaryDropdown = ({
   onlineCount,
   open,
   onToggle,
-  onAreaSelect
+  onAreaSelect,
+  onCampaignSelect
 }) => {
   const { logout } = useAuth();
   const [managerAreas, setManagerAreas] = useState([]);
@@ -20,6 +21,31 @@ const ManagerSummaryDropdown = ({
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [currentCampaign, setCurrentCampaign] = useState(null);
+  const [campaigns, setCampaigns] = useState([]);
+
+  // Load the selectable campaigns for the picker.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await getCampaigns();
+        const arr = Array.isArray(list) ? list : (list?.results || []);
+        if (!cancelled) setCampaigns(arr);
+      } catch {
+        if (!cancelled) setCampaigns([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Pick a campaign from the dropdown → notify the app (persists + syncs authService) and update
+  // the local display so getCampaignId() resolves for the body campaign_id + X-Campaign-ID header.
+  const handlePickCampaign = (e) => {
+    const id = e.target.value;
+    const campaign = campaigns.find(c => String(c.id) === String(id)) || null;
+    setCurrentCampaign(campaign);
+    if (onCampaignSelect) onCampaignSelect(campaign);
+  };
 
   useEffect(() => {
     const readCampaign = async () => {
@@ -165,10 +191,19 @@ const ManagerSummaryDropdown = ({
                 </button>
               </div>
 
-              {/* Campaign Info */}
+              {/* Campaign selector */}
               <div className="mobile-campaign-info">
                 <div className="mobile-campaign-label">Valgt kampanje:</div>
-                <div className="mobile-campaign-name">{currentCampaign ? currentCampaign.name : 'Ingen kampanje valgt'}</div>
+                <select
+                  className="campaign-select mobile-campaign-select"
+                  value={currentCampaign?.id || ''}
+                  onChange={handlePickCampaign}
+                >
+                  <option value="">Ingen kampanje valgt</option>
+                  {campaigns.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Quick Actions */}
@@ -249,10 +284,19 @@ const ManagerSummaryDropdown = ({
       </div>
       {open && (
         <div className="area-dropdown open">
-          {/* Campaign Info */}
+          {/* Campaign selector */}
           <div className="campaign-info">
             <div className="campaign-label">Valgt kampanje:</div>
-            <div className="campaign-name">{currentCampaign && currentCampaign.name ? currentCampaign.name : 'Ingen kampanje valgt'}</div>
+            <select
+              className="campaign-select"
+              value={currentCampaign?.id || ''}
+              onChange={handlePickCampaign}
+            >
+              <option value="">Ingen kampanje valgt</option>
+              {campaigns.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
           <div className="area-list">
             {loading ? (

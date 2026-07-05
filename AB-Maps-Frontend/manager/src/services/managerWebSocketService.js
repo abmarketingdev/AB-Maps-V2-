@@ -83,7 +83,9 @@ class ManagerWebSocketService {
     this.currentToken = refreshedToken;
 
     return new Promise((resolve, reject) => {
-      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+      // Fallback so an unset env var can't throw before `new WebSocket()` (which would
+      // silently prevent any WS from connecting — no Network entry at all).
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
       const wsUrl = BACKEND_URL.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws/tracking/dashboard/?token=' + refreshedToken;
 
       console.log('Backend URL:', BACKEND_URL);

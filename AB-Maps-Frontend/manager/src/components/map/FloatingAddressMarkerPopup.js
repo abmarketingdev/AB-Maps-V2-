@@ -132,16 +132,22 @@ const FloatingAddressMarkerPopup = ({
         // Initialize notes state with fetched data
         setNotes(response.notes || '');
         
-        // Check permissions based on user type
-        let canDelete = false;
-        const currentUserId = user?.user_info?.id;
-        
-        if (user.user_type === 'manager' && response.manager?.id) {
-          canDelete = response.manager.id === currentUserId;
-        } else if (user.user_type === 'employee' && response.employee?.id) {
-          canDelete = response.employee.id === currentUserId;
-        }
-        
+        // Permissions: owner (created_by_user_id === my auth user_id) OR admin/superuser.
+        // Backend enforces the same rule on DELETE.
+        let cachedSuperuser = false;
+        try {
+          cachedSuperuser = JSON.parse(sessionStorage.getItem('superuser_status') || '{}')?.status === true;
+        } catch { /* ignore */ }
+        const isAdmin = ['admin', 'superuser'].includes(user.user_type) || cachedSuperuser;
+        const authId = user?.user_id;
+        const creator = response.created_by_user_id;
+        const domainId = user?.user_info?.id;
+        const canDelete =
+          isAdmin ||
+          (!!creator && !!authId && String(creator) === String(authId)) ||
+          (user.user_type === 'manager' && response.manager_id && String(response.manager_id) === String(domainId)) ||
+          (user.user_type === 'employee' && response.employee_id && String(response.employee_id) === String(domainId));
+
         setCanDeleteAddress(canDelete);
         
       } catch (err) {

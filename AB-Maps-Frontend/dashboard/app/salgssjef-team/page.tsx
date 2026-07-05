@@ -4,7 +4,7 @@ import { SalgssjefTeamView } from "@/components/dashboard/v2/SalgssjefTeamView";
 
 export default function Page() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allow={({ isSuperuser, isSalesChief }) => isSuperuser || isSalesChief}>
       <ClientLayout>
         <SalgssjefTeamView />
       </ClientLayout>

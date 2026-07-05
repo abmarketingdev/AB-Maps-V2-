@@ -19,6 +19,23 @@ import { fetchAllCampaigns } from "@/services/campaignService"
 import { fetchAssignable } from "@/lib/api/users"
 import { fetchHeatmap, type HeatmapMetric } from "@/lib/api/heatmap"
 import { RoyMascot, type RoyState } from "@/components/gamification/RoyMascot"
+import { AreaStatsPanel } from "./AreaStatsPanel"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { useIsMobile } from "@/hooks/use-mobile"
+
+// Per-area stats date window (mirrors the retired Geografi period filter).
+type Period = "uke" | "maaned" | "kvartal" | "alle"
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "uke", label: "7 dager" }, { key: "maaned", label: "30 dager" },
+  { key: "kvartal", label: "90 dager" }, { key: "alle", label: "Alle" },
+]
+function ymd(d: Date) { return d.toISOString().slice(0, 10) }
+function rangeFor(p: Period): { start?: string; end?: string } {
+  if (p === "alle") return {}  // all-time → no recorded_at filter (backend default)
+  const start = new Date()
+  start.setDate(start.getDate() - (p === "uke" ? 6 : p === "maaned" ? 29 : 89))
+  return { start: ymd(start), end: ymd(new Date()) }
+}
 
 // Cosmetic mascot per person id (deterministic by id hash — not data).
 const ROY_STATES: RoyState[] = ["ready", "idle", "win-small", "greeting", "thinking", "win-big"]
@@ -99,6 +116,10 @@ export function OmraderView() {
   const [heat, setHeat] = useState<HeatOverlay | null>(null)
   const [modal, setModal] = useState<ModalKind>(null)
   const [menuFor, setMenuFor] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
+  const [period, setPeriod] = useState<Period>("alle")
+  const isMobile = useIsMobile()
+  const range = useMemo(() => rangeFor(period), [period])
 
   // Load real campaigns for the filter (tiles + scoped fetches need real UUIDs).
   // `Campaign` has no color, so assign one from the palette by index.
@@ -113,18 +134,18 @@ export function OmraderView() {
     return () => { cancelled = true }
   }, [])
 
-  // Areas (cards/dock list) are fetched campaign-scoped + paginated (10/page),
-  // only once a campaign is selected. The map renders ALL polygons via MVT tiles
-  // (AreasMap), independent of which page the list shows.
+  // The backend returns a campaign's FULL area list in one call, so fetch it ONCE
+  // per campaign and paginate/search CLIENT-SIDE. (A campaign can have thousands of
+  // areas — rendering all of them as animated rows froze the browser; we now render
+  // only the current page. The map draws all polygons via MVT tiles regardless.)
   const PAGE_SIZE = 10
   const decorate = (a: Area): MockArea => ({ ...a, load: 0, __assignees: [] })
-  const totalPages = Math.max(1, Math.ceil(areasTotal / PAGE_SIZE))
 
   useEffect(() => {
     if (!campaignFilter) { setAreas([]); setAreasTotal(0); setAreasLoading(false); return }
     let cancelled = false
     setAreasLoading(true)
-    getCampaignAreas(campaignFilter, areasPage, PAGE_SIZE)
+    getCampaignAreas(campaignFilter, 1, 10000)
       .then((res) => {
         if (cancelled) return
         setAreas(res.results.map(decorate))
@@ -133,7 +154,10 @@ export function OmraderView() {
       .catch(() => { if (!cancelled) { setAreas([]); setAreasTotal(0) } })
       .finally(() => { if (!cancelled) setAreasLoading(false) })
     return () => { cancelled = true }
-  }, [campaignFilter, areasPage])
+  }, [campaignFilter])
+
+  // Reset to page 1 whenever the working set changes.
+  useEffect(() => { setAreasPage(1) }, [campaignFilter, search])
 
   // Heatmap overlay: color areas by metric (ja-rate/doors), joined on area_id.
   useEffect(() => {
@@ -151,8 +175,22 @@ export function OmraderView() {
     return () => { cancelled = true }
   }, [campaignFilter, heatMetric])
 
-  // Areas are already campaign-scoped server-side; the list shows them as-is.
-  const filteredAreas = areas
+  // Areas are campaign-scoped server-side; filter by the search box client-side
+  // (the backend returns the campaign's full area list in one call).
+  const filteredAreas = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return q ? areas.filter(a => (a.name || "").toLowerCase().includes(q)) : areas
+  }, [areas, search])
+  const totalPages = Math.max(1, Math.ceil(filteredAreas.length / PAGE_SIZE))
+  // Only the current page is rendered — thousands of animated rows froze the tab.
+  const pagedAreas = useMemo(
+    () => filteredAreas.slice((areasPage - 1) * PAGE_SIZE, areasPage * PAGE_SIZE),
+    [filteredAreas, areasPage],
+  )
+  const selectedArea = useMemo(
+    () => areas.find(a => a.id === selectedAreaId) ?? null,
+    [areas, selectedAreaId],
+  )
 
   // mutations
   const upsertArea = (area: MockArea) => setAreas(prev => prev.some(a => a.id === area.id) ? prev.map(a => a.id === area.id ? area : a) : [area, ...prev])
@@ -174,7 +212,17 @@ export function OmraderView() {
             <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Geografisk fordeling · Kapasitet</p>
             <h1 className="text-3xl font-bold text-white">Områder</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Stats period (drives the area-detail panel window) */}
+            <div className="hidden sm:flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+              {PERIODS.map(p => (
+                <button key={p.key} onClick={() => setPeriod(p.key)}
+                  className={cn("cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all",
+                    period === p.key ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
             {/* Campaign filter */}
             <div className="relative">
               <button onClick={() => setCampOpen(o => !o)}
@@ -211,9 +259,30 @@ export function OmraderView() {
 
         {/* List + Map */}
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(360px,440px)_1fr] gap-5" style={{ minHeight: 540 }}>
-          {/* List */}
+          {/* Left: area list ↔ area-stats panel (desktop swaps in place; mobile uses a Sheet) */}
+          {selectedAreaId && !isMobile ? (
+            <AreaStatsPanel
+              areaId={selectedAreaId}
+              campaign={campaignFilter ?? undefined}
+              fallbackName={selectedArea?.name}
+              accent={selectedArea?.color}
+              start={range.start}
+              end={range.end}
+              onBack={() => setSelectedAreaId(null)}
+            />
+          ) : (
           <motion.div initial={reduced ? false : { opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}
             className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden flex flex-col">
+            {/* Search */}
+            {campaignFilter && (
+              <div className="px-3 pt-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk område…"
+                    className="w-full h-9 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+                </div>
+              </div>
+            )}
             <div className="px-4 py-3 border-b border-white/8 grid grid-cols-[1fr_auto_auto] gap-3 items-center text-[10px] font-bold uppercase tracking-wider text-white/35">
               <span>Område</span><span className="text-right pr-2">Dører · Last</span><span className="text-right">Tildelt</span>
             </div>
@@ -235,11 +304,11 @@ export function OmraderView() {
                     </>
                   )}
                 </div>
-              ) : filteredAreas.map((area, i) => {
+              ) : pagedAreas.map((area, i) => {
                 const selected = selectedAreaId === area.id
                 return (
                   <motion.div key={area.id}
-                    initial={reduced ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 + i * 0.03 }}
+                    initial={reduced ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i, 10) * 0.02 }}
                     onMouseEnter={() => setHoveredAreaId(area.id)} onMouseLeave={() => setHoveredAreaId(null)}
                     onClick={() => setSelectedAreaId(selected ? null : area.id)}
                     className={cn("group relative cursor-pointer px-4 py-3 grid grid-cols-[1fr_auto_auto] gap-3 items-center transition-colors",
@@ -292,11 +361,11 @@ export function OmraderView() {
                 )
               })}
             </div>
-            {/* Pagination footer */}
-            {campaignFilter && areasTotal > 0 && (
+            {/* Pagination footer (client-side over the filtered set) */}
+            {campaignFilter && filteredAreas.length > 0 && (
               <div className="px-4 py-3 border-t border-white/8 flex items-center justify-between gap-3">
                 <span className="text-[11px] text-white/35">
-                  Side {areasPage} av {totalPages} · {nbFmt.format(areasTotal)} områder
+                  Side {areasPage} av {totalPages} · {nbFmt.format(filteredAreas.length)} områder
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => setAreasPage(p => Math.max(1, p - 1))} disabled={areasLoading || areasPage <= 1}
@@ -311,10 +380,11 @@ export function OmraderView() {
               </div>
             )}
           </motion.div>
+          )}
 
           {/* Map (kept as-is) */}
           <motion.div initial={reduced ? false : { opacity: 0, scale: 0.99 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}
-            className="rounded-2xl border border-white/10 overflow-hidden relative">
+            className="rounded-2xl border border-white/10 overflow-hidden relative min-h-[60vh] xl:min-h-0">
             {/* Heatmap metric toggle */}
             {campaignFilter && (
               <div className="absolute top-3 left-3 z-[2] flex gap-1 rounded-xl border border-white/10 bg-[#0d1528]/85 backdrop-blur-md p-1 shadow-lg">
@@ -337,7 +407,7 @@ export function OmraderView() {
             )}
             <AreasMap
               campaignId={campaignFilter}
-              areas={filteredAreas}
+              areas={areas}
               selectedAreaId={selectedAreaId}
               hoveredAreaId={hoveredAreaId}
               highlightedAreaIds={highlightedAreaIds}
@@ -350,6 +420,24 @@ export function OmraderView() {
         </div>
 
       </div>
+
+      {/* Mobile: area stats slide up over the map instead of pushing it off-screen */}
+      <Sheet open={isMobile && !!selectedAreaId} onOpenChange={(o) => { if (!o) setSelectedAreaId(null) }}>
+        <SheetContent side="bottom" className="h-[86vh] p-0 border-white/10 bg-transparent">
+          {isMobile && selectedAreaId && (
+            <div className="h-full p-2">
+              <AreaStatsPanel
+                areaId={selectedAreaId}
+                fallbackName={selectedArea?.name}
+                accent={selectedArea?.color}
+                start={range.start}
+                end={range.end}
+                onBack={() => setSelectedAreaId(null)}
+              />
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Modals */}
       <AreaModals modal={modal} campaigns={campaigns} onClose={() => setModal(null)} onSave={upsertArea} onDelete={removeArea} />

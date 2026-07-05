@@ -401,7 +401,7 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
     
     const handleLoc = ({ location }) => {
       if (location && typeof location.latitude === 'number' && typeof location.longitude === 'number') {
-        const newLocation = { lat: location.latitude, lon: location.longitude };
+        const newLocation = { lat: location.latitude, lon: location.longitude, accuracy: location.accuracy };
         
         // Always update current location for map centering
         setUserLocation(newLocation);
@@ -420,7 +420,7 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
     
           const handlePermissionGranted = ({ location }) => {
         if (location && typeof location.latitude === 'number' && typeof location.longitude === 'number') {
-          const newLocation = { lat: location.latitude, lon: location.longitude };
+          const newLocation = { lat: location.latitude, lon: location.longitude, accuracy: location.accuracy };
           setUserLocation(newLocation);
           setLastFetchLocation(newLocation);
           setHasInitialLoad(true);
@@ -645,8 +645,16 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
             
             // Get campaign ID and manager ID for the API call
             const campaignId = authService.getCampaignId();
+            // No campaign → the bulk-create would 400 and no building would be created. Stop early
+            // with a clear message and prompt the user to pick a campaign in the toolbar.
+            if (!campaignId) {
+              setIsGeonorgeLoading(false);
+              setClickedInfo(null);
+              setToast({ visible: true, message: 'Velg en kampanje først (øverst i verktøylinjen)', type: 'error' });
+              return;
+            }
             const createdById = currentUser?.id || null;
-            
+
             // Call backend local-lookup API
             const lookupResult = await fetchLocalLookupForAddress(primaryAddress, {
               campaignId,
@@ -797,7 +805,12 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
         
         // Get campaign ID
         const campaignId = authService.getCampaignId();
-        
+        if (!campaignId) {
+          setClickedInfo(null);
+          setToast({ visible: true, message: 'Velg en kampanje først (øverst i verktøylinjen)', type: 'error' });
+          return;
+        }
+
         // Create building via bulk-create API
         const buildingData = {
           base_address: address,
@@ -1608,28 +1621,38 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
    * Check if a marker belongs to the current user
    */
   const canDeleteMarker = (marker) => {
-    
     if (!currentUser || !marker) {
       return false;
     }
-    
-    // Handle both camelCase and snake_case property names
+
+    // Admins/superusers can delete any marker (backend also enforces this).
+    let cachedSuperuser = false;
+    try {
+      cachedSuperuser = JSON.parse(sessionStorage.getItem('superuser_status') || '{}')?.status === true;
+    } catch { /* ignore */ }
+    if (['admin', 'superuser'].includes(currentUser.user_type) || cachedSuperuser) {
+      return true;
+    }
+
+    // Owner: the auth user who created the marker. `created_by_user_id` is stamped from the
+    // token on every create and matches `currentUser.user_id` (both are the auth user id).
+    const markerCreator = marker.created_by_user_id || marker.createdByUserId;
+    const authId = currentUser.user_id;
+    if (markerCreator && authId && String(markerCreator) === String(authId)) {
+      return true;
+    }
+
+    // Legacy fallback: domain-id match (for rows/tiles that only carry manager_id/employee_id).
     const markerManagerId = marker.managerId || marker.manager_id;
     const markerEmployeeId = marker.employeeId || marker.employee_id;
-    const currentUserId = currentUser.user_info?.id;
-    
-    // Check if marker has user information for managers
-    if (markerManagerId && currentUser.user_type === 'manager') {
-      const canDelete = markerManagerId === currentUserId;
-      return canDelete;
+    const domainId = currentUser.user_info?.id;
+    if (markerManagerId && currentUser.user_type === 'manager' && String(markerManagerId) === String(domainId)) {
+      return true;
     }
-    
-    // Check if marker has user information for employees
-    if (markerEmployeeId && currentUser.user_type === 'employee') {
-      const canDelete = markerEmployeeId === currentUserId;
-      return canDelete;
+    if (markerEmployeeId && currentUser.user_type === 'employee' && String(markerEmployeeId) === String(domainId)) {
+      return true;
     }
-    
+
     return false;
   };
 

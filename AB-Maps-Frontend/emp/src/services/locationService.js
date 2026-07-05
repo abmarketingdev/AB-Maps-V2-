@@ -623,7 +623,9 @@ class LocationService {
       }
     }
 
-    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+    // Fallback so an unset env var can't throw before `new WebSocket()` (which would
+    // silently prevent any WS from connecting — no Network entry at all).
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
     const wsUrl = `${BACKEND_URL.replace(/^http/, 'ws')}/ws/tracking/?token=${token}`;
     console.log('[LocationService] Connecting to WS:', wsUrl);
 

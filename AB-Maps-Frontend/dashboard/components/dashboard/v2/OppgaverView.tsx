@@ -13,7 +13,10 @@
  *   - Employee→ self only
  *
  * Layouts: Board (Kanban, drag to move) + Liste toggle.
- * Runs entirely on MOCK DATA. A "Vis som" demo switcher lets you test each role.
+ * Live data: role comes from the authenticated user (useAuth → user_type), the
+ * assignee picker from /api/users/assignable/, and tasks from /api/todos/v2/tasks/
+ * scoped per perspective. The perspective set and assignee picker are driven strictly
+ * by the real role — employees only ever see "Mine oppgaver" and cannot assign.
  */
 
 import React, { useState, useMemo } from "react"

@@ -106,9 +106,10 @@ class TalkmoreWebSocketService {
         return;
       }
 
-      // Convert HTTP/HTTPS to WS/WSS
-      const wsUrl = BACKEND_URL.replace('http://', 'ws://').replace('https://', 'wss://') + 
-                    `/ws/talkmore/jobs/${jobId}/`;
+      // Convert HTTP/HTTPS to WS/WSS. Browsers can't set WS headers, so the JWT
+      // is passed as a ?token= query param (mirrors managerWebSocketService).
+      const wsUrl = BACKEND_URL.replace('http://', 'ws://').replace('https://', 'wss://') +
+                    `/ws/talkmore/jobs/${jobId}/?token=${refreshedToken}`;
 
       console.log('[talkmoreWebSocketService] Backend URL:', BACKEND_URL);
       console.log('[talkmoreWebSocketService] WebSocket URL:', wsUrl);

@@ -101,17 +101,16 @@ const FloatingAddressMarkerPopup = ({
         // Initialize notes state with fetched data
         setNotes(response.notes || '');
         
-        // Check permissions based on user type
-        let canDelete = false;
-        const currentUserId = employee?.id;
-        
-        if (employee && response.employee?.id) {
-          canDelete = response.employee.id === currentUserId;
-        } else if (employee && response.manager?.id) {
-          // Employees can't edit manager addresses, but check anyway
-          canDelete = false;
-        }
-        
+        // Owner check: the serializer returns FLAT ids. An employee owns a marker when its
+        // employee_id matches their domain id (backend stamps employee_id on emp-created rows),
+        // or when created_by_user_id matches their auth user id. Backend enforces the same rule.
+        const domainId = employee?.id;
+        const authId = employee?.user_id || employee?.user?.id;
+        const creator = response.created_by_user_id;
+        const canDelete =
+          (!!response.employee_id && String(response.employee_id) === String(domainId)) ||
+          (!!creator && !!authId && String(creator) === String(authId));
+
         setCanDeleteAddress(canDelete);
         
       } catch (err) {

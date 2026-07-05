@@ -276,10 +276,43 @@ class AuthService {
   }
 
   /**
-   * Get campaign ID
+   * Get campaign ID — ALWAYS a plain UUID string (or null).
+   * handleCampaignSelect() persists the full campaign OBJECT to localStorage
+   * ('currentCampaign'), so returning it raw yielded a JSON blob in the
+   * X-Campaign-ID header (breaking lock "kampanje ingen valgt" + polygon delete).
+   * Normalise both sources (object → .id, JSON string → parsed .id, plain id → as-is).
    */
   getCampaignId() {
-    return this.user?.campaignId || localStorage.getItem('currentCampaign');
+    const norm = (v) => {
+      if (!v) return null;
+      if (typeof v === 'object') return v.id || null;
+      const s = String(v);
+      if (s[0] === '{') {
+        try { return JSON.parse(s)?.id || null; } catch { return null; }
+      }
+      return s;
+    };
+    return norm(this.user?.campaignId) || norm(localStorage.getItem('currentCampaign'));
+  }
+
+  /**
+   * Persist the selected campaign so BOTH the in-memory user and localStorage stay in sync,
+   * and getCampaignId() (hence the body campaign_id + X-Campaign-ID header) resolves immediately
+   * — no reload needed. Accepts a campaign object {id,name,...} or a raw id string.
+   */
+  setCampaignId(campaign) {
+    const id = campaign && (typeof campaign === 'object' ? campaign.id : campaign);
+    if (!id) {
+      if (this.user) this.user.campaignId = null;
+      localStorage.removeItem('currentCampaign');
+      return null;
+    }
+    if (this.user) this.user.campaignId = id;
+    const toStore = typeof campaign === 'object'
+      ? JSON.stringify({ id, name: campaign.name, description: campaign.description })
+      : String(id);
+    localStorage.setItem('currentCampaign', toStore);
+    return id;
   }
 
   /**

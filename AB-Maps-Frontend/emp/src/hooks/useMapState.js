@@ -13,9 +13,13 @@ import { isNRCCampaign, openNRCUrl } from '../utils/nrcUrlHelper';
 // Phase 2: Import for Discovery Flow (Backend local-lookup API for apartment detection)
 import { fetchLocalLookupForAddress, fetchGeonorgeForAddress } from '../services/apartmentService';
 import buildingService from '../services/buildingService';
+import { API_CONFIG } from '../config/apiConfig';
 // Helper to fetch statuses for an address
 const getAddressStatuses = async (token, addressId) => {
-  const url = `${process.env.REACT_APP_API_BASE_URL || 'https://ab-maps-backend-production.onrender.com'}/api/addresses/statuses/?address=${addressId}`;
+  // Use the same backend base as every other service (was hardcoded to a prod
+  // Render URL, which silently pointed dev traffic at production).
+  const base = API_CONFIG.backend.baseUrl || process.env.REACT_APP_API_BASE_URL || '';
+  const url = `${base}/api/addresses/statuses/?address=${addressId}`;
   const response = await fetch(url, {
     headers: {
       'accept': 'application/json',
@@ -276,7 +280,7 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
     
     const handleLoc = ({ location }) => {
       if (location && typeof location.latitude === 'number' && typeof location.longitude === 'number') {
-        const newLocation = { lat: location.latitude, lon: location.longitude };
+        const newLocation = { lat: location.latitude, lon: location.longitude, accuracy: location.accuracy };
         
         // Always update current location for map centering
         setUserLocation(newLocation);
@@ -299,7 +303,7 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
     
     const handlePermissionGranted = ({ location }) => {
       if (location && typeof location.latitude === 'number' && typeof location.longitude === 'number') {
-        const newLocation = { lat: location.latitude, lon: location.longitude };
+        const newLocation = { lat: location.latitude, lon: location.longitude, accuracy: location.accuracy };
         setUserLocation(newLocation);
         
         // Only set lastFetchLocation if it's different from current location to prevent duplicate API calls
@@ -349,7 +353,7 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
             return;
           }
           
-          const newLocation = { lat: location.latitude, lon: location.longitude };
+          const newLocation = { lat: location.latitude, lon: location.longitude, accuracy: location.accuracy };
           
           setUserLocation(newLocation);
           setLastFetchLocation(newLocation);
@@ -865,6 +869,13 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
       };
       if (backendStatus === 'nei' && neiSubcategory !== undefined) {
         markerPayload.nei_subcategory = neiSubcategory;
+      }
+      // GPS proximity guard: send the knocker's live location so the backend can verify the
+      // door is within 75 m (else it rejects with 400 too_far, handled below).
+      if (userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lon === 'number') {
+        markerPayload.user_location = {
+          lat: userLocation.lat, lng: userLocation.lon, accuracy: userLocation.accuracy,
+        };
       }
       const createdMarker = await createAddressMarker(token, markerPayload);
       

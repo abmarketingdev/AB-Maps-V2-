@@ -1,17 +1,19 @@
 "use client"
 
 /**
- * Team (Campaign Teams) — campaign-scoped teams with role-based CRUD, member
- * management, per-team analytics + a campaign leaderboard. Live via /api/teams/.
- * Managers see only teams they created; sales chiefs/admins see all. Employees
- * never reach this (nav-hidden + backend 403). Glassmorphism dark, animated.
+ * Team (Campaign Teams) — campaign-scoped teams, wired to the HR microservice
+ * (/api/hr/teams/). HR is the single writer; access is role-scoped server-side:
+ * team-leads see only the team(s) they lead, sales-chiefs/admins see all,
+ * employees never reach this (nav-hidden + backend 403). Team-leads & sales-chiefs
+ * may add/remove members only; create/edit/delete/rates are admin-only (HR staff).
+ * Glassmorphism dark, animated.
  */
 
 import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
-  Users, Plus, Search, X, Trash2, Pencil, UserPlus, Trophy, ChevronDown,
-  Loader2, Crown, Check, Activity as ActivityIcon, Clock,
+  Users, Plus, Search, X, Trash2, Pencil, UserPlus, ChevronDown,
+  Loader2, Crown, Check,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchCampaignsWithStats } from "@/lib/api/campaigns"
@@ -20,10 +22,9 @@ import { useAuth } from "@/lib/auth/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 import {
   listTeams, createTeam, getTeam, updateTeam, deleteTeam,
-  addTeamMember, removeTeamMember, fetchAssignableMembers,
-  fetchTeamAnalytics, fetchTeamLeaderboard, TeamMemberError,
+  addTeamMember, removeTeamMember, fetchAssignableMembers, TeamMemberError,
   type TeamListItem, type TeamDetail, type TeamMember, type AssignableMember,
-  type TeamAnalytics, type LeaderboardMetric, type LeaderboardEntry, type PersonType,
+  type PersonType,
 } from "@/lib/api/teams"
 import { PanelLoading, PanelEmpty, PanelError } from "./_states"
 
@@ -33,25 +34,15 @@ const nbFmt = new Intl.NumberFormat("nb-NO")
 
 interface CampaignVM { id: string; name: string; color: string }
 
-const METRICS: { key: LeaderboardMetric; label: string }[] = [
-  { key: "ja_rate", label: "Ja-rate" },
-  { key: "doors", label: "Dører" },
-  { key: "contact_rate", label: "Kontakt-rate" },
-  { key: "work_time", label: "Arbeidstid" },
-  { key: "consistency", label: "Konsistens" },
-]
-function fmtMetric(metric: LeaderboardMetric, v: number): string {
-  if (metric === "doors") return nbFmt.format(Math.round(v))
-  if (metric === "work_time") { const h = Math.floor(v / 60), m = Math.round(v % 60); return h > 0 ? `${h}t ${m}m` : `${m}m` }
-  return `${v.toFixed(1)}%`
-}
-
 export function TeamsView() {
   const reduced = useReducedMotion()
   const { toast } = useToast()
   const { user, isAdmin, isSalesChief } = useAuth()
   const { campaignId: globalCampaignId } = useSelectedCampaign()
   const seesAll = isAdmin || isSalesChief
+  // Structural team CRUD + provisjon (create/edit/delete) is HR-staff/admin only.
+  // Team-leads and sales-chiefs may manage members only (enforced by HR too).
+  const canManageStructural = isAdmin
   const myId = user?.user_info?.id || user?.user_id || ""
 
   const [campaigns, setCampaigns] = useState<CampaignVM[]>([])
@@ -140,14 +131,13 @@ export function TeamsView() {
                 Mine team
               </button>
             )}
-            <button onClick={() => setModal({ kind: "create" })} className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.35)] hover:bg-blue-500 transition-all">
-              <Plus className="h-4 w-4" /> Nytt team
-            </button>
+            {canManageStructural && (
+              <button onClick={() => setModal({ kind: "create" })} className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.35)] hover:bg-blue-500 transition-all">
+                <Plus className="h-4 w-4" /> Nytt team
+              </button>
+            )}
           </div>
         </motion.div>
-
-        {/* Leaderboard (requires a selected campaign) */}
-        <LeaderboardPanel campaignId={campaignFilter} campaignName={campaignName(campaignFilter)} />
 
         {/* Teams grid */}
         {loading ? (
@@ -182,7 +172,7 @@ export function TeamsView() {
 
       {/* Detail sheet */}
       <TeamDetailSheet
-        team={detail} campaigns={campaigns}
+        team={detail} canManageStructural={canManageStructural}
         onClose={() => setDetail(null)}
         onChanged={() => { void load() }}
         onReload={async (id) => { try { setDetail(await getTeam(id)) } catch { /* ignore */ } }}
@@ -213,75 +203,10 @@ export function TeamsView() {
   )
 }
 
-// ─── Leaderboard ──────────────────────────────────────────────────────────────
-function LeaderboardPanel({ campaignId, campaignName }: { campaignId: string; campaignName: string }) {
-  const [metric, setMetric] = useState<LeaderboardMetric>("ja_rate")
-  const [entries, setEntries] = useState<LeaderboardEntry[] | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!campaignId) { setEntries(null); return }
-    let cancelled = false
-    setLoading(true)
-    fetchTeamLeaderboard({ campaignId, metric })
-      .then(res => { if (!cancelled) setEntries(res.entries) })
-      .catch(() => { if (!cancelled) setEntries([]) })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [campaignId, metric])
-
-  if (!campaignId) {
-    return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex items-center gap-3 text-sm text-white/40">
-        <Trophy className="h-4 w-4 text-amber-400/60" /> Velg en kampanje for å se ledertavlen mellom team.
-      </div>
-    )
-  }
-  const max = Math.max(...(entries ?? []).map(e => e.value), 1)
-  const RANK_COLORS = ["#f59e0b", "#94a3b8", "#cd7f32"]
-
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-amber-400" />
-          <h3 className="text-base font-semibold text-white">Ledertavle · {campaignName}</h3>
-        </div>
-        <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
-          {METRICS.map(m => (
-            <button key={m.key} onClick={() => setMetric(m.key)} className={cn("cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-all", metric === m.key ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{m.label}</button>
-          ))}
-        </div>
-      </div>
-      {loading ? <PanelLoading label="Laster ledertavle…" /> : !entries || entries.length === 0 ? (
-        <PanelEmpty msg="Ingen team i denne kampanjen" />
-      ) : (
-        <div className="space-y-3">
-          {entries.map(e => (
-            <div key={e.team_id} className="flex items-center gap-3">
-              <span className="w-5 text-center font-mono text-sm font-bold" style={{ color: RANK_COLORS[e.rank - 1] ?? "rgba(255,255,255,0.3)" }}>{e.rank}</span>
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base" style={{ background: `${e.color}22`, border: `1px solid ${e.color}55` }}>{e.icon || "👥"}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white/90 truncate">{e.name}</p>
-                  <span className="font-mono text-sm font-bold text-white">{fmtMetric(metric, e.value)}</span>
-                </div>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full" style={{ width: `${(e.value / max) * 100}%`, background: e.color }} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ─── Detail sheet ─────────────────────────────────────────────────────────────
-function TeamDetailSheet({ team, campaigns, onClose, onChanged, onReload, onEdit, onDelete }: {
+function TeamDetailSheet({ team, canManageStructural, onClose, onChanged, onReload, onEdit, onDelete }: {
   team: TeamDetail | null
-  campaigns: CampaignVM[]
+  canManageStructural: boolean
   onClose: () => void
   onChanged: () => void
   onReload: (id: string) => Promise<void>
@@ -289,23 +214,12 @@ function TeamDetailSheet({ team, campaigns, onClose, onChanged, onReload, onEdit
   onDelete: (t: TeamDetail) => void
 }) {
   const { toast } = useToast()
-  const [analytics, setAnalytics] = useState<TeamAnalytics | null>(null)
-  const [anLoading, setAnLoading] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!team) { setAnalytics(null); return }
-    let cancelled = false
-    setAnLoading(true)
-    fetchTeamAnalytics(team.id).then(a => { if (!cancelled) setAnalytics(a) }).catch(() => { if (!cancelled) setAnalytics(null) }).finally(() => { if (!cancelled) setAnLoading(false) })
-    return () => { cancelled = true }
-  }, [team])
 
   const reloadAll = async (id: string) => {
     await onReload(id)
     onChanged()
-    fetchTeamAnalytics(id).then(setAnalytics).catch(() => {})
   }
 
   const remove = async (memberId: string, personType: "employee" | "manager") => {
@@ -338,31 +252,6 @@ function TeamDetailSheet({ team, campaigns, onClose, onChanged, onReload, onEdit
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Analytics */}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3 flex items-center gap-1.5"><ActivityIcon className="h-3.5 w-3.5" /> Analyse (30 dager)</p>
-                {anLoading ? <div className="py-6 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-white/40" /></div> : analytics ? (
-                  <>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { l: "Dører", v: nbFmt.format(analytics.total_doors), c: "#3b82f6" },
-                        { l: "Ja-rate", v: `${analytics.ja_rate.toFixed(1)}%`, c: "#10b981" },
-                        { l: "Kontakt", v: `${analytics.contact_rate.toFixed(0)}%`, c: "#8b5cf6" },
-                      ].map(k => (
-                        <div key={k.l} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
-                          <p className="font-mono text-lg font-bold" style={{ color: k.c }}>{k.v}</p>
-                          <p className="text-[11px] text-white/40">{k.l}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-2 flex items-center gap-3 text-[11px] text-white/40">
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {analytics.work.total_minutes ? `${Math.round(analytics.work.total_minutes)}m arbeid` : "Ingen arbeidstid"}</span>
-                      <span>·</span><span>{analytics.work.active_members} aktive</span>
-                    </div>
-                  </>
-                ) : <p className="text-sm text-white/30">Ingen analyse.</p>}
-              </div>
-
               {/* Members */}
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -401,8 +290,8 @@ function TeamDetailSheet({ team, campaigns, onClose, onChanged, onReload, onEdit
               <ManageMembersModal open={manageOpen} team={team} onClose={() => setManageOpen(false)} onChanged={() => reloadAll(team.id)} />
             )}
 
-            {/* Actions */}
-            {team.can_edit && (
+            {/* Actions — structural edit/delete is HR-staff/admin only */}
+            {canManageStructural && (
               <div className="sticky bottom-0 flex gap-2 p-4 border-t border-white/8 bg-[#0d1528]">
                 <button onClick={() => onEdit(team)} className="cursor-pointer flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/80 hover:bg-white/10 transition-all"><Pencil className="h-4 w-4" /> Rediger</button>
                 <button onClick={() => onDelete(team)} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-sm font-semibold text-rose-400 hover:bg-rose-500/20 transition-all"><Trash2 className="h-4 w-4" /></button>

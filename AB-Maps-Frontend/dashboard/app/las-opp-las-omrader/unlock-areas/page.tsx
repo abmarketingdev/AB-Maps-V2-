@@ -55,7 +55,7 @@ const UnlockAreasPage: React.FC = () => {
   };
 
   return (
-    <ProtectedRoute requiredUserType="manager">
+    <ProtectedRoute allow={({ isSuperuser, isSalesChief }) => isSuperuser || isSalesChief}>
       <ClientLayout>
         <div className="container mx-auto p-4 space-y-6">
           {/* Header */}

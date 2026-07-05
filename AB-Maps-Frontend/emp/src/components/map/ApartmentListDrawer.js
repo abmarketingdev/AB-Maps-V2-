@@ -13,6 +13,7 @@ import {
   faSyncAlt
 } from '@fortawesome/free-solid-svg-icons';
 import buildingService from '../../services/buildingService';
+import locationService from '../../services/locationService';
 import ApartmentListItem from './ApartmentListItem';
 import { isNRCCampaign, openNRCUrlForApartment } from '../../utils/nrcUrlHelper';
 import { isNeiSubcategory } from '../../constants/neiSubcategory';
@@ -235,6 +236,16 @@ const ApartmentListDrawer = ({
         neiSubcategory !== undefined
       ) {
         aptOptions.neiSubcategory = neiSubcategory;
+      }
+      // Attach the knocker's live GPS fix so the backend 75 m proximity guard can
+      // validate this knock (parity with the standalone-house path in useMapState).
+      const fix = locationService.getStatus().lastLocation;
+      if (fix && typeof fix.latitude === 'number' && typeof fix.longitude === 'number') {
+        aptOptions.userLocation = {
+          lat: fix.latitude,
+          lng: fix.longitude,
+          accuracy: fix.accuracy,
+        };
       }
       const updated = await buildingService.updateApartmentStatus(
         apartmentId,

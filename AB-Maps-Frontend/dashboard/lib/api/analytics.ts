@@ -34,11 +34,15 @@ export interface AnDaily { date: string; total_doors: number; ja: number; nei: n
 export interface AnHourly { hour: number; total_doors: number; ja: number; yes_rate: number }
 export interface AnPerfEntry { employee_id: string; employee_name: string; value: number }
 export interface AnTopPerformers { top_yes_rate: AnPerfEntry; top_doors: AnPerfEntry; bottom_yes_rate: AnPerfEntry; bottom_doors: AnPerfEntry }
+export interface AnAlertDaily {
+  date: string; doors?: number; ja?: number; yes_rate?: number; value?: number;
+  below_doors_threshold?: boolean; below_yes_rate_threshold?: boolean;
+}
 export interface AnAlert {
   alert_type: string; severity: 'critical' | 'warning' | string;
   employee_id: string; employee_name: string; campaign_id: string | null; campaign_name: string | null;
   current_value: number; threshold_value: number; consecutive_days: number; message: string;
-  daily_details: { date: string; value: number }[];
+  daily_details: AnAlertDaily[];
 }
 export interface AnWorkGroup { total: number; active_count: number; active_pct: number; avg_daily_seconds: number; avg_daily_minutes: number }
 export interface AnWorkTimeSummary { period_days: number; active_threshold_seconds: number; employees: AnWorkGroup; managers: AnWorkGroup; combined: AnWorkGroup }
@@ -66,13 +70,15 @@ export interface WorkTimeStats {
   managers: WorkTimePerson[];
 }
 
-export interface AnalyticsParams { startDate: string; endDate: string; campaignIds?: string[] }
+export interface AnalyticsParams { startDate: string; endDate: string; campaignIds?: string[]; employeeIds?: string[] }
 
 function qp(p: AnalyticsParams): string {
   const qs = new URLSearchParams();
   qs.set('start_date', p.startDate);
   qs.set('end_date', p.endDate);
   if (p.campaignIds && p.campaignIds.length) qs.set('campaign_ids', p.campaignIds.join(','));
+  // Sales-chief scoping passes the team members' employee ids (backend accepts CSV).
+  if (p.employeeIds && p.employeeIds.length) qs.set('employee_ids', p.employeeIds.join(','));
   return qs.toString();
 }
 

@@ -58,6 +58,7 @@ import CampaignSelector from "@/components/CampaignSelector"
 import { CampaignPicker, getStoredCampaign } from "@/components/dashboard/v2/CampaignPicker"
 import StandaloneCampaignModal from "@/components/campaign/StandaloneCampaignModal"
 import { useAuth } from "@/lib/auth/AuthContext"
+import { launchMap, currentCampaignId } from "@/lib/maps/launchMap"
 import type { Campaign } from "../services/campaignService"
 import {
   checkCampaignCompletion,
@@ -88,7 +89,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashbord": "Dashbord",
   "/sales": "Statistikk",
   "/rapport": "Rapport",
-  "/statistikk": "Geografi",
   "/todo": "Oppgaver",
   "/map": "Kart",
   "/areas": "Områder",
@@ -362,46 +362,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     }
   }
 
-  const openAbMaps = () => {
-    const tokens = localStorage.getItem("auth_tokens")
-    const campaignData = localStorage.getItem("currentCampaign")
-    if (tokens) {
-      try {
-        const tokenData = JSON.parse(tokens)
-        if (!tokenData.access) {
-          alert("Ugyldig autentiseringstoken. Vennligst logg inn igjen.")
-          window.location.href = "/login"
-          return
-        }
-        let campaignId: string | null = null
-        if (campaignData) {
-          try {
-            const campaign = JSON.parse(campaignData)
-            campaignId = campaign.id
-          } catch {
-            campaignId = campaignData
-          }
-        }
-        const baseUrl = process.env.NEXT_PUBLIC_AB_MAPS_MANAGER_URL
-        let url = `${baseUrl}/?token=${encodeURIComponent(JSON.stringify(tokenData))}`
-        if (campaignId) url += `&campaign_id=${encodeURIComponent(campaignId)}`
-        window.open(url, "_blank")
-      } catch {
-        alert("Autentiseringsfeil. Vennligst logg inn igjen.")
-        window.location.href = "/login"
-      }
-    } else {
-      alert("Ingen autentiseringstoken funnet. Vennligst logg inn igjen.")
-      window.location.href = "/login"
-    }
-  }
+  // Role-based launch (this layout renders for manager/admin/superuser -> MANAGER map).
+  const openAbMaps = () => launchMap(user, { campaignId: currentCampaignId() })
 
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
       { href: "/dashbord",  title: "Dashbord",  icon: <Home className="h-4 w-4" />,        group: "ARBEIDSFLATE" },
       { href: "/sales",     title: "Statistikk",icon: <DollarSign className="h-4 w-4" />,  group: "ARBEIDSFLATE" },
       { href: "/rapport",   title: "Rapport",   icon: <FileText className="h-4 w-4" />,    group: "ARBEIDSFLATE" },
-      { href: "/statistikk", title: "Geografi", icon: <MapIcon className="h-4 w-4" />,     group: "ARBEIDSFLATE" },
       { href: "/todo",      title: "Oppgaver",  icon: <CheckSquare className="h-4 w-4" />, group: "ARBEIDSFLATE" },
     ]
     // Hidden per request — route still exists at /admin/tasks but not surfaced
@@ -413,11 +381,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       { href: "/map",                  title: "Kart",                 icon: <Globe className="h-4 w-4" />,     group: "TERRITORIUM" },
       { href: "#",                     title: "AB Maps",              icon: <MapPinned className="h-4 w-4" />, group: "TERRITORIUM", external: true, onClick: openAbMaps },
       { href: "/areas",                title: "Områder",              icon: <MapIcon className="h-4 w-4" />,   group: "TERRITORIUM" },
-      // Hidden per request — feature still exists at /las-opp-las-omrader but
-      // not surfaced in the sidebar.
-      // { href: "/las-opp-las-omrader",  title: "Lås opp/lås områder",  icon: <Lock className="h-4 w-4" />,      group: "TERRITORIUM" },
       { href: "/campaigns",            title: "Kampanje",             icon: <MapPinned className="h-4 w-4" />, group: "TERRITORIUM" },
     )
+    // Lås opp/lås områder — oversight page, superusers/admins + sales-chiefs only.
+    if (isSuperuser || isSalesChief) {
+      items.push({ href: "/las-opp-las-omrader", title: "Lås opp/lås områder", icon: <Lock className="h-4 w-4" />, group: "TERRITORIUM" })
+    }
     // Campaign teams — managers (own teams), sales chiefs + admins (all teams).
     if (isStaff || isSuperuser || isSalesChief) {
       items.push({ href: "/teams", title: "Team", icon: <Users className="h-4 w-4" />, group: "TEAM" })
@@ -431,10 +400,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       icon: <BookOpen className="h-4 w-4" />,
       group: "LÆRING",
     })
-    if (isSuperuser) {
+    // Analytics — admins/superusers + sales-chiefs only (plain managers excluded).
+    if (isSuperuser || isSalesChief) {
+      items.push({ href: "/analytics", title: "Analytics", icon: <BarChart3 className="h-4 w-4" />, group: "ADMIN" })
+    }
+    // Admin/oversight pages — superusers/admins + sales-chiefs only (never plain managers).
+    if (isSuperuser || isSalesChief) {
       items.push(
         { href: "/admin-dashboard",     title: "Admin Dashboard",  icon: <Shield className="h-4 w-4" />,    group: "ADMIN" },
-        { href: "/analytics",           title: "Analytics",        icon: <BarChart3 className="h-4 w-4" />, group: "ADMIN" },
         { href: "/uploaded-addresses",  title: "Legg til adresse", icon: <Plus className="h-4 w-4" />,      group: "ADMIN" },
       )
     }

@@ -17,7 +17,8 @@ const AreaDialog = ({
   onAddEmployee,
   draftAreas,  // NEW: Pass draftAreas to sync status updates
   onShowTalkmoreResults,  // NEW: Callback for Talkmore results button
-  talkmoreResultsLoading = false  // NEW: Loading state for Talkmore results
+  talkmoreResultsLoading = false,  // NEW: Loading state for Talkmore results
+  isTalkmoreCampaign = false  // Only show the Talkmore-results button for Talkmore campaigns
 }) => {
 
   // Validate end_date when dialog opens or when endDate changes
@@ -375,7 +376,7 @@ const AreaDialog = ({
                 Tildel Ansatte
               </button>
             )}
-            {areaId && onShowTalkmoreResults && (
+            {areaId && onShowTalkmoreResults && isTalkmoreCampaign && (
               <button
                 className="area-talkmore-results-button"
                 onClick={(e) => {

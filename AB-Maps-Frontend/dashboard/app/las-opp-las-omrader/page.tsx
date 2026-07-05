@@ -156,7 +156,7 @@ const LasOppLasOmraderPage: React.FC = () => {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredUserType="manager">
+      <ProtectedRoute allow={({ isSuperuser, isSalesChief }) => isSuperuser || isSalesChief}>
         <ClientLayout>
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -170,7 +170,7 @@ const LasOppLasOmraderPage: React.FC = () => {
   }
 
   return (
-    <ProtectedRoute requiredUserType="manager">
+    <ProtectedRoute allow={({ isSuperuser, isSalesChief }) => isSuperuser || isSalesChief}>
       <ClientLayout>
         <div className="container mx-auto p-4 space-y-6">
           {/* Header */}

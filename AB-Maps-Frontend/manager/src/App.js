@@ -928,11 +928,11 @@ function AppContent() {
     setSelectedAreaForEmployees(null);
   };
   
-  // Handler for campaign selection
+  // Handler for campaign selection — keeps React state, localStorage, AND authService.user
+  // in sync so getCampaignId() (body campaign_id + X-Campaign-ID header) resolves immediately.
   const handleCampaignSelect = (campaign) => {
     setSelectedCampaign(campaign);
-    // Store campaign in localStorage for persistence
-    localStorage.setItem('currentCampaign', JSON.stringify(campaign));
+    authService.setCampaignId(campaign);
   };
     // Enhanced handler for employee select with better fly-to animation and WebSocket integration
   const handleEmployeeSelect = (employee) => {
@@ -1334,6 +1334,7 @@ function AppContent() {
       tags: typeof properties.tags === 'string' ? JSON.parse(properties.tags) : (properties.tags || {}),
       manager_id: properties.manager_id,
       employee_id: properties.employee_id,
+      created_by_user_id: properties.created_by_user_id,
       campaign_id: properties.campaign_id,
       source_table: properties.source_table,
       isUploadedAddress: false,
@@ -2250,6 +2251,7 @@ function AppContent() {
           draftAreas={draftAreas}  // NEW: Pass draftAreas for status syncing
           onShowTalkmoreResults={handleShowTalkmoreResults}  // NEW: Talkmore results handler
           talkmoreResultsLoading={talkmoreAreaLoading}  // NEW: Loading state
+          isTalkmoreCampaign={isTalkmoreCampaign(resolveCampaign(selectedCampaign))}  // gate button to Talkmore campaigns
         />
 
       <ManagerSummaryDropdown
@@ -2259,6 +2261,7 @@ function AppContent() {
         onToggle={() => setShowAreaDropdown(v => !v)}
         onAreaSelect={handleAreaSelectDropdown}
         selectedCampaign={selectedCampaign}
+        onCampaignSelect={handleCampaignSelect}
       />
 
       {showEmployeeList && selectedAreaForEmployees && (

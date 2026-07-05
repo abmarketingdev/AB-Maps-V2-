@@ -8,6 +8,7 @@ import { LogOut, User, Menu, Home, BarChart3, Map, DollarSign, FileText, MapPinn
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { LearningAuthService } from "@/services/learningAuthService";
+import { launchMap, currentCampaignId } from "@/lib/maps/launchMap";
 
 interface MobileHeaderProps {
   title: string;
@@ -109,42 +110,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       external: true,
       onClick: () => {
         setHamburgerMenuOpen(false);
-        const tokens = localStorage.getItem('auth_tokens');
-        const campaignData = localStorage.getItem('currentCampaign');
-        
-        if (tokens) {
-          try {
-            const tokenData = JSON.parse(tokens);
-            if (!tokenData.access) {
-              alert('Invalid authentication token. Please log in again.');
-              router.push('/login');
-              return;
-            }
-            
-            let campaignId = null;
-            if (campaignData) {
-              try {
-                const campaign = JSON.parse(campaignData);
-                campaignId = campaign.id;
-              } catch (error) {
-                campaignId = campaignData;
-              }
-            }
-            
-            const baseUrl = process.env.NEXT_PUBLIC_AB_MAPS_MANAGER_URL;
-            let url = `${baseUrl}/?token=${encodeURIComponent(JSON.stringify(tokenData))}`;
-            if (campaignId) {
-              url += `&campaign_id=${encodeURIComponent(campaignId)}`;
-            }
-            window.location.href = url;
-          } catch (error) {
-            console.error('Error navigating to AB Maps:', error);
-            alert('Error accessing AB Maps. Please try again.');
-          }
-        } else {
-          alert('You must be logged in to access AB Maps.');
-          router.push('/login');
-        }
+        // Manager nav list -> MANAGER map (same tab on mobile).
+        launchMap({ user_type: "manager" }, { campaignId: currentCampaignId(), sameTab: true });
       },
     },
   ];
@@ -166,38 +133,19 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       title: "AB Maps",
       icon: <Map className="w-4 h-4" />,
       external: true,
-      onClick: async () => {
+      onClick: () => {
         setHamburgerMenuOpen(false);
+        // Employee nav list -> EMPLOYEE map (same tab on mobile).
+        let employeeId: string | null = null;
         try {
-          const authService = LearningAuthService.getInstance();
-          const token = authService.getToken();
-          
-          const userDataStr = localStorage.getItem('user_data');
-          let employeeId = null;
-          
-          if (userDataStr) {
-            try {
-              const userData = JSON.parse(userDataStr);
-              employeeId = userData?.user_info?.id;
-            } catch (e) {
-              console.error('Error parsing user data:', e);
-            }
-          }
-          
-          if (token && employeeId) {
-            const baseUrl = process.env.NEXT_PUBLIC_AB_MAPS_EMPLOYEE_URL;
-            if (baseUrl) {
-              window.location.href = `${baseUrl}/?token=${encodeURIComponent(token)}&employee_id=${encodeURIComponent(employeeId)}`;
-            } else {
-              router.push("/employee");
-            }
-          } else {
-            router.push("/employee");
-          }
-        } catch (error) {
-          console.error('Error navigating to AB Maps:', error);
-          router.push("/employee");
+          employeeId = JSON.parse(localStorage.getItem("user_data") || "{}")?.user_info?.id ?? null;
+        } catch {
+          /* ignore */
         }
+        launchMap(
+          { user_type: "employee", user_info: { id: employeeId } },
+          { campaignId: currentCampaignId(), sameTab: true }
+        );
       },
     },
   ];

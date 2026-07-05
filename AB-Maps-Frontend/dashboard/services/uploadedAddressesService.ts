@@ -250,37 +250,6 @@ export const getUploadProgress = async (batchId: string): Promise<UploadProgress
   }
 };
 
-// Download failed addresses
-export const downloadFailedAddresses = async (campaignId: string, managerId: string): Promise<Blob> => {
-  try {
-    const token = authService.getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/uploaded-addresses/uploaded-addresses/download-failed-geocoding/?campaign_id=${campaignId}&manager_id=${managerId}`,
-      {
-        method: 'GET',
-        headers: {
-          'accept': 'application/json, text/csv, */*',
-          'Authorization': `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const blob = await response.blob();
-    return blob;
-  } catch (error) {
-    console.error('Error downloading failed addresses:', error);
-    throw error;
-  }
-};
-
 export interface UpdateAddressTextResponse {
   message: string;
   address_id: string;
@@ -291,15 +260,6 @@ export interface UpdateAddressTextResponse {
   longitude?: number;
   geocoded_at?: string;
   error?: string;
-}
-
-export interface UploadCsvResponse {
-  message: string;
-  created_count: number;
-  geocoded_count: number;
-  failed_count: number;
-  failed_rows: any[];
-  addresses: UploadedAddress[];
 }
 
 export interface CancelBatchResponse {
@@ -379,44 +339,6 @@ export const createUploadedAddress = async (
     return (await response.json()) as UploadedAddress;
   } catch (error) {
     console.error('Error creating uploaded address:', error);
-    throw error;
-  }
-};
-
-export const uploadCsvFile = async (
-  file: File,
-  campaignId: string
-): Promise<UploadCsvResponse> => {
-  try {
-    const token = authService.getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('campaign_id', campaignId);
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/uploaded-addresses/uploaded-addresses/upload-csv/`,
-      {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: UploadCsvResponse = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error uploading CSV file:', error);
     throw error;
   }
 };

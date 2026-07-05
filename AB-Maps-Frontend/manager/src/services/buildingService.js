@@ -192,6 +192,12 @@ class BuildingService {
         delete payload.nei_subcategory;
       }
 
+      // GPS proximity guard: pass the knocker's live location when available. If omitted,
+      // the backend falls back to the latest tracking-WS ping for this user.
+      if (options && options.userLocation && typeof options.userLocation.lat === 'number') {
+        payload.user_location = options.userLocation;
+      }
+
       const response = await fetch(`${BASE_URL}/apartments/${apartmentId}/`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
@@ -377,9 +383,12 @@ class BuildingService {
           throw new Error('Du har ikke tillatelse til å slette denne bygningen.');
         }
         if (response.status === 404) {
-          throw new Error('Bygningen ble ikke funnet.');
+          // The building isn't in the backend (never persisted, or already deleted). Treat it as
+          // already-gone so the caller just clears the local marker instead of erroring.
+          console.warn('[BuildingService] building already gone (404) — treating as deleted');
+          return { alreadyDeleted: true };
         }
-        
+
         throw new Error(errorMessage);
       }
 

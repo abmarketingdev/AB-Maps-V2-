@@ -4,9 +4,10 @@
 
 import { getJSON, fetchWithAuth } from '@/lib/auth/fetchWithAuth';
 import { mapThreshold } from '@/lib/api/thresholds';
-import type {
-  EmployeeDayData, Outcome, JourneyEvent, FollowUp,
-  EmployeeStats, CampaignPerf,
+import {
+  emptyEmployeeDay,
+  type EmployeeDayData, type Outcome, type JourneyEvent, type FollowUp,
+  type EmployeeStats, type CampaignPerf,
 } from '@/components/dashboard/v2/employee/employeeLogic';
 import type { Threshold } from '@/services/analyticsService';
 
@@ -36,37 +37,41 @@ interface EmployeeDayResponse {
 }
 
 function mapToday(r: EmployeeDayResponse): EmployeeDayData {
+  // Start from a fully-populated seed and override only fields the backend actually sends, so a
+  // missing/partial payload degrades to safe zeros instead of throwing (e.g. `undefined.toFixed`).
+  const base = emptyEmployeeDay(r?.first_name ?? '');
+  const num = (v: unknown, d: number | null | undefined) =>
+    (typeof v === 'number' && !Number.isNaN(v) ? v : (typeof d === 'number' ? d : 0));
+  const bool = (v: unknown, d: boolean) => (typeof v === 'boolean' ? v : d);
+  const str = (v: unknown, d: string) => (typeof v === 'string' && v ? v : d);
   return {
-    firstName: r.first_name,
-    weekday: r.weekday,
-    dateStr: r.date_str,
-    timeOfDay: r.time_of_day,
-    withinShift: r.within_shift,
-    doorsToday: r.doors_today,
-    doorGoal: r.door_goal,
-    jaToday: r.ja_today,
-    neiToday: r.nei_today,
-    ikkeHjemmeToday: r.ikke_hjemme_today,
-    folgOppToday: r.folg_opp_today,
-    salesToday: r.sales_today,
-    jaProsent: r.ja_prosent,
-    jaProsentDelta: r.ja_prosent_delta,
-    streakDays: r.streak_days,
-    streakAtRisk: r.streak_at_risk,
-    streakMinDoors: r.streak_min_doors,
-    personalBestDoors: r.personal_best_doors,
-    isNewBest: r.is_new_best,
-    avgDoors7: r.avg_doors_7,
-    weekActivity: r.week_activity,
-    weekLabels: r.week_labels,
-    todayGoal: r.door_goal,
-    // Yesterday fields aren't part of /me/today/ (they belong to the briefing);
-    // the dashboard view doesn't read them. Default them safely.
-    yesterdayDoors: 0,
-    yesterdayGoal: r.door_goal,
-    yesterdayAchieved: false,
-    journey: (r.journey ?? []) as JourneyEvent[],
-    followUps: (r.follow_ups ?? []) as FollowUp[],
+    ...base,
+    firstName: str(r?.first_name, base.firstName),
+    weekday: str(r?.weekday, base.weekday),
+    dateStr: str(r?.date_str, base.dateStr),
+    timeOfDay: (r?.time_of_day ?? base.timeOfDay) as EmployeeDayData['timeOfDay'],
+    withinShift: bool(r?.within_shift, base.withinShift),
+    doorsToday: num(r?.doors_today, base.doorsToday),
+    doorGoal: num(r?.door_goal, base.doorGoal),
+    jaToday: num(r?.ja_today, base.jaToday),
+    neiToday: num(r?.nei_today, base.neiToday),
+    ikkeHjemmeToday: num(r?.ikke_hjemme_today, base.ikkeHjemmeToday),
+    folgOppToday: num(r?.folg_opp_today, base.folgOppToday),
+    salesToday: num(r?.sales_today, base.salesToday),
+    jaProsent: num(r?.ja_prosent, base.jaProsent),
+    jaProsentDelta: num(r?.ja_prosent_delta, base.jaProsentDelta),
+    streakDays: num(r?.streak_days, base.streakDays),
+    streakAtRisk: bool(r?.streak_at_risk, base.streakAtRisk),
+    streakMinDoors: num(r?.streak_min_doors, base.streakMinDoors),
+    personalBestDoors: num(r?.personal_best_doors, base.personalBestDoors),
+    isNewBest: bool(r?.is_new_best, base.isNewBest),
+    avgDoors7: num(r?.avg_doors_7, base.avgDoors7),
+    weekActivity: Array.isArray(r?.week_activity) ? r.week_activity : base.weekActivity,
+    weekLabels: Array.isArray(r?.week_labels) ? r.week_labels : base.weekLabels,
+    todayGoal: num(r?.door_goal, base.todayGoal),
+    yesterdayGoal: num(r?.door_goal, base.yesterdayGoal),
+    journey: (Array.isArray(r?.journey) ? r.journey : []) as JourneyEvent[],
+    followUps: (Array.isArray(r?.follow_ups) ? r.follow_ups : []) as FollowUp[],
   };
 }
 

@@ -25,7 +25,7 @@ import { PanelLoading, PanelEmpty, PanelError } from "./_states"
 // ─── Types & mock data ────────────────────────────────────────────────────────
 
 type Role = "admin" | "manager" | "employee"
-type Dept = "maps" | "qc"
+type Dept = "maps" | "qc" | "hr"
 
 interface User {
   id: string
@@ -35,7 +35,7 @@ interface User {
   email: string
   phone: string
   role: Role
-  dept?: Dept            // for admin/employee
+  dept?: Dept            // platform: maps / qc / hr (from employee_type / admin_type)
   abId?: string
   isSalesChief?: boolean
   online: boolean
@@ -53,6 +53,12 @@ const userRoy = (id: string): RoyState => ROY_STATES[id.split("").reduce((a, c) 
 function flatToUser(f: FlatUser): User {
   const role: Role = (f.user_type === "superuser" || f.user_type === "admin" || f.is_superuser) ? "admin"
     : f.user_type === "manager" ? "manager" : "employee"
+  // Platform/department from the auth role tokens (employee_type / admin_type).
+  const dept: Dept | undefined =
+    (f.employee_type === "qc_emp" || f.admin_type === "qc_admin") ? "qc"
+      : f.employee_type === "hr_emp" ? "hr"
+        : (f.employee_type === "maps_emp" || f.admin_type === "maps_admin") ? "maps"
+          : undefined
   const parts = (f.name || f.username || "").trim().split(/\s+/)
   return {
     id: f.id,
@@ -62,6 +68,7 @@ function flatToUser(f: FlatUser): User {
     email: f.email ?? "",
     phone: f.phone ?? "",
     role,
+    dept,
     abId: f.ab_person_id ?? undefined,
     isSalesChief: f.is_sales_chief,
     online: f.online,
@@ -93,13 +100,21 @@ function Modal({ open, onClose, children, width = "max-w-md" }: { open: boolean;
 const inputCls = "w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all"
 function Lbl({ children }: { children: React.ReactNode }) { return <label className="block text-xs font-medium text-white/45 mb-1.5">{children}</label> }
 
+// QC/HR are the segregated platforms worth flagging; MAPS is the default (no suffix noise).
+const DEPT_STYLE: Record<Dept, { label: string; color: string; bg: string }> = {
+  maps: { label: "MAPS", color: "#3b82f6", bg: "bg-blue-500/15" },
+  qc: { label: "QC", color: "#06b6d4", bg: "bg-cyan-500/15" },
+  hr: { label: "HR", color: "#f59e0b", bg: "bg-amber-500/15" },
+}
 function RoleBadge({ role, dept, salesChief }: { role: Role; dept?: Dept; salesChief?: boolean }) {
   const m = ROLE_META[role]
+  const showDept = dept && dept !== "maps"
   return (
     <div className="flex items-center gap-1.5">
       <span className={cn("flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold", m.bg)} style={{ color: m.color }}>
-        <m.Icon className="h-3 w-3" />{m.label}{dept ? ` · ${dept.toUpperCase()}` : ""}
+        <m.Icon className="h-3 w-3" />{m.label}
       </span>
+      {showDept && <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", DEPT_STYLE[dept!].bg)} style={{ color: DEPT_STYLE[dept!].color }}>{DEPT_STYLE[dept!].label}</span>}
       {salesChief && <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-400"><Star className="h-3 w-3" /> Salgssjef</span>}
     </div>
   )
@@ -107,7 +122,7 @@ function RoleBadge({ role, dept, salesChief }: { role: Role; dept?: Dept; salesC
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-type Filter = "all" | Role
+type Filter = "all" | Role | "qc" | "hr"
 type ModalKind =
   | null
   | { kind: "register" }
@@ -116,7 +131,7 @@ type ModalKind =
   | { kind: "promote"; user: User; to: Role }
 
 const PAGE_SIZE = 20
-const ROLE_PARAM: Record<Exclude<Filter, "all">, DirectoryRole> = {
+const ROLE_PARAM: Record<Role, DirectoryRole> = {
   admin: "superuser", manager: "manager", employee: "employee",
 }
 
@@ -147,9 +162,10 @@ export function AdminDashboardView() {
 
   const load = useCallback(() => {
     setLoading(true); setErrored(false)
-    const role = filter === "all" ? undefined : ROLE_PARAM[filter]
+    const role = (filter === "admin" || filter === "manager" || filter === "employee") ? ROLE_PARAM[filter] : undefined
+    const dept = (filter === "qc" || filter === "hr") ? filter : undefined
     return Promise.all([
-      fetchDirectory({ role, search: debounced || undefined, page, pageSize: PAGE_SIZE }),
+      fetchDirectory({ role, dept, search: debounced || undefined, page, pageSize: PAGE_SIZE }),
       fetchUserStats().catch(() => null),
     ])
       .then(([dir, st]) => {
@@ -186,6 +202,8 @@ export function AdminDashboardView() {
     admin: stats?.superusers ?? 0,
     manager: stats?.managers ?? 0,
     employee: stats?.employees ?? 0,
+    qc: stats?.by_dept?.qc ?? 0,
+    hr: stats?.by_dept?.hr ?? 0,
   }
 
   const TABS: { key: Filter; label: string; count: number; color?: string }[] = [
@@ -193,6 +211,8 @@ export function AdminDashboardView() {
     { key: "admin", label: "Admins", count: counts.admin, color: ROLE_META.admin.color },
     { key: "manager", label: "Managers", count: counts.manager, color: ROLE_META.manager.color },
     { key: "employee", label: "Ansatte", count: counts.employee, color: ROLE_META.employee.color },
+    { key: "qc", label: "QC", count: counts.qc, color: DEPT_STYLE.qc.color },
+    { key: "hr", label: "HR", count: counts.hr, color: DEPT_STYLE.hr.color },
   ]
 
   return (
@@ -217,12 +237,14 @@ export function AdminDashboardView() {
 
         {/* KPI tiles */}
         <motion.div initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {[
             { label: "Totalt", value: counts.all, color: "#3b82f6", Icon: Users },
             { label: "Admins", value: counts.admin, color: ROLE_META.admin.color, Icon: Shield },
             { label: "Managers", value: counts.manager, color: ROLE_META.manager.color, Icon: UserCog },
             { label: "Ansatte", value: counts.employee, color: ROLE_META.employee.color, Icon: Users },
+            { label: "QC", value: counts.qc, color: DEPT_STYLE.qc.color, Icon: Shield },
+            { label: "HR", value: counts.hr, color: DEPT_STYLE.hr.color, Icon: Users },
           ].map((k, i) => (
             <motion.div key={k.label} initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + i * 0.05 }}
               className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
@@ -417,15 +439,21 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
     setSaving(true); setErr("")
     try {
       if (isReg) {
-        const res = await registerUser({
+        // Platform role token: employees carry employee_type, admins carry admin_type
+        // (HR has no admin tier, so an admin's dept is clamped to maps/qc).
+        const body: Record<string, unknown> = {
           username: username.trim(), email: email.trim(),
           password: pw, password_confirm: pw,
           first_name: firstName.trim(), last_name: lastName.trim(), phone: phone.trim(),
           user_type: role === "admin" ? "superuser" : role,
           ab_person_id: abId.trim() || undefined,
-          is_sales_chief: role !== "admin" ? salesChief : false,
+          // Only managers can be sales chiefs.
+          is_sales_chief: role === "manager" ? salesChief : false,
           send_welcome_email: welcome,
-        })
+        }
+        if (role === "employee") body.employee_type = `${dept}_emp`
+        if (role === "admin") body.admin_type = `${dept === "hr" ? "maps" : dept}_admin`
+        const res = await registerUser(body)
         if (!res.ok) {
           const data = await res.json().catch(() => ({} as Record<string, unknown>))
           const detail = Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" · ")
@@ -468,11 +496,11 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
         {isReg && (
           <div className="grid grid-cols-2 gap-3">
             <div><Lbl>Brukernavn</Lbl><input value={username} onChange={e => setUsername(e.target.value)} className={inputCls} placeholder="bruker.navn" /></div>
-            <div><Lbl>AB Person-ID <span className="text-white/20">(valgfritt)</span></Lbl><input value={abId} onChange={e => setAbId(e.target.value.replace(/\D/g, "").slice(0, 4))} className={inputCls} placeholder="4 siffer" /></div>
+            <div><Lbl>AB Person-ID <span className="text-white/20">(valgfritt)</span></Lbl><input value={abId} onChange={e => setAbId(e.target.value.replace(/\D/g, "").slice(0, 16))} className={inputCls} placeholder="AB Person-ID" /></div>
           </div>
         )}
         {!isReg && (
-          <div><Lbl>AB Person-ID</Lbl><input value={abId} onChange={e => setAbId(e.target.value.replace(/\D/g, "").slice(0, 4))} className={inputCls} placeholder="4 siffer" /></div>
+          <div><Lbl>AB Person-ID</Lbl><input value={abId} onChange={e => setAbId(e.target.value.replace(/\D/g, "").slice(0, 16))} className={inputCls} placeholder="AB Person-ID" /></div>
         )}
 
         {/* Password (register only) */}
@@ -497,7 +525,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
               const m = ROLE_META[r]; const on = role === r
               const disabled = !isReg // role change only via promote in edit
               return (
-                <button key={r} disabled={disabled} onClick={() => setRole(r)}
+                <button key={r} disabled={disabled} onClick={() => { setRole(r); if (r === "admin" && dept === "hr") setDept("maps") }}
                   className={cn("flex-1 flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-sm font-semibold transition-all", on ? m.bg : "bg-white/5 text-white/40", !disabled && "cursor-pointer hover:text-white/70", disabled && "opacity-50 cursor-not-allowed")}
                   style={on ? { color: m.color } : undefined}>
                   <m.Icon className="h-3.5 w-3.5" />{m.label}
@@ -508,12 +536,12 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
           {!isReg && <p className="mt-1.5 text-[11px] text-white/30">Endre rolle via "Forfrem / Degrader" i radmenyen.</p>}
         </div>
 
-        {/* Dept for admin/employee */}
+        {/* Dept — employees: maps/qc/hr; admins: maps/qc (no HR admin tier). Managers have no platform. */}
         {isReg && role !== "manager" && (
           <div>
             <Lbl>Avdeling</Lbl>
             <div className="flex gap-1.5">
-              {(["maps", "qc"] as Dept[]).map(d => (
+              {((role === "employee" ? ["maps", "qc", "hr"] : ["maps", "qc"]) as Dept[]).map(d => (
                 <button key={d} onClick={() => setDept(d)} className={cn("cursor-pointer flex-1 rounded-xl px-2 py-2 text-sm font-semibold transition-all", dept === d ? "bg-white/15 text-white" : "bg-white/5 text-white/40 hover:text-white/70")}>{d.toUpperCase()}</button>
               ))}
             </div>
@@ -522,7 +550,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
 
         {/* Toggles */}
         <div className="space-y-2.5">
-          {role !== "admin" && (
+          {role === "manager" && (
             <label className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 cursor-pointer">
               <span className="flex items-center gap-2 text-sm text-white/75"><Star className="h-3.5 w-3.5 text-amber-400" /> Salgssjef</span>
               <button onClick={() => setSalesChief(s => !s)} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors", salesChief ? "bg-blue-600" : "bg-white/15")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", salesChief ? "translate-x-4" : "translate-x-0.5")} /></button>

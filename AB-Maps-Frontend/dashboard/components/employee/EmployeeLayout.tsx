@@ -11,6 +11,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { launchMap, currentCampaignId } from "@/lib/maps/launchMap";
 import { useRouter, usePathname } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -32,7 +33,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { authService } from "@/lib/auth/authService";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { CampaignPicker } from "@/components/dashboard/v2/CampaignPicker";
 import { Input } from "@/components/ui/input";
@@ -97,28 +97,14 @@ export function EmployeeLayout({
     }
   };
 
+  // Role-based launch (this layout renders for employees -> EMPLOYEE map).
+  // Read the campaign from localStorage FIRST — that's the source of truth the CampaignPicker
+  // writes on select. The `selectedCampaign` prop can be stale (the picker isn't wired to it),
+  // which is why the map used to open with no campaign. Mirrors the manager launcher.
   const handleABMapsClick = () => {
-    const token = authService.getAccessToken();
-    const employeeId = user?.user_info?.id;
-    if (!token || !employeeId) {
-      alert("Du må være innlogget for å få tilgang til AB Maps.");
-      return;
-    }
-    const authTokens = localStorage.getItem("auth_tokens");
-    let refreshToken: string | null = null;
-    if (authTokens) {
-      try {
-        refreshToken = JSON.parse(authTokens).refresh || null;
-      } catch (e) {
-        console.error("[EmployeeLayout] Error parsing tokens:", e);
-      }
-    }
-    const campaignToUse = selectedCampaign || (campaigns.length > 0 ? campaigns[0] : null);
-    const baseUrl = process.env.NEXT_PUBLIC_AB_MAPS_EMPLOYEE_URL;
-    let url = `${baseUrl}/?accessToken=${encodeURIComponent(token)}&employee_id=${encodeURIComponent(employeeId)}`;
-    if (refreshToken) url += `&refreshToken=${encodeURIComponent(refreshToken)}`;
-    if (campaignToUse) url += `&campaign_id=${encodeURIComponent(campaignToUse.id)}`;
-    window.location.href = url;
+    const campaignId =
+      currentCampaignId() || selectedCampaign?.id || (campaigns.length > 0 ? campaigns[0]?.id : null) || null;
+    launchMap(user, { campaignId });
   };
 
   const userName = user?.user_info?.name || user?.username || "Ansatt";

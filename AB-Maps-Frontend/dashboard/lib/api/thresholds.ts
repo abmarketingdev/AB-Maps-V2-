@@ -7,16 +7,19 @@ import { getJSON } from '@/lib/auth/fetchWithAuth';
 import type { Threshold } from '@/services/analyticsService';
 import type { PerfThreshold } from '@/components/dashboard/v2/employee/employeeLogic';
 
-export function mapThreshold(t: Threshold): PerfThreshold {
+export function mapThreshold(t?: Threshold | null): PerfThreshold {
+  // Tolerate a missing/partial threshold so a stats payload without one never throws
+  // (was the cause of "Kunne ikke laste statistikken din").
+  const s = (t ?? {}) as Partial<Threshold>;
   return {
-    doorsDay: t.min_doors_per_day,
-    doorsWeek: t.min_doors_per_week,
-    minJa: t.min_yes_rate_percent,
-    maxNei: t.max_no_rate_percent,
-    minContact: t.min_contact_rate_percent,
-    consecutiveDays: t.consecutive_days_threshold,
-    dropAlert: t.performance_drop_alert_percent,
-    maxInactiveHours: t.max_inactive_hours,
+    doorsDay: s.min_doors_per_day ?? 0,
+    doorsWeek: s.min_doors_per_week ?? 0,
+    minJa: s.min_yes_rate_percent ?? 0,
+    maxNei: s.max_no_rate_percent ?? 0,
+    minContact: s.min_contact_rate_percent ?? 0,
+    consecutiveDays: s.consecutive_days_threshold ?? 0,
+    dropAlert: s.performance_drop_alert_percent ?? 0,
+    maxInactiveHours: s.max_inactive_hours ?? 0,
   };
 }
 

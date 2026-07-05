@@ -184,6 +184,16 @@ class BuildingService {
         delete payload.nei_subcategory;
       }
 
+      // GPS proximity guard: pass the knocker's live location when available. If omitted,
+      // the backend falls back to the latest tracking-WS ping for this user.
+      if (
+        options && options.userLocation &&
+        typeof options.userLocation.lat === 'number' &&
+        typeof options.userLocation.lng === 'number'
+      ) {
+        payload.user_location = options.userLocation;
+      }
+
       const response = await fetchWithAuthRefresh(`${BASE_URL}/api/apartments/${apartmentId}/`, {
         method: 'PATCH',
         headers: getHeadersWithCampaign(),

@@ -7,7 +7,7 @@ import AreaHierarchy from '../components/AreaHierarchy';
 
 const LockAreasPage: React.FC = () => {
   return (
-    <ProtectedRoute requiredUserType="manager">
+    <ProtectedRoute allow={({ isSuperuser, isSalesChief }) => isSuperuser || isSalesChief}>
       <ClientLayout>
         <div className="container mx-auto p-4">
           <AreaHierarchy />

@@ -35,6 +35,7 @@ const STATUS_META: Record<CampStatus, { label: string; color: string; bg: string
 interface Campaign {
   id: string; name: string; description: string; color: string; status: CampStatus
   areas: number; employeeIds: string[]; salesWeek: number; salesLifetime: number; created: Date
+  availableDoors: number; knocked: number; pctComplete: number; totalJa: number
 }
 
 const COLORS = ["#10b981", "#ec4899", "#f59e0b", "#06b6d4", "#3b82f6", "#8b5cf6", "#f43f5e"]
@@ -318,13 +319,30 @@ function DetailSheet({ campaign, onClose, onEdit, onDelete, onAssign }: {
                   { Icon: MapPin, v: campaign.areas, l: "Områder", c: "#3b82f6" },
                   { Icon: Users, v: campaign.employeeIds.length, l: "Ansatte", c: "#8b5cf6" },
                   { Icon: TrendingUp, v: nbFmt.format(campaign.salesWeek), l: "Salg denne uken", c: "#10b981" },
-                  { Icon: TrendingUp, v: nbFmt.format(campaign.salesLifetime), l: "Salg totalt", c: "#f59e0b" },
+                  { Icon: Check, v: nbFmt.format(campaign.totalJa), l: "Total Ja", c: "#f59e0b" },
                 ].map((m, i) => (
                   <div key={i} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
                     <div className="flex items-center gap-2 mb-2"><div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ background: `${m.c}22` }}><m.Icon className="h-3.5 w-3.5" style={{ color: m.c }} /></div></div>
                     <p className="font-mono text-2xl font-bold text-white">{m.v}</p><p className="text-xs text-white/40">{m.l}</p>
                   </div>
                 ))}
+              </div>
+
+              {/* Doors knocked vs total (aggregated across the campaign's areas) */}
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                <div className="flex items-baseline justify-between mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/40">Dører banket</p>
+                  <p className="font-mono text-sm text-white/80">
+                    <span className="text-white font-bold">{nbFmt.format(campaign.knocked)}</span>
+                    <span className="text-white/40"> / {nbFmt.format(campaign.availableDoors)}</span>
+                    <span className="ml-2 text-blue-300 font-bold">{campaign.pctComplete}%</span>
+                  </p>
+                </div>
+                <div className="h-2 w-full rounded-full bg-white/8 overflow-hidden">
+                  <div className="h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(100, campaign.pctComplete)}%`, background: `linear-gradient(90deg, ${campaign.color}, ${campaign.color}aa)` }} />
+                </div>
+                <p className="mt-1.5 text-[11px] text-white/30">Oppdateres når områder legges til eller fjernes</p>
               </div>
 
               {/* Team */}
@@ -382,7 +400,7 @@ function CampaignModal({ modal, onClose, onSave }: {
   const isCreate = modal.kind === "create"
   const submit = () => {
     if (!name.trim()) return
-    if (isCreate) onSave({ id: `c${Date.now()}`, name: name.trim(), description: desc.trim(), color, status, areas: 0, employeeIds: [], salesWeek: 0, salesLifetime: 0, created: new Date() }, true)
+    if (isCreate) onSave({ id: `c${Date.now()}`, name: name.trim(), description: desc.trim(), color, status, areas: 0, employeeIds: [], salesWeek: 0, salesLifetime: 0, availableDoors: 0, knocked: 0, pctComplete: 0, totalJa: 0, created: new Date() }, true)
     else if (editing) onSave({ ...editing, name: name.trim(), description: desc.trim(), color, status }, false)
     onClose()
   }

@@ -8,6 +8,8 @@ export interface CampaignStats {
   pct_complete: number;
   days_left: number | null;
   available_doors: number;
+  knocked?: number;
+  total_ja?: number;
   sales_week: number;
   sales_lifetime: number;
   employee_ids: string[];
@@ -38,6 +40,8 @@ export interface CampaignVM {
   salesLifetime: number;
   pctComplete: number;
   availableDoors: number;
+  knocked: number;
+  totalJa: number;
   created: Date;
 }
 
@@ -55,6 +59,8 @@ export function mapCampaign(c: CampaignWithStats): CampaignVM {
     salesLifetime: s?.sales_lifetime ?? 0,
     pctComplete: s?.pct_complete ?? 0,
     availableDoors: s?.available_doors ?? 0,
+    knocked: s?.knocked ?? 0,
+    totalJa: s?.total_ja ?? s?.sales_lifetime ?? 0,
     created: c.created_at ? new Date(c.created_at) : new Date(),
   };
 }

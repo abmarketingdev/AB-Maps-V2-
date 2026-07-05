@@ -693,64 +693,16 @@ const CampaignFormPopup = ({
     setError('');
     
     try {
-      // Get current user information from localStorage
-      const userDataStr = localStorage.getItem('user_data');
-      let userData = null;
-      if (userDataStr) {
-        try {
-          userData = JSON.parse(userDataStr);
-        } catch {}
-      }
-
-      // Get access token
-      let token = null;
-      try {
-        token = localStorage.getItem('accessToken') || localStorage.getItem('access_token');
-      } catch {}
-
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      };
-
-      // Create metadata for Vipps flow
-      const metadata = {
-        tags: {
-          source: "vipps_contact",
-          timestamp: new Date().toISOString()
-        },
-        status: "ja",
-        user_name: userData?.user_info?.name || userData?.username || "Unknown User",
-        user_type: userData?.user_type || "manager",
-        campaign_id: campaignId,
-        recorded_at: new Date().toISOString(),
-        campaign_name: currentCampaign?.name || "Unknown Campaign"
-      };
-
-      // Log Vipps Contact Activity with metadata
-      const activityPayload = {
-        activity_type: "vipps_contact",
-        description: "Filled by Vipps redirect",
-        campaign_id: campaignId,
-        metadata: metadata
-      };
-
-      const activityResponse = await fetch(`${process.env.REACT_APP_API_URL}/dashboard/activities/`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(activityPayload),
-      });
-
-      if (!activityResponse.ok) {
-        // Failed to log Vipps activity, but continuing with redirect
-      }
+      // (Removed) the /dashboard/activities/ POST — that endpoint isn't part of the
+      // activity API surface (only /dashboard/activities/{filtered,summary}/ exist) and
+      // the call 404'd; Vipps contact is not logged via a maps activity anymore.
 
       // Close the popup first to ensure state is cleared
       onClose();
-      
+
       // Redirect to VIPPS page
       window.open('https://folkehjelp.no/d2d-2', '_blank');
-      
+
     } catch (err) {
       setError(err.message || 'Noe gikk galt med VIPPS prosessering.');
       setCurrentStep('selection');

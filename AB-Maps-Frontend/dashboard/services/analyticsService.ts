@@ -130,11 +130,13 @@ export type ThresholdScope = 'global' | 'manager' | 'campaign' | 'employee';
 export interface Threshold {
   id: string;
   scope: ThresholdScope;
-  scope_display: string;
-  manager: string | null;
-  campaign: string | null;
-  employee: string | null;
-  target_name: string;
+  // Backend (analytics microservice) keys targets by *_id; scope_display/target_name
+  // are not returned by this service, so they're optional.
+  scope_display?: string;
+  target_name?: string;
+  manager_id: string | null;
+  campaign_id: string | null;
+  employee_id: string | null;
   min_doors_per_day: number;
   min_doors_per_week: number;
   min_yes_rate_percent: number;
@@ -143,6 +145,11 @@ export interface Threshold {
   consecutive_days_threshold: number;
   performance_drop_alert_percent: number;
   max_inactive_hours: number;
+  // Personal-baseline deviation model (Feature 2).
+  baseline_window_days: number;
+  min_history_days: number;
+  normal_variation_band_pct: number;
+  deviation_threshold_pct: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -150,9 +157,9 @@ export interface Threshold {
 
 export interface CreateThresholdData {
   scope: ThresholdScope;
-  manager?: string;
-  campaign?: string;
-  employee?: string;
+  manager_id?: string;
+  campaign_id?: string;
+  employee_id?: string;
   min_doors_per_day?: number;
   min_doors_per_week?: number;
   min_yes_rate_percent?: number;
@@ -161,6 +168,10 @@ export interface CreateThresholdData {
   consecutive_days_threshold?: number;
   performance_drop_alert_percent?: number;
   max_inactive_hours?: number;
+  baseline_window_days?: number;
+  min_history_days?: number;
+  normal_variation_band_pct?: number;
+  deviation_threshold_pct?: number;
   is_active?: boolean;
 }
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faClock, faTimes, faSpinner, faRedo } from '@fortawesome/free-solid-svg-icons';
 import addressService from '../../services/addressService';
+import authService from '../../services/authService';
+import locationService from '../../services/locationService';
 import { useAuth } from '../../contexts/AuthContext';
 import { isNRCCampaignAsync, openNRCUrl } from '../../utils/nrcUrlHelper';
 import './FloatingAddressPopup.css';
@@ -152,11 +154,14 @@ const FloatingAddressPopup = ({
    * Get campaign ID from localStorage
    */
   const getCampaignId = () => {
+    // Delegate to the normalized resolver (this.user.campaignId → localStorage, object/JSON → .id)
+    // so the body carries the same campaign the X-Campaign-ID header does.
+    const fromAuth = authService.getCampaignId && authService.getCampaignId();
+    if (fromAuth) return fromAuth;
     const campaignData = localStorage.getItem('currentCampaign');
     if (campaignData) {
       try {
-        const campaign = JSON.parse(campaignData);
-        return campaign.id;
+        return JSON.parse(campaignData).id;
       } catch (error) {
         return campaignData;
       }
@@ -218,7 +223,15 @@ const FloatingAddressPopup = ({
       }
       
       const campaignId = getCampaignId();
-      
+      // No campaign selected → the knock would be saved campaign-less (and analytics/campaign
+      // metrics would miss it). Stop with a clear prompt instead.
+      if (!campaignId) {
+        setLoading(false);
+        const msg = 'Velg en kampanje først (øverst i verktøylinjen).';
+        setError(msg);
+        return { success: false, error: msg };
+      }
+
       // Create address (marker) in backend - simple house address
       const payload = {
         address_text: address,
@@ -236,7 +249,27 @@ const FloatingAddressPopup = ({
       if (statusValue === 'nei' && neiSubcategory !== undefined) {
         payload.nei_subcategory = neiSubcategory;
       }
-      
+
+      // GPS proximity guard: attach the tracked device position (via locationService, which
+      // runs a watchPosition) so the backend's 75 m check actually fires. Prefer the last tracked
+      // fix; else request one with the service's own timeout+retry. A confident far fix is
+      // rejected (400 too_far, shown as a toast). Only if GPS is truly unavailable do we send
+      // nothing — and we warn the user that the knock will be unverified.
+      try {
+        let fix = locationService.getStatus && locationService.getStatus().lastLocation;
+        if (!fix && locationService.getCurrentLocation) {
+          fix = await locationService.getCurrentLocation();
+        }
+        const lat = fix && (fix.latitude ?? fix.lat);
+        const lng = fix && (fix.longitude ?? fix.lng);
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          payload.user_location = { lat, lng, accuracy: fix.accuracy };
+        }
+      } catch (e) { /* GPS unavailable — handled below */ }
+      if (!payload.user_location) {
+        setError('GPS utilgjengelig — posisjonen kunne ikke bekreftes. Aktiver stedstjenester.');
+      }
+
       const createdAddress = await addressService.createAddress(payload);
       if (createdAddress && createdAddress.id) {
         const newMarker = {
