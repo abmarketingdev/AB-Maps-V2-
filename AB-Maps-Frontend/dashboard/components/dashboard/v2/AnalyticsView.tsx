@@ -373,7 +373,7 @@ export function AnalyticsView() {
 
         {/* Content */}
         {tab === "terskler" ? (
-          <TersklerTab campaigns={campaigns} data={data} />
+          <TersklerTab campaigns={campaigns} data={data} onChanged={() => void load()} />
         ) : tab === "team" ? (
           <TeamTab startStr={startStr} endStr={endStr} />
         ) : loading ? (
@@ -1563,7 +1563,7 @@ const TERSKEL_GROUPS: { label: string; color: string; fields: TField[] }[] = [
 ]
 const ALL_TERSKEL_FIELDS: TField[] = TERSKEL_GROUPS.flatMap(g => g.fields)
 
-function TersklerTab({ campaigns, data }: { campaigns: { id: string; name: string; color: string }[]; data: AnalyticsPreview | null }) {
+function TersklerTab({ campaigns, data, onChanged }: { campaigns: { id: string; name: string; color: string }[]; data: AnalyticsPreview | null; onChanged: () => void }) {
   const { toast } = useToast()
   const [items, setItems] = useState<Threshold[] | null>(null)
   const [errored, setErrored] = useState(false)
@@ -1582,12 +1582,12 @@ function TersklerTab({ campaigns, data }: { campaigns: { id: string; name: strin
     setBusy(id)
     try { await analyticsService.deleteThreshold(id); toast({ title: "Terskel slettet" }); if (editing?.id === id) setEditing(null) }
     catch (e) { toast({ title: "Sletting feilet", description: e instanceof Error ? e.message : "", variant: "destructive" }) }
-    setBusy(null); load()
+    setBusy(null); load(); onChanged()   // re-fetch analytics so varsler recompute against the new thresholds
   }
   const toggleActive = async (t: Threshold) => {
     setBusy(t.id)
     try { await analyticsService.updateThreshold(t.id, { is_active: !t.is_active }) } catch { /* ignore */ }
-    setBusy(null); load()
+    setBusy(null); load(); onChanged()
   }
 
   return (
@@ -1621,7 +1621,7 @@ function TersklerTab({ campaigns, data }: { campaigns: { id: string; name: strin
 
       {/* Right — always-visible inline form (keyed to reset on edit target change) */}
       <TerskelForm key={editing?.id ?? "new"} editing={editing} campaigns={campaigns} employees={data?.employees ?? []}
-        onCancelEdit={() => setEditing(null)} onSaved={() => { setEditing(null); load() }} />
+        onCancelEdit={() => setEditing(null)} onSaved={() => { setEditing(null); load(); onChanged() }} />
     </motion.div>
   )
 }
