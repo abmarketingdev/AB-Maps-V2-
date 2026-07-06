@@ -20,7 +20,7 @@ export interface OwnerRef { id: string; name: string }
 export interface TeamListItem {
   id: string; name: string; description: string;
   color: string; icon: string;
-  campaign: TeamRef | null; owner: OwnerRef | null;
+  campaign: TeamRef | null; owner: OwnerRef | null; sales_chief: OwnerRef | null;
   member_count: number; created_at: string; updated_at: string;
 }
 
@@ -85,6 +85,7 @@ interface HrTeam {
   id: string; name: string; description: string | null; color: string | null; icon: string | null;
   campaign: { id: string; name: string | null } | null;
   leader: HrPerson | null;
+  sales_chief: HrPerson | null;
   members?: HrMember[];
   created_at: string; updated_at: string;
 }
@@ -110,6 +111,7 @@ const mapListItem = (t: HrTeam): TeamListItem => ({
   icon: t.icon ?? '',
   campaign: mapRef(t.campaign),
   owner: mapRef(t.leader),                 // HR "leader" is the dashboard's "owner"
+  sales_chief: mapRef(t.sales_chief ?? null),
   member_count: t.members?.length ?? 0,
   created_at: t.created_at,
   updated_at: t.updated_at,
@@ -123,12 +125,13 @@ const mapDetail = (t: HrTeam): TeamDetail => ({
 
 // ─── List / create ────────────────────────────────────────────────────────────
 export async function listTeams(opts: {
-  campaignId?: string; createdBy?: string; search?: string; page?: number; pageSize?: number;
+  campaignId?: string; salesChiefId?: string; createdBy?: string; search?: string; page?: number; pageSize?: number;
 } = {}): Promise<Paginated<TeamListItem>> {
   // The dashboard's "Mine team" toggle sets createdBy=<my id>; HR exposes this as
   // the `mine=true` filter (teams I personally lead), applied on top of scoping.
+  // `salesChiefId` (admin only) narrows to one sales chief's teams.
   const raw = await getJSON<any>(
-    `/api/hr/teams/${qp({ campaign_id: opts.campaignId, mine: opts.createdBy ? 'true' : undefined, search: opts.search, page: opts.page, page_size: opts.pageSize })}`,
+    `/api/hr/teams/${qp({ campaign_id: opts.campaignId, sales_chief_id: opts.salesChiefId, mine: opts.createdBy ? 'true' : undefined, search: opts.search, page: opts.page, page_size: opts.pageSize })}`,
   );
   const results: HrTeam[] = raw?.results ?? (Array.isArray(raw) ? raw : []);
   return {

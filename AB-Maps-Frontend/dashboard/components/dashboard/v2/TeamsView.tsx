@@ -37,9 +37,11 @@ interface CampaignVM { id: string; name: string; color: string }
 export function TeamsView() {
   const reduced = useReducedMotion()
   const { toast } = useToast()
-  const { user, isAdmin, isSalesChief } = useAuth()
+  const { user, isAdmin } = useAuth()
   const { campaignId: globalCampaignId } = useSelectedCampaign()
-  const seesAll = isAdmin || isSalesChief
+  // Only admin sees ALL teams; a sales-chief / team-lead is scoped to their own
+  // team(s) by HR, so they get a flat own-teams list (no "Mine team" / chief filter).
+  const seesAll = isAdmin
   // Structural team CRUD + provisjon (create/edit/delete) is HR-staff/admin only.
   // Team-leads and sales-chiefs may manage members only (enforced by HR too).
   const canManageStructural = isAdmin
@@ -50,6 +52,10 @@ export function TeamsView() {
   const [campOpen, setCampOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [mineOnly, setMineOnly] = useState(false)
+  // Admin-only: filter/group teams by sales chief.
+  const [salesChiefFilter, setSalesChiefFilter] = useState<string>("")
+  const [chiefOpen, setChiefOpen] = useState(false)
+  const [chiefOptions, setChiefOptions] = useState<{ id: string; name: string }[]>([])
 
   const [teams, setTeams] = useState<TeamListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -68,14 +74,24 @@ export function TeamsView() {
     setLoading(true); setErrored(false)
     return listTeams({
       campaignId: campaignFilter || undefined,
+      salesChiefId: isAdmin ? (salesChiefFilter || undefined) : undefined,
       createdBy: mineOnly && seesAll ? myId : undefined,
       search: search || undefined,
       pageSize: 200,
     })
-      .then(res => setTeams(res.results))
+      .then(res => {
+        setTeams(res.results)
+        // Populate the sales-chief filter from the full (chief-unfiltered) set so
+        // picking one chief doesn't shrink the dropdown.
+        if (isAdmin && !salesChiefFilter) {
+          const seen = new Map<string, string>()
+          res.results.forEach(t => { if (t.sales_chief) seen.set(t.sales_chief.id, t.sales_chief.name) })
+          setChiefOptions([...seen].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)))
+        }
+      })
       .catch(() => setErrored(true))
       .finally(() => setLoading(false))
-  }, [campaignFilter, mineOnly, seesAll, myId, search])
+  }, [campaignFilter, salesChiefFilter, mineOnly, seesAll, isAdmin, myId, search])
   useEffect(() => { const t = setTimeout(() => { void load() }, 250); return () => clearTimeout(t) }, [load])
 
   const openDetail = async (id: string) => {
@@ -84,6 +100,38 @@ export function TeamsView() {
   }
 
   const campaignName = (id: string | undefined) => campaigns.find(c => c.id === id)?.name ?? "Kampanje"
+  const chiefName = (id: string) => chiefOptions.find(c => c.id === id)?.name ?? "Salgssjef"
+
+  // Admin, no chief filter → group the cards by sales chief. Otherwise a flat grid.
+  const groupsByChief = useMemo(() => {
+    if (!(isAdmin && !salesChiefFilter)) return null
+    const m = new Map<string, { name: string; teams: TeamListItem[] }>()
+    for (const t of teams) {
+      const key = t.sales_chief?.id ?? "__none__"
+      const g = m.get(key) ?? { name: t.sales_chief?.name ?? "Uten salgssjef", teams: [] }
+      g.teams.push(t); m.set(key, g)
+    }
+    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name))
+  }, [teams, isAdmin, salesChiefFilter])
+
+  const renderTeamCard = (t: TeamListItem, i: number) => (
+    <motion.button key={t.id} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 12) * 0.03 }}
+      onClick={() => openDetail(t.id)}
+      className="cursor-pointer text-left rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-white/20 hover:bg-white/[0.07] transition-all">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style={{ background: `${t.color}22`, border: `1px solid ${t.color}55` }}>{t.icon || "👥"}</div>
+        <div className="min-w-0 flex-1">
+          <p className="text-base font-bold text-white truncate">{t.name}</p>
+          <p className="text-xs text-white/40 truncate">{t.campaign?.name ?? "Ingen kampanje"}</p>
+        </div>
+      </div>
+      {t.description && <p className="mt-3 text-sm text-white/55 line-clamp-2">{t.description}</p>}
+      <div className="mt-4 flex items-center justify-between text-xs">
+        <span className="flex items-center gap-1.5 text-white/50"><Users className="h-3.5 w-3.5" /> {t.member_count} medlem{t.member_count === 1 ? "" : "mer"}</span>
+        {t.owner && <span className="flex items-center gap-1.5 text-white/35"><Crown className="h-3 w-3 text-amber-400/70" /> {t.owner.name}</span>}
+      </div>
+    </motion.button>
+  )
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
@@ -126,6 +174,29 @@ export function TeamsView() {
                 )}
               </AnimatePresence>
             </div>
+            {/* Sales-chief filter (admin only) */}
+            {isAdmin && chiefOptions.length > 0 && (
+              <div className="relative">
+                <button onClick={() => setChiefOpen(o => !o)} className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white/70 hover:text-white transition-all">
+                  {salesChiefFilter ? chiefName(salesChiefFilter) : "Alle salgssjefer"} <ChevronDown className="h-3.5 w-3.5 text-white/40" />
+                </button>
+                <AnimatePresence>
+                  {chiefOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setChiefOpen(false)} />
+                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="absolute right-0 top-full mt-2 z-20 w-56 max-h-72 overflow-y-auto rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl py-1">
+                        <button onClick={() => { setSalesChiefFilter(""); setChiefOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left"><span className="flex-1 text-white/85">Alle salgssjefer</span>{!salesChiefFilter && <Check className="h-3.5 w-3.5 text-blue-400" />}</button>
+                        {chiefOptions.map(c => (
+                          <button key={c.id} onClick={() => { setSalesChiefFilter(c.id); setChiefOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left">
+                            <Crown className="h-3 w-3 text-amber-400/70" /><span className="flex-1 text-white/85 truncate">{c.name}</span>{salesChiefFilter === c.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                          </button>
+                        ))}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
             {seesAll && (
               <button onClick={() => setMineOnly(m => !m)} className={cn("cursor-pointer rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all", mineOnly ? "border-blue-500/40 bg-blue-600/15 text-blue-200" : "border-white/10 bg-white/5 text-white/60 hover:text-white")}>
                 Mine team
@@ -146,26 +217,26 @@ export function TeamsView() {
           <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelError onRetry={() => void load()} /></div>
         ) : teams.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelEmpty msg="Ingen team ennå" sub="Opprett et team for å komme i gang." /></div>
+        ) : groupsByChief ? (
+          // Admin view — grouped by sales chief.
+          <div className="space-y-6">
+            {groupsByChief.map(g => (
+              <div key={g.name}>
+                <div className="mb-3 flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-400/70" />
+                  <h2 className="text-sm font-semibold text-white/80">{g.name}</h2>
+                  <span className="text-xs text-white/35">· {g.teams.length} team</span>
+                  <div className="ml-2 h-px flex-1 bg-white/10" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {g.teams.map((t, i) => renderTeamCard(t, i))}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {teams.map((t, i) => (
-              <motion.button key={t.id} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 12) * 0.03 }}
-                onClick={() => openDetail(t.id)}
-                className="cursor-pointer text-left rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-white/20 hover:bg-white/[0.07] transition-all">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style={{ background: `${t.color}22`, border: `1px solid ${t.color}55` }}>{t.icon || "👥"}</div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-base font-bold text-white truncate">{t.name}</p>
-                    <p className="text-xs text-white/40 truncate">{t.campaign?.name ?? "Ingen kampanje"}</p>
-                  </div>
-                </div>
-                {t.description && <p className="mt-3 text-sm text-white/55 line-clamp-2">{t.description}</p>}
-                <div className="mt-4 flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-white/50"><Users className="h-3.5 w-3.5" /> {t.member_count} medlem{t.member_count === 1 ? "" : "mer"}</span>
-                  {t.owner && <span className="flex items-center gap-1.5 text-white/35"><Crown className="h-3 w-3 text-amber-400/70" /> {t.owner.name}</span>}
-                </div>
-              </motion.button>
-            ))}
+            {teams.map((t, i) => renderTeamCard(t, i))}
           </div>
         )}
       </div>
