@@ -819,6 +819,29 @@ export function RapportView() {
     }
   }, [activeCampaignIds, campaigns, startDate, endDate])
 
+  // Export the loaded report table as CSV (Feature 10). Semicolon-separated + UTF-8
+  // BOM so Norwegian Excel opens it correctly.
+  const exportCsv = useCallback(() => {
+    if (!tableData || tableData.users.length === 0) return
+    const esc = (v: unknown) => {
+      const s = String(v ?? "")
+      return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const headers = ["Navn", "Rolle", "Totalt svar", "Byer", "Ja %", "Nei %", "Ikke hjemme %"]
+    const rows = tableData.users.map(u => [
+      u.name, u.role, u.total_responses, u.total_cities,
+      u.ja_percentage, u.nei_percentage, u.ikke_hjemme_percentage,
+    ])
+    const csv = [headers, ...rows].map(r => r.map(esc).join(";")).join("\r\n")
+    const campNames = campaigns.filter(c => activeCampaignIds.has(c.id)).map(c => c.name).join("-") || "alle"
+    const fname = `rapport_${campNames}_${startDate}_${endDate}.csv`.replace(/[^\w.\-]+/g, "_")
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = fname
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+  }, [tableData, campaigns, activeCampaignIds, startDate, endDate])
+
   const handleSelectUser = useCallback(async (user: UserSummary) => {
     setSelectedUser(user)
     if (addressCache.has(user.user_id)) return
@@ -898,7 +921,7 @@ export function RapportView() {
                     <Search className="h-3.5 w-3.5" />
                     Endre søk
                   </button>
-                  <button className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/50 hover:text-white hover:border-white/20 transition-all">
+                  <button onClick={exportCsv} disabled={!tableData || tableData.users.length === 0} className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/50 hover:text-white hover:border-white/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                     <Download className="h-3.5 w-3.5" />
                     Eksporter
                   </button>
