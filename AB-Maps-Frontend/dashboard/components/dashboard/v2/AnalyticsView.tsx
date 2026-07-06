@@ -483,7 +483,7 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
               <YAxis yAxisId="left" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} />
               <YAxis yAxisId="right" orientation="right" domain={[0, "auto"]} tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }} tickLine={false} axisLine={false} unit="%" />
               <Tooltip contentStyle={chartTooltip} />
-              <ReferenceLine yAxisId="right" y={30} stroke="#f59e0b" strokeDasharray="4 4" strokeOpacity={0.6} />
+              <ReferenceLine yAxisId="right" y={2} stroke="#f59e0b" strokeDasharray="4 4" strokeOpacity={0.6} />
               {STATUS.filter(st => seg[st.key]).map(st => (
                 <Bar key={st.key} yAxisId="left" dataKey={st.key} stackId="1" fill={st.color} radius={st.key === "ja" ? [3, 3, 0, 0] : undefined} maxBarSize={28} />
               ))}
@@ -491,7 +491,7 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
             </ComposedChart>
           </ResponsiveContainer>
           {chart.length > 0 && (
-            <p className="mt-2 text-[11px] text-white/40">★ Beste {gran}: <span className="text-white/70">{chart[bestIdx]?.label}</span> · {nbFmt.format(chart[bestIdx]?.total ?? 0)} dører · stiplet linje = ja-rate-terskel 30 %</p>
+            <p className="mt-2 text-[11px] text-white/40">★ Beste {gran}: <span className="text-white/70">{chart[bestIdx]?.label}</span> · {nbFmt.format(chart[bestIdx]?.total ?? 0)} dører · stiplet linje = ja-rate-terskel 2 %</p>
           )}
         </Glass>
 
@@ -1378,7 +1378,7 @@ function TersklerTab({ campaigns, data }: { campaigns: { id: string; name: strin
             <p className="text-xs text-white/40 mb-4">Systemet bruker standardverdier inntil du legger til egne.</p>
             <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
               <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 text-center"><p className="text-[10px] uppercase tracking-wider text-white/35">Standard dører/dag</p><p className="font-mono text-2xl font-bold text-white">70</p></div>
-              <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 text-center"><p className="text-[10px] uppercase tracking-wider text-white/35">Standard ja-rate</p><p className="font-mono text-2xl font-bold text-white">30 %</p></div>
+              <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 text-center"><p className="text-[10px] uppercase tracking-wider text-white/35">Standard ja-rate</p><p className="font-mono text-2xl font-bold text-white">2 %</p></div>
             </div>
           </div>
         ) : (
