@@ -43,6 +43,14 @@ export interface TeamAnalyticsMember {
   id: string; name: string; person_type: PersonType;
   doors: number; ja: number; ja_rate: number; work_minutes: number;
 }
+export interface TeamDailyPoint {
+  date: string; total_doors: number; ja: number; nei: number; ikke_hjemme: number; folg_opp: number; yes_rate: number;
+}
+export interface TeamAlert {
+  alert_type: string; severity: 'critical' | 'warning' | string;
+  employee_id: string; employee_name: string; current_value: number; threshold_value: number;
+  consecutive_days: number; message: string;
+}
 export interface TeamAnalytics {
   team_id: string; name: string; campaign: TeamRef | null; member_count: number;
   total_doors: number; ja: number; nei: number; ikke_hjemme: number; folg_opp: number;
@@ -50,6 +58,14 @@ export interface TeamAnalytics {
   doors_per_active_day: number; consistency_score: number;
   work: { total_seconds: number; total_minutes: number; avg_minutes_per_member: number; active_members: number };
   per_member: TeamAnalyticsMember[];
+  daily?: TeamDailyPoint[];
+  alerts?: TeamAlert[];
+}
+
+// Tier-1 quick stats (cheap list) — from /api/dashboard/teams/.
+export interface TeamQuickStats {
+  team_id: string; name: string; campaign: TeamRef | null; member_count: number;
+  total_doors: number; ja: number; ja_rate: number; contact_rate: number;
 }
 
 export type LeaderboardMetric = 'ja_rate' | 'doors' | 'contact_rate' | 'work_time' | 'consistency';
@@ -201,11 +217,13 @@ export async function fetchAssignableMembers(id: string): Promise<{ count: numbe
 }
 
 // ─── Analytics / leaderboard ──────────────────────────────────────────────────
-// NOTE: door-knock analytics + those leaderboard metrics live in the Maps/analytics
-// service, not HR (HR owns only teams + sales). These panels are hidden in TeamsView
-// for now; wiring them to the analytics service is a separate task. Kept for typing.
+// Teams Analytics (Features 12/13) — door-knock analytics live in the analytics
+// service, scoped to admin (all) / sales-chief (own team).
+export function fetchTeamsList(opts: { startDate?: string; endDate?: string } = {}): Promise<{ period: { start_date: string; end_date: string }; teams: TeamQuickStats[] }> {
+  return getJSON(`/api/dashboard/teams/${qp({ start_date: opts.startDate, end_date: opts.endDate })}`);
+}
 export function fetchTeamAnalytics(id: string, opts: { startDate?: string; endDate?: string } = {}): Promise<TeamAnalytics> {
-  return getJSON<TeamAnalytics>(`/api/hr/teams/${id}/analytics/${qp({ start_date: opts.startDate, end_date: opts.endDate })}`);
+  return getJSON<TeamAnalytics>(`/api/dashboard/teams/${id}/analytics/${qp({ start_date: opts.startDate, end_date: opts.endDate })}`);
 }
 
 export function fetchTeamLeaderboard(opts: { campaignId: string; metric: LeaderboardMetric; startDate?: string; endDate?: string }): Promise<TeamLeaderboard> {
