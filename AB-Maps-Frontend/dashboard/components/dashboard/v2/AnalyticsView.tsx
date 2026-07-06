@@ -952,6 +952,7 @@ const sevColor = (s: USeverity) => (s === "critical" ? "#f43f5e" : s === "warnin
 function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviations: DeviationTeam[] | null; proximity: ProximityViolationsResponse | null }) {
   const [sev, setSev] = useState<"alle" | USeverity>("alle")
   const [group, setGroup] = useState<"ansatt" | "type">("ansatt")
+  const [person, setPerson] = useState<string>("")   // scope: per-ansatt filter
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
   const [openAlerts, setOpenAlerts] = useState<Set<string>>(new Set())
 
@@ -981,7 +982,17 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
     warning: alerts.filter(a => a.severity === "warning").length,
     info: alerts.filter(a => a.severity === "info").length,
   }), [alerts])
-  const filtered = useMemo(() => alerts.filter(a => sev === "alle" || a.severity === sev), [alerts, sev])
+  // Scope: per-ansatt narrows to one person's varsler (each already computed with
+  // their own resolved threshold). Combined with the header campaign filter this gives
+  // global / per-kampanje / per-ansatt scoping.
+  const personOptions = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const a of alerts) m.set(a.personId, a.personName)
+    return [...m].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
+  }, [alerts])
+  const filtered = useMemo(
+    () => alerts.filter(a => (sev === "alle" || a.severity === sev) && (!person || a.personId === person)),
+    [alerts, sev, person])
 
   const groups = useMemo(() => {
     const m = new Map<string, { key: string; name: string; items: UAlert[] }>()
@@ -1013,6 +1024,13 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
                   {s === "alle" ? "Alle" : SEV_LABEL[s]} <span className="text-white/40">{counts[s]}</span>
                 </button>
               ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-white/35">Omfang</span>
+              <select value={person} onChange={e => setPerson(e.target.value)} title="Vis varsler for én ansatt" className="h-7 max-w-[170px] rounded-lg bg-white/5 border border-white/8 px-2 text-xs text-white outline-none focus:border-blue-500/50 [color-scheme:dark]">
+                <option value="" className="bg-[#0d1528]">Alle ansatte</option>
+                {personOptions.map(p => <option key={p.id} value={p.id} className="bg-[#0d1528]">{p.name}</option>)}
+              </select>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] text-white/35">Grupper etter</span>
