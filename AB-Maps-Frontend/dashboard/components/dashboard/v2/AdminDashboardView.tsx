@@ -20,6 +20,8 @@ import {
   promoteEmployeeToManager, promoteManagerToSuperuser, demoteSuperuserToManager,
   type FlatUser, type DirectoryRole, type UserStats,
 } from "@/lib/api/users"
+import { listTeams, addTeamMember, type TeamListItem } from "@/lib/api/teams"
+import { fetchCampaignsWithStats } from "@/lib/api/campaigns"
 import { PanelLoading, PanelEmpty, PanelError } from "./_states"
 
 // ─── Types & mock data ────────────────────────────────────────────────────────
@@ -380,6 +382,10 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
   const [showPw, setShowPw] = useState(false)
   const [welcome, setWelcome] = useState(true)
   const [reason, setReason] = useState("")
+  // Optional team appointment on register (Feature 9).
+  const [teamId, setTeamId] = useState("")
+  const [teamName, setTeamName] = useState("")
+  const [teamPickerOpen, setTeamPickerOpen] = useState(false)
 
   React.useEffect(() => {
     if (!modal) return
@@ -389,6 +395,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
       setRole(u.role); setDept(u.dept ?? "maps"); setAbId(u.abId ?? ""); setSalesChief(!!u.isSalesChief)
     } else if (modal.kind === "register") {
       setFirstName(""); setLastName(""); setUsername(""); setEmail(""); setPhone(""); setRole("employee"); setDept("maps"); setAbId(""); setSalesChief(false); setPw(""); setWelcome(true)
+      setTeamId(""); setTeamName("")
     } else if (modal.kind === "promote") { setReason("") }
   }, [modal])
 
@@ -453,11 +460,22 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
         }
         if (role === "employee") body.employee_type = `${dept}_emp`
         if (role === "admin") body.admin_type = `${dept === "hr" ? "maps" : dept}_admin`
+        // Team appointment: auth names the team in the welcome email; the actual HR
+        // membership (which auto-assigns the campaign) is done right after create.
+        if (teamId) { body.team_id = teamId; body.team_name = teamName }
         const res = await registerUser(body)
         if (!res.ok) {
           const data = await res.json().catch(() => ({} as Record<string, unknown>))
           const detail = Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" · ")
           throw new Error(detail || `Feil ${res.status}`)
+        }
+        if (teamId) {
+          const created = await res.json().catch(() => ({} as Record<string, unknown>))
+          const person = (created.manager || created.employee) as { id?: string } | undefined
+          if (person?.id) {
+            try { await addTeamMember(teamId, { id: String(person.id), person_type: role === "employee" ? "employee" : "manager" }) }
+            catch { /* user is created; appointment can be redone from Team if it failed */ }
+          }
         }
       } else if (editing) {
         const res = await updateUser(editing.role === "manager" ? "manager" : "employee", editing.id, {
@@ -477,6 +495,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
   }
 
   return (
+    <>
     <Modal open onClose={onClose} width="max-w-lg">
       <div className="flex items-center justify-between px-5 py-4 border-b border-white/8 sticky top-0 bg-[#0d1528] z-10 rounded-t-2xl">
         <h2 className="text-lg font-bold text-white">{isReg ? "Registrer ny bruker" : "Rediger bruker"}</h2>
@@ -548,6 +567,22 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
           </div>
         )}
 
+        {/* Team appointment (register, non-admin) */}
+        {isReg && role !== "admin" && (
+          <div>
+            <Lbl>Team <span className="text-white/20">(valgfritt)</span></Lbl>
+            <div className={inputCls + " flex items-center justify-between gap-2 !py-0 !pr-1"}>
+              <button type="button" onClick={() => setTeamPickerOpen(true)} className="cursor-pointer flex-1 text-left py-2.5">
+                <span className={teamName ? "text-white" : "text-white/25"}>{teamName || "Velg team…"}</span>
+              </button>
+              {teamName
+                ? <button type="button" onClick={() => { setTeamId(""); setTeamName("") }} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/8"><X className="h-3.5 w-3.5" /></button>
+                : <ChevronDown className="h-4 w-4 text-white/40 mr-2" />}
+            </div>
+            <p className="mt-1.5 text-[11px] text-white/30">Legges automatisk til i teamet og teamets kampanje.</p>
+          </div>
+        )}
+
         {/* Toggles */}
         <div className="space-y-2.5">
           {role === "manager" && (
@@ -568,6 +603,79 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
         {err && <span className="mr-auto text-xs text-rose-400">{err}</span>}
         <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
         <button onClick={submit} disabled={!valid || saving} className="cursor-pointer rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Lagrer…" : isReg ? "Registrer bruker" : "Lagre endringer"}</button>
+      </div>
+    </Modal>
+    {teamPickerOpen && (
+      <TeamPickerModal
+        onClose={() => setTeamPickerOpen(false)}
+        onSelect={(t) => { setTeamId(t.id); setTeamName(t.name); setTeamPickerOpen(false) }}
+      />
+    )}
+    </>
+  )
+}
+
+// Select-Team popup (Feature 9): filter teams by campaign / sales chief, pick one.
+function TeamPickerModal({ onClose, onSelect }: { onClose: () => void; onSelect: (t: { id: string; name: string }) => void }) {
+  const [teams, setTeams] = useState<TeamListItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [campaignFilter, setCampaignFilter] = useState("")
+  const [chiefFilter, setChiefFilter] = useState("")
+  const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([])
+  const [chiefs, setChiefs] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => { fetchCampaignsWithStats().then(l => setCampaigns(l.map(c => ({ id: c.id, name: c.name })))).catch(() => {}) }, [])
+  useEffect(() => {
+    setLoading(true)
+    const t = setTimeout(() => {
+      listTeams({ campaignId: campaignFilter || undefined, salesChiefId: chiefFilter || undefined, search: search || undefined, pageSize: 200 })
+        .then(r => {
+          setTeams(r.results)
+          if (!chiefFilter) {
+            const m = new Map<string, string>()
+            r.results.forEach(x => { if (x.sales_chief) m.set(x.sales_chief.id, x.sales_chief.name) })
+            setChiefs([...m].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)))
+          }
+        })
+        .catch(() => setTeams([]))
+        .finally(() => setLoading(false))
+    }, 200)
+    return () => clearTimeout(t)
+  }, [campaignFilter, chiefFilter, search])
+
+  const selCls = "h-9 rounded-lg border border-white/10 bg-white/5 px-2 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
+  return (
+    <Modal open onClose={onClose} width="max-w-md">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+        <h2 className="text-base font-bold text-white">Velg team</h2>
+        <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+      </div>
+      <div className="p-4 space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <select value={campaignFilter} onChange={e => setCampaignFilter(e.target.value)} className={selCls}>
+            <option value="" className="bg-[#0d1528]">Alle kampanjer</option>
+            {campaigns.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+          </select>
+          <select value={chiefFilter} onChange={e => setChiefFilter(e.target.value)} className={selCls}>
+            <option value="" className="bg-[#0d1528]">Alle salgssjefer</option>
+            {chiefs.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+          </select>
+        </div>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk team…" className="w-full h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+        <div className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-1.5">
+          {loading ? <p className="py-6 text-center text-sm text-white/35">Laster team…</p>
+            : teams.length === 0 ? <p className="py-6 text-center text-sm text-white/35">Ingen team funnet.</p>
+              : teams.map(t => (
+                <button key={t.id} onClick={() => onSelect({ id: t.id, name: t.name })} className="cursor-pointer w-full flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2.5 text-left hover:border-white/20 hover:bg-white/[0.06] transition-all">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base" style={{ background: `${t.color || "#3b82f6"}22`, border: `1px solid ${t.color || "#3b82f6"}55` }}>{t.icon || "👥"}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-white truncate">{t.name}</span>
+                    <span className="block text-[11px] text-white/40 truncate">{t.campaign?.name ?? "Ingen kampanje"}{t.sales_chief ? ` · ${t.sales_chief.name}` : ""}</span>
+                  </span>
+                </button>
+              ))}
+        </div>
       </div>
     </Modal>
   )
