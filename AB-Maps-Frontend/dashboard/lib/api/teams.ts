@@ -64,8 +64,8 @@ export interface TeamAnalytics {
 
 // Tier-1 quick stats (cheap list) — from /api/dashboard/teams/.
 export interface TeamQuickStats {
-  team_id: string; name: string; campaign: TeamRef | null; member_count: number;
-  total_doors: number; ja: number; ja_rate: number; contact_rate: number;
+  team_id: string; name: string; campaign: TeamRef | null; sales_chief: OwnerRef | null;
+  member_count: number; total_doors: number; ja: number; ja_rate: number; contact_rate: number;
 }
 
 export type LeaderboardMetric = 'ja_rate' | 'doors' | 'contact_rate' | 'work_time' | 'consistency';

@@ -392,6 +392,8 @@ function TeamTab({ startStr, endStr }: { startStr: string; endStr: string }) {
   const [sel, setSel] = useState<string | null>(null)
   const [detail, setDetail] = useState<TeamAnalytics | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [campaignFilter, setCampaignFilter] = useState("")
+  const [chiefFilter, setChiefFilter] = useState("")
 
   const loadList = useCallback(() => {
     setTeams(null); setErrored(false)
@@ -400,138 +402,180 @@ function TeamTab({ startStr, endStr }: { startStr: string; endStr: string }) {
   }, [startStr, endStr])
   useEffect(() => { loadList() }, [loadList])
 
+  const campaignOpts = useMemo(() => {
+    const m = new Map<string, string>()
+    ;(teams ?? []).forEach(t => { if (t.campaign) m.set(t.campaign.id, t.campaign.name) })
+    return [...m].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
+  }, [teams])
+  const chiefOpts = useMemo(() => {
+    const m = new Map<string, string>()
+    ;(teams ?? []).forEach(t => { if (t.sales_chief) m.set(t.sales_chief.id, t.sales_chief.name) })
+    return [...m].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
+  }, [teams])
+  const filtered = useMemo(() => (teams ?? []).filter(t =>
+    (!campaignFilter || t.campaign?.id === campaignFilter) &&
+    (!chiefFilter || t.sales_chief?.id === chiefFilter)), [teams, campaignFilter, chiefFilter])
+
   const openTeam = (id: string) => {
     setSel(id); setDetail(null); setDetailLoading(true)
     fetchTeamAnalytics(id, { startDate: startStr, endDate: endStr })
       .then(setDetail).catch(() => setDetail(null)).finally(() => setDetailLoading(false))
   }
+  const closeDrawer = () => { setSel(null); setDetail(null) }
 
   if (teams === null) return <Glass className="min-h-[300px]"><PanelLoading label="Laster team…" /></Glass>
   if (errored) return <Glass className="min-h-[300px]"><PanelError onRetry={loadList} /></Glass>
-  if (teams.length === 0) return <Glass className="min-h-[300px]"><PanelEmpty msg="Ingen team" sub="Ingen team tilgjengelig for din tilgang." /></Glass>
 
+  const selName = teams.find(t => t.team_id === sel)?.name ?? "Team"
+  const selCls = "h-9 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {teams.map(t => (
-          <button key={t.team_id} onClick={() => openTeam(t.team_id)}
-            className={cn("cursor-pointer text-left rounded-2xl border bg-white/[0.03] p-4 transition-all hover:bg-white/[0.06]",
-              sel === t.team_id ? "border-blue-500/50 bg-blue-600/10" : "border-white/8 hover:border-white/20")}>
-            <div className="flex items-start justify-between gap-2 mb-3">
-              <p className="text-sm font-bold text-white truncate">{t.name}</p>
-              <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", sel === t.team_id ? "rotate-90 text-blue-400" : "text-white/25")} />
-            </div>
-            <p className="text-[11px] text-white/40 truncate mb-3">{t.campaign?.name ?? "Ingen kampanje"} · {t.member_count} medlem{t.member_count === 1 ? "" : "mer"}</p>
-            <div className="grid grid-cols-3 gap-2">
-              <div><p className="text-[10px] uppercase tracking-wide text-white/35">Dører</p><p className="font-mono text-sm font-bold text-white">{nbFmt.format(t.total_doors)}</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide text-white/35">Ja %</p><p className="font-mono text-sm font-bold text-emerald-400">{nf1(t.ja_rate)}</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide text-white/35">Kontakt %</p><p className="font-mono text-sm font-bold text-blue-300">{nf1(t.contact_rate)}</p></div>
-            </div>
-          </button>
-        ))}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={campaignFilter} onChange={e => setCampaignFilter(e.target.value)} className={selCls}>
+          <option value="" className="bg-[#0d1528]">Alle kampanjer</option>
+          {campaignOpts.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+        </select>
+        <select value={chiefFilter} onChange={e => setChiefFilter(e.target.value)} className={selCls}>
+          <option value="" className="bg-[#0d1528]">Alle salgssjefer</option>
+          {chiefOpts.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+        </select>
+        <span className="text-xs text-white/40 ml-1">{filtered.length} team</span>
+        {(campaignFilter || chiefFilter) && <button onClick={() => { setCampaignFilter(""); setChiefFilter("") }} className="cursor-pointer text-xs text-blue-300/80 hover:text-blue-200">Nullstill</button>}
       </div>
 
-      <AnimatePresence mode="wait">
-        {sel && (
-          detailLoading ? <Glass key="dl" className="min-h-[220px]"><PanelLoading label="Laster team-detaljer…" /></Glass>
-            : detail ? <TeamDetailPanel key={sel} d={detail} onClose={() => setSel(null)} />
-              : <Glass key="de" className="min-h-[120px]"><PanelEmpty msg="Kunne ikke laste team-detaljer" sub="Prøv igjen." /></Glass>
-        )}
+      {filtered.length === 0 ? (
+        <Glass className="min-h-[200px]"><PanelEmpty msg="Ingen team" sub="Juster filtrene eller sjekk tilgangen din." /></Glass>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map(t => (
+            <motion.button key={t.team_id} onClick={() => openTeam(t.team_id)} whileHover={{ y: -2 }}
+              className={cn("cursor-pointer text-left rounded-2xl border bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.06]",
+                sel === t.team_id ? "border-blue-500/50 bg-blue-600/10" : "border-white/8 hover:border-white/20")}>
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <p className="text-sm font-bold text-white truncate">{t.name}</p>
+                <ChevronRight className="h-4 w-4 shrink-0 text-white/25" />
+              </div>
+              <p className="text-[11px] text-white/40 truncate mb-3">{t.campaign?.name ?? "Ingen kampanje"}{t.sales_chief ? ` · ${t.sales_chief.name}` : ""} · {t.member_count} medl.</p>
+              <div className="grid grid-cols-3 gap-2">
+                <TeamMiniStat label="Dører" value={nbFmt.format(t.total_doors)} color="#ffffff" />
+                <TeamMiniStat label="Ja %" value={nf1(t.ja_rate)} color="#34d399" />
+                <TeamMiniStat label="Kontakt %" value={nf1(t.contact_rate)} color="#7dd3fc" />
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {sel && <TeamDrawer key="drawer" name={selName} d={detail} loading={detailLoading} onClose={closeDrawer} />}
       </AnimatePresence>
     </motion.div>
   )
 }
 
-function TeamDetailPanel({ d, onClose }: { d: TeamAnalytics; onClose: () => void }) {
-  const chart = useMemo(() => (d.daily ?? []).map(x => ({
-    label: new Date(x.date).toLocaleDateString("nb-NO", { day: "numeric", month: "short" }),
-    doors: x.total_doors, yes_rate: x.yes_rate,
-  })), [d.daily])
-  const kpis = [
-    { label: "Dører totalt", value: nbFmt.format(d.total_doors), color: "#3b82f6" },
-    { label: "Ja-rate", value: `${nf1(d.ja_rate)} %`, color: "#10b981" },
-    { label: "Kontaktrate", value: `${nf1(d.contact_rate)} %`, color: "#8b5cf6" },
-    { label: "Dører/aktiv dag", value: nf1(d.doors_per_active_day), color: "#06b6d4" },
-    { label: "Konsistens", value: `${nf1(d.consistency_score)}`, color: "#f59e0b" },
-    { label: "Arbeidstid", value: `${nbFmt.format(Math.round(d.work.total_minutes / 60))} t`, color: "#ec4899" },
-  ]
+function TeamMiniStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-      <Glass className="p-5 space-y-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-bold text-white">{d.name}</h3>
-            <p className="text-xs text-white/40">{d.campaign?.name ?? "Ingen kampanje"} · {d.member_count} medlemmer · {d.work.active_members} aktive</p>
-          </div>
-          <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
-        </div>
-
-        {/* KPI tiles */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          {kpis.map(k => (
-            <div key={k.label} className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-              <p className="text-[10px] uppercase tracking-wide text-white/35">{k.label}</p>
-              <p className="font-mono text-lg font-bold" style={{ color: k.color }}>{k.value}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Daily trend */}
-        {chart.length > 0 && (
-          <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-            <p className="text-xs text-white/45 mb-2">Daglig aktivitet · dører (søyle) og ja-rate % (linje)</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <ComposedChart data={chart} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis yAxisId="left" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="right" orientation="right" domain={[0, "auto"]} tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }} tickLine={false} axisLine={false} unit="%" />
-                <Tooltip contentStyle={chartTooltip} />
-                <Bar yAxisId="left" dataKey="doors" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={26} name="Dører" />
-                <Line yAxisId="right" type="monotone" dataKey="yes_rate" stroke="#10b981" strokeWidth={2} dot={false} name="Ja-rate %" />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Per-member */}
-          <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-            <p className="text-xs font-semibold text-white/70 mb-2">Medlemmer ({d.per_member.length})</p>
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1.5 text-xs">
-              <span className="text-white/35">Navn</span><span className="text-right text-white/35">Dører</span><span className="text-right text-white/35">Ja %</span><span className="text-right text-white/35">Tid</span>
-              {d.per_member.map(m => (
-                <Fragment key={m.id}>
-                  <span className="text-white/85 truncate flex items-center gap-1.5">{m.person_type === "manager" && <Target className="h-3 w-3 text-amber-400/70" />}{m.name}</span>
-                  <span className="text-right font-mono text-white/80">{nbFmt.format(m.doors)}</span>
-                  <span className="text-right font-mono text-emerald-400/90">{nf1(m.ja_rate)}</span>
-                  <span className="text-right font-mono text-white/55">{Math.round(m.work_minutes / 60)}t {Math.round(m.work_minutes % 60)}m</span>
-                </Fragment>
-              ))}
-            </div>
-          </div>
-
-          {/* Alerts (thresholds) */}
-          <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-            <p className="text-xs font-semibold text-white/70 mb-2">Varsler ({d.alerts?.length ?? 0})</p>
-            {(d.alerts?.length ?? 0) === 0 ? (
-              <p className="py-4 text-center text-xs text-emerald-400/80">✓ Ingen terskelbrudd i teamet.</p>
-            ) : (
-              <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                {(d.alerts ?? []).map((a, i) => (
-                  <div key={i} className={cn("rounded-lg border px-3 py-2 text-xs", a.severity === "critical" ? "border-rose-500/25 bg-rose-500/[0.06]" : "border-amber-500/25 bg-amber-500/[0.05]")}>
-                    <p className={a.severity === "critical" ? "text-rose-300" : "text-amber-200"}>{a.message}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </Glass>
-    </motion.div>
+    <div>
+      <p className="text-[10px] uppercase tracking-wide text-white/35">{label}</p>
+      <p className="font-mono text-sm font-bold" style={{ color }}>{value}</p>
+    </div>
   )
 }
 
+function TeamDrawer({ name, d, loading, onClose }: { name: string; d: TeamAnalytics | null; loading: boolean; onClose: () => void }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", h)
+    return () => window.removeEventListener("keydown", h)
+  }, [onClose])
+  const chart = useMemo(() => (d?.daily ?? []).map(x => ({
+    label: new Date(x.date).toLocaleDateString("nb-NO", { day: "numeric", month: "short" }),
+    doors: x.total_doors, yes_rate: x.yes_rate,
+  })), [d])
+  const kpis = d ? [
+    { label: "Dører totalt", value: nbFmt.format(d.total_doors), color: "#93c5fd" },
+    { label: "Ja-rate", value: `${nf1(d.ja_rate)} %`, color: "#34d399" },
+    { label: "Kontaktrate", value: `${nf1(d.contact_rate)} %`, color: "#c4b5fd" },
+    { label: "Dører/aktiv dag", value: nf1(d.doors_per_active_day), color: "#7dd3fc" },
+    { label: "Konsistens", value: nf1(d.consistency_score), color: "#fbbf24" },
+    { label: "Arbeidstid", value: `${nbFmt.format(Math.round(d.work.total_minutes / 60))} t`, color: "#f9a8d4" },
+  ] : []
+  return (
+    <>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose} className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+      <motion.aside initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+        transition={{ type: "spring", stiffness: 320, damping: 34 }}
+        className="fixed right-0 top-0 z-50 h-screen w-full sm:w-[560px] max-w-[94vw] overflow-y-auto border-l border-white/10 bg-[#0b1220] shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/8 bg-[#0b1220]/95 backdrop-blur px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-widest text-white/30">Team-analyse</p>
+            <h3 className="text-lg font-bold text-white truncate">{name}</h3>
+          </div>
+          <button onClick={onClose} className="cursor-pointer h-8 w-8 shrink-0 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+        </div>
+
+        {loading || !d ? (
+          <div className="p-6"><PanelLoading label="Laster team-detaljer…" /></div>
+        ) : (
+          <div className="p-5 space-y-5">
+            <p className="text-xs text-white/40">{d.campaign?.name ?? "Ingen kampanje"} · {d.member_count} medlemmer · {d.work.active_members} aktive</p>
+            <div className="grid grid-cols-2 gap-2">
+              {kpis.map(k => (
+                <div key={k.label} className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-white/35">{k.label}</p>
+                  <p className="font-mono text-lg font-bold" style={{ color: k.color }}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+            {chart.length > 0 && (
+              <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                <p className="text-xs text-white/45 mb-2">Daglig aktivitet · dører (søyle) og ja-rate % (linje)</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <ComposedChart data={chart} margin={{ top: 4, right: 8, left: -22, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                    <YAxis yAxisId="left" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis yAxisId="right" orientation="right" domain={[0, "auto"]} tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }} tickLine={false} axisLine={false} unit="%" />
+                    <Tooltip contentStyle={chartTooltip} />
+                    <Bar yAxisId="left" dataKey="doors" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={22} name="Dører" />
+                    <Line yAxisId="right" type="monotone" dataKey="yes_rate" stroke="#10b981" strokeWidth={2} dot={false} name="Ja-rate %" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+              <p className="text-xs font-semibold text-white/70 mb-2">Medlemmer ({d.per_member.length})</p>
+              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1.5 text-xs">
+                <span className="text-white/35">Navn</span><span className="text-right text-white/35">Dører</span><span className="text-right text-white/35">Ja %</span><span className="text-right text-white/35">Tid</span>
+                {d.per_member.map(m => (
+                  <Fragment key={m.id}>
+                    <span className="text-white/85 truncate flex items-center gap-1.5">{m.person_type === "manager" && <Target className="h-3 w-3 text-amber-400/70" />}{m.name}</span>
+                    <span className="text-right font-mono text-white/80">{nbFmt.format(m.doors)}</span>
+                    <span className="text-right font-mono text-emerald-400/90">{nf1(m.ja_rate)}</span>
+                    <span className="text-right font-mono text-white/55">{Math.round(m.work_minutes / 60)}t</span>
+                  </Fragment>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+              <p className="text-xs font-semibold text-white/70 mb-2">Varsler ({d.alerts?.length ?? 0})</p>
+              {(d.alerts?.length ?? 0) === 0 ? (
+                <p className="py-3 text-center text-xs text-emerald-400/80">✓ Ingen terskelbrudd.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {(d.alerts ?? []).map((a, i) => (
+                    <div key={i} className={cn("rounded-lg border px-3 py-2 text-xs", a.severity === "critical" ? "border-rose-500/25 bg-rose-500/[0.06] text-rose-300" : "border-amber-500/25 bg-amber-500/[0.05] text-amber-200")}>{a.message}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </motion.aside>
+    </>
+  )
+}
 // ─── Oversikt ─────────────────────────────────────────────────────────────────
 function OversiktTab({ d }: { d: AnalyticsPreview }) {
   const s = d.summary, c = d.comparisons
