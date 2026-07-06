@@ -25,6 +25,33 @@ import buildingService from '../services/buildingService';
 // Phase 3: Import date utility functions
 import { formatDateToISO, formatISOToLocal, validateDateRange } from '../utils/dateUtils';
 
+// GPS proximity guard (Feature 11): matches the backend's 75 m door rule so a knock
+// placed too far away never reaches local-lookup / bulk-create. Returns the rounded
+// distance when the tapped point is clearly beyond 75 m + accuracy of the tracked
+// device fix, else null (no fix → don't block; the backend still validates the knock).
+const PROXIMITY_LIMIT_M = 75;
+function _distMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000, toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+function proximityViolationMeters(lat, lng) {
+  try {
+    const fix = locationService.getStatus && locationService.getStatus().lastLocation;
+    if (!fix) return null;
+    const flat = fix.latitude != null ? fix.latitude : fix.lat;
+    const flng = fix.longitude != null ? fix.longitude : (fix.lng != null ? fix.lng : fix.lon);
+    if (typeof flat !== 'number' || typeof flng !== 'number') return null;
+    const dist = _distMeters(flat, flng, lat, lng);
+    const limit = PROXIMITY_LIMIT_M + (typeof fix.accuracy === 'number' ? fix.accuracy : 0);
+    return dist > limit ? Math.round(dist) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 /**
  * Custom hook for managing map state and interactions
  */
@@ -653,6 +680,15 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
               setToast({ visible: true, message: 'Velg en kampanje først (øverst i verktøylinjen)', type: 'error' });
               return;
             }
+            // GPS proximity guard: if we're clearly >75 m from the tapped door, don't
+            // look up or create anything (the backend would reject the knock anyway).
+            const proxM = proximityViolationMeters(latlng.lat, latlng.lng);
+            if (proxM != null) {
+              setIsGeonorgeLoading(false);
+              setClickedInfo(null);
+              showToast(`Du er ${proxM} m unna – du må være nær døra (maks 75 m) for å registrere adressen.`, 'error');
+              return;
+            }
             const createdById = currentUser?.id || null;
 
             // Call backend local-lookup API
@@ -792,9 +828,17 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
       }
     }
 
+    // GPS proximity guard: same 75 m rule as the primary flow.
+    const proxM = proximityViolationMeters(normalizedPosition.lat, normalizedPosition.lng);
+    if (proxM != null) {
+      setClickedInfo(null);
+      showToast(`Du er ${proxM} m unna – du må være nær døra (maks 75 m) for å registrere adressen.`, 'error');
+      return;
+    }
+
     try {
       console.log('🏢 [useMapState] Geonorge fallback: Checking for apartments at:', address, 'with position:', normalizedPosition);
-      
+
       setIsGeonorgeLoading(true);
       
       // Call Geonorge API
