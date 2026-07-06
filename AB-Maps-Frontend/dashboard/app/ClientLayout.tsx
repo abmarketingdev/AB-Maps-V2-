@@ -103,7 +103,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/analytics": "Analytics",
   "/admin/tasks": "Tildel oppgaver",
   "/uploaded-addresses": "Legg til adresse",
-  "/salgssjef-team": "Salgssjef-team",
   "/teams": "Team",
 }
 
@@ -391,9 +390,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     if (isStaff || isSuperuser || isSalesChief) {
       items.push({ href: "/teams", title: "Team", icon: <Users className="h-4 w-4" />, group: "TEAM" })
     }
-    if (isSalesChief) {
-      items.push({ href: "/salgssjef-team", title: "Salgssjef-team", icon: <Users className="h-4 w-4" />, group: "TEAM" })
-    }
     items.push({
       href: "/learning-platform",
       title: isSuperuser ? "Læringsadminpanel" : "AB Academy",
@@ -401,15 +397,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       group: "LÆRING",
     })
     // Analytics — admins/superusers + sales-chiefs only (plain managers excluded).
+    // Sales chiefs get a team-only Analytics view (enforced inside AnalyticsView).
     if (isSuperuser || isSalesChief) {
       items.push({ href: "/analytics", title: "Analytics", icon: <BarChart3 className="h-4 w-4" />, group: "ADMIN" })
     }
-    // Admin/oversight pages — superusers/admins + sales-chiefs only (never plain managers).
+    // Admin Dashboard — superusers/admins ONLY (sales chiefs must not see it).
+    if (isSuperuser) {
+      items.push({ href: "/admin-dashboard", title: "Admin Dashboard", icon: <Shield className="h-4 w-4" />, group: "ADMIN" })
+    }
+    // Add-address oversight — superusers + sales chiefs.
     if (isSuperuser || isSalesChief) {
-      items.push(
-        { href: "/admin-dashboard",     title: "Admin Dashboard",  icon: <Shield className="h-4 w-4" />,    group: "ADMIN" },
-        { href: "/uploaded-addresses",  title: "Legg til adresse", icon: <Plus className="h-4 w-4" />,      group: "ADMIN" },
-      )
+      items.push({ href: "/uploaded-addresses", title: "Legg til adresse", icon: <Plus className="h-4 w-4" />, group: "ADMIN" })
     }
     return items
   }, [isSuperuser, isSalesChief, isStaff])

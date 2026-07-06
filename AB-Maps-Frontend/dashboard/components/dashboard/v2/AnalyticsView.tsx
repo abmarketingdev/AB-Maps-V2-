@@ -173,7 +173,9 @@ export function AnalyticsView() {
   const { campaignId: globalCampaignId } = useSelectedCampaign()
   const { isAdmin, isSalesChief } = useAuth()
   const { toast } = useToast()
-  const [tab, setTab] = useState<Tab>("oversikt")
+  // A sales chief (not admin) only gets the Team tab — their own team's stats.
+  const chiefOnly = isSalesChief && !isAdmin
+  const [tab, setTab] = useState<Tab>(chiefOnly ? "team" : "oversikt")
   const [startStr, setStartStr] = useState<string>(() => daysAgo(89))
   const [endStr, setEndStr] = useState<string>(() => ymd(anchorDate()))
   const [activePreset, setActivePreset] = useState<number>(90)
@@ -205,8 +207,13 @@ export function AnalyticsView() {
     fetchCampaignsWithStats().then(l => setCampaigns(l.map(c => ({ id: c.id, name: c.name, color: c.color })))).catch(() => {})
   }, [])
   useEffect(() => { if (globalCampaignId) setCampaignId(globalCampaignId) }, [globalCampaignId])
+  // Keep a chief pinned to the Team tab even if their role resolves after mount.
+  useEffect(() => { if (chiefOnly) setTab("team") }, [chiefOnly])
 
   const load = useCallback(() => {
+    // A sales chief only sees the Team tab (its own endpoint) — never fetch the
+    // global preview/work-time (which is not theirs to see).
+    if (chiefOnly) { setLoading(false); setErrored(false); return }
     if (tooLong) { setLoading(false); setErrored(false); return }
     setLoading(true); setErrored(false)
     const params = { startDate: startStr, endDate: endStr, campaignIds: campaignId ? [campaignId] : undefined }
@@ -220,7 +227,7 @@ export function AnalyticsView() {
       })
       .catch(() => setErrored(true))
       .finally(() => setLoading(false))
-  }, [startStr, endStr, campaignId, tooLong])
+  }, [startStr, endStr, campaignId, tooLong, chiefOnly])
   // Debounced — custom date inputs change start then end in quick succession.
   useEffect(() => { const t = setTimeout(() => { void load() }, 300); return () => clearTimeout(t) }, [load])
 
@@ -264,15 +271,17 @@ export function AnalyticsView() {
     } finally { setDownloading(false) }
   }
 
-  const TABS: { key: Tab; label: string; badge?: number }[] = [
-    { key: "oversikt", label: "Oversikt" },
-    { key: "ansatte", label: "Ansatte" },
-    { key: "kampanjer", label: "Kampanjer" },
-    { key: "team", label: "Team" },
-    { key: "varsler", label: "Varsler", badge: data?.alerts.length || undefined },
-    { key: "arbeidstid", label: "Tid & tempo" },
-    { key: "terskler", label: "Terskler" },
-  ]
+  const TABS: { key: Tab; label: string; badge?: number }[] = chiefOnly
+    ? [{ key: "team", label: "Team" }]
+    : [
+        { key: "oversikt", label: "Oversikt" },
+        { key: "ansatte", label: "Ansatte" },
+        { key: "kampanjer", label: "Kampanjer" },
+        { key: "team", label: "Team" },
+        { key: "varsler", label: "Varsler", badge: data?.alerts.length || undefined },
+        { key: "arbeidstid", label: "Tid & tempo" },
+        { key: "terskler", label: "Terskler" },
+      ]
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
