@@ -8,8 +8,8 @@
  *
  * Access: admins/superusers + sales-chiefs only (route-gated in app/analytics/page.tsx).
  *
- * Two DISTINCT time signals are shown, never conflated:
- *   • Arbeidstid = tracked work-session hours (work_time_rollup) — GPS-økter, less precise.
+ * Work time is KNOCK-BASED (no GPS/WebSocket):
+ *   • Arbeidstid = idle-capped active minutes (seller_day_metric.active_minutes, gaps >90m excluded).
  *   • Tempo      = dører per aktiv time from the first→last knock window (seller_day_metric).
  */
 
@@ -25,20 +25,21 @@ import {
   TrendingUp, TrendingDown, DoorOpen, Users, Percent, Clock, AlertCircle,
   ChevronDown, ChevronRight, Trophy, Target, Activity, Trash2, X, Check, Loader2,
   Download, Send, Pencil, CalendarDays, MapPin, ShieldAlert, Info, Zap,
-  ArrowDownRight, SlidersHorizontal,
+  ArrowDownRight, SlidersHorizontal, Mail, FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { RoyMascot, MOOD_TO_ROY, type RoyState } from "@/components/gamification/RoyMascot"
 import { computeMood } from "@/components/gamification/lib/mood"
 import {
   fetchAnalyticsPreview, fetchWorkTimeStats, fmtMin, downloadAnalyticsPdf, triggerAnalyticsEmail,
-  type AnalyticsPreview, type WorkTimeStats, type AnEmployee, type AnCampaign, type AnAlert,
-  type NeiBreakdown,
+  type AnalyticsPreview, type WorkTimeStats, type AnEmployee, type AnCampaign,
+  type NeiBreakdown, type DayClassification,
 } from "@/lib/api/analytics"
 import { fetchTeamPace, fetchEmployeePaceSeries, type PaceRow, type PaceDay } from "@/lib/api/pace"
 import { fetchDeviations, type DeviationTeam } from "@/lib/api/deviations"
 import { fetchTeamsList, fetchTeamAnalytics, type TeamQuickStats, type TeamAnalytics } from "@/lib/api/teams"
 import { fetchProximityViolations, type ProximityViolationsResponse } from "@/lib/api/proximity"
+import { fetchEmailLog, fetchEmailLogDetail, type EmailLogRow, type EmailLogDetail } from "@/lib/api/emailLog"
 import { fetchCampaignsWithStats } from "@/lib/api/campaigns"
 import { useSelectedCampaign } from "@/lib/hooks/useSelectedCampaign"
 import { useAuth } from "@/lib/auth/AuthContext"
@@ -67,6 +68,12 @@ const RANGES = [
   { d: 7, label: "7 dager" }, { d: 14, label: "14 dager" },
   { d: 30, label: "30 dager" }, { d: 90, label: "90 dager" },
 ]
+// Short, unique-ish label for a threshold set in the Apply-Thresholds picker.
+const SCOPE_LABEL: Record<string, string> = { global: "Global", manager: "Leder", campaign: "Kampanje", employee: "Ansatt" }
+function thresholdLabel(t?: Threshold): string {
+  if (!t) return "Terskel"
+  return `${SCOPE_LABEL[t.scope] ?? t.scope} · ${t.min_doors_per_day} d/dag · ${t.min_yes_rate_percent}% ja · full ${t.full_day_doors}`
+}
 const WEEKDAY_LABELS = ["man", "tir", "ons", "tor", "fre", "lør", "søn"]
 
 // ISO week key/label for a date (Mon-based).
@@ -145,6 +152,74 @@ function MiniBars({ values, below, threshold, color = "#3b82f6", belowColor = "#
   )
 }
 
+// ─── Workday classification (full / half / none) ─────────────────────────────
+type DayCls = "full" | "half" | "none" | "off"
+const DAY_CLS: Record<DayCls, { color: string; label: string }> = {
+  full: { color: "#10b981", label: "Full dag" },
+  half: { color: "#f59e0b", label: "Halv dag" },
+  none: { color: "#f43f5e", label: "Under halv" },
+  off:  { color: "rgba(255,255,255,0.09)", label: "Ingen aktivitet" },
+}
+// Classify a day's door count against the effective thresholds (falls back to 80/40/20 %).
+function classifyDoors(doors: number, dc?: DayClassification): DayCls {
+  if (!doors || doors <= 0) return "off"
+  const fullCut = dc ? dc.full_day_cutoff : 64
+  const halfCut = dc ? dc.half_day_doors : 40
+  if (doors >= fullCut) return "full"
+  if (doors >= halfCut) return "half"
+  return "none"
+}
+// A compact coloured day strip. `cells` already bucketed/stepped by the caller for long ranges.
+function DayStrip({ cells }: { cells: { cls: DayCls; title: string }[] }) {
+  return (
+    <div className="flex items-stretch gap-[3px]">
+      {cells.map((c, i) => (
+        <div key={i} title={c.title} className="h-6 flex-1 min-w-[7px] rounded-[3px]"
+          style={{ background: DAY_CLS[c.cls].color, opacity: c.cls === "off" ? 1 : 0.9 }} />
+      ))}
+    </div>
+  )
+}
+// Build day-classification cells across [start, end]. For long ranges (>14 days) it steps
+// into ~14 buckets (each classified by the bucket's average doors/working-day) so the strip
+// never clutters. `counts` is the employee's daily_door_counts { dateISO: doors }.
+function buildDayCells(counts: Record<string, number>, startStr: string, endStr: string, dc?: DayClassification): { cls: DayCls; title: string }[] {
+  const fmtD = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("nb-NO", { day: "numeric", month: "short" })
+  const days: { iso: string; doors: number }[] = []
+  const start = new Date(`${startStr}T00:00:00Z`).getTime(), end = new Date(`${endStr}T00:00:00Z`).getTime()
+  for (let t = start; t <= end; t += 86400000) {
+    const iso = new Date(t).toISOString().slice(0, 10)
+    days.push({ iso, doors: counts[iso] ?? 0 })
+  }
+  const bucket = Math.max(1, Math.ceil(days.length / 14))
+  if (bucket === 1) return days.map(d => ({ cls: classifyDoors(d.doors, dc), title: `${fmtD(d.iso)} — ${nbFmt.format(d.doors)} dører` }))
+  const cells: { cls: DayCls; title: string }[] = []
+  for (let i = 0; i < days.length; i += bucket) {
+    const chunk = days.slice(i, i + bucket)
+    const working = chunk.filter(d => d.doors > 0)
+    const avg = working.length ? Math.round(working.reduce((a, d) => a + d.doors, 0) / working.length) : 0
+    cells.push({ cls: classifyDoors(avg, dc), title: `${fmtD(chunk[0].iso)}–${fmtD(chunk[chunk.length - 1].iso)} — snitt ${nbFmt.format(avg)} dører/arbeidsdag` })
+  }
+  return cells
+}
+function DayStripLegend() {
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      {(["full", "half", "none", "off"] as DayCls[]).map(k => (
+        <span key={k} className="flex items-center gap-1.5 text-[10px] text-white/45">
+          <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: DAY_CLS[k].color }} />{DAY_CLS[k].label}
+        </span>
+      ))}
+    </div>
+  )
+}
+// Summarise a set of day cells into full/half/none counts (working days only).
+function daySummary(cells: { cls: DayCls }[]) {
+  const c = { full: 0, half: 0, none: 0 }
+  for (const x of cells) if (x.cls !== "off") c[x.cls]++
+  return c
+}
+
 // SVG ring gauge showing active_pct in the centre.
 function RingGauge({ pct, color, center, sub }: { pct: number; color: string; center: string; sub: string }) {
   const r = 34, c = 2 * Math.PI * r
@@ -166,7 +241,7 @@ function RingGauge({ pct, color, center, sub }: { pct: number; color: string; ce
 
 const chartTooltip = { background: "#0d1528", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, fontSize: 12 } as const
 
-type Tab = "oversikt" | "ansatte" | "kampanjer" | "team" | "varsler" | "arbeidstid" | "terskler"
+type Tab = "oversikt" | "ansatte" | "kampanjer" | "team" | "varsler" | "arbeidstid" | "terskler" | "epostlogg"
 
 export function AnalyticsView() {
   const reduced = useReducedMotion()
@@ -184,6 +259,10 @@ export function AnalyticsView() {
   const [campOpen, setCampOpen] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [emailOpen, setEmailOpen] = useState(false)
+  // Apply-Thresholds (view-only what-if): pick a stored threshold set to recompute the view.
+  const [thresholdId, setThresholdId] = useState<string>("")
+  const [thresholdList, setThresholdList] = useState<Threshold[]>([])
+  const [threshOpen, setThreshOpen] = useState(false)
 
   const [data, setData] = useState<AnalyticsPreview | null>(null)
   const [work, setWork] = useState<WorkTimeStats | null>(null)
@@ -206,6 +285,12 @@ export function AnalyticsView() {
   useEffect(() => {
     fetchCampaignsWithStats().then(l => setCampaigns(l.map(c => ({ id: c.id, name: c.name, color: c.color })))).catch(() => {})
   }, [])
+  const loadThresholds = useCallback(() => {
+    analyticsService.getThresholds()
+      .then((r: unknown) => { const arr = Array.isArray(r) ? r : ((r as { results?: Threshold[] })?.results ?? []); setThresholdList(arr as Threshold[]) })
+      .catch(() => {})
+  }, [])
+  useEffect(() => { if (!chiefOnly) loadThresholds() }, [chiefOnly, loadThresholds])
   useEffect(() => { if (globalCampaignId) setCampaignId(globalCampaignId) }, [globalCampaignId])
   // Keep a chief pinned to the Team tab even if their role resolves after mount.
   useEffect(() => { if (chiefOnly) setTab("team") }, [chiefOnly])
@@ -216,7 +301,7 @@ export function AnalyticsView() {
     if (chiefOnly) { setLoading(false); setErrored(false); return }
     if (tooLong) { setLoading(false); setErrored(false); return }
     setLoading(true); setErrored(false)
-    const params = { startDate: startStr, endDate: endStr, campaignIds: campaignId ? [campaignId] : undefined }
+    const params = { startDate: startStr, endDate: endStr, campaignIds: campaignId ? [campaignId] : undefined, thresholdId: thresholdId || undefined }
     return Promise.all([
       fetchAnalyticsPreview(params),
       fetchWorkTimeStats(params).catch(() => null),
@@ -227,7 +312,7 @@ export function AnalyticsView() {
       })
       .catch(() => setErrored(true))
       .finally(() => setLoading(false))
-  }, [startStr, endStr, campaignId, tooLong, chiefOnly])
+  }, [startStr, endStr, campaignId, thresholdId, tooLong, chiefOnly])
   // Debounced — custom date inputs change start then end in quick succession.
   useEffect(() => { const t = setTimeout(() => { void load() }, 300); return () => clearTimeout(t) }, [load])
 
@@ -237,12 +322,12 @@ export function AnalyticsView() {
     if (!campaignId) { setPace(null); return }
     let cancelled = false
     setPaceLoading(true)
-    fetchTeamPace({ campaignId, date: endStr, pageSize: 200 })
+    fetchTeamPace({ campaignId, startDate: startStr, endDate: endStr, pageSize: 200 })
       .then(r => { if (!cancelled) { setPace(r.results); setPaceEff(r.effective_date) } })
       .catch(() => { if (!cancelled) setPace(null) })
       .finally(() => { if (!cancelled) setPaceLoading(false) })
     return () => { cancelled = true }
-  }, [tab, campaignId, endStr])
+  }, [tab, campaignId, startStr, endStr])
 
   // Deviations + proximity — for the Varsler tab.
   useEffect(() => {
@@ -281,6 +366,7 @@ export function AnalyticsView() {
         { key: "varsler", label: "Varsler", badge: data?.alerts.length || undefined },
         { key: "arbeidstid", label: "Tid & tempo" },
         { key: "terskler", label: "Terskler" },
+        ...(isAdmin ? [{ key: "epostlogg" as Tab, label: "E-postlogg" }] : []),
       ]
 
   return (
@@ -337,6 +423,40 @@ export function AnalyticsView() {
                 )}
               </AnimatePresence>
             </div>
+            {/* Apply thresholds (view-only what-if) */}
+            {!chiefOnly && (
+              <div className="relative">
+                <button onClick={() => setThreshOpen(o => !o)} title="Beregn visningen mot et valgt terskelsett (kun visning)"
+                  className={cn("cursor-pointer flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all",
+                    thresholdId ? "border-amber-400/40 bg-amber-400/10 text-amber-200" : "border-white/10 bg-white/5 text-white/70 hover:text-white")}>
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  {thresholdId ? (thresholdLabel(thresholdList.find(t => t.id === thresholdId)) ?? "Terskel") : "Standard terskel"}
+                  <ChevronDown className="h-3.5 w-3.5 text-white/40" />
+                </button>
+                <AnimatePresence>
+                  {threshOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setThreshOpen(false)} />
+                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="absolute right-0 top-full mt-2 z-20 w-72 max-h-80 overflow-y-auto rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl py-1">
+                        <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-white/35">Aktiv terskel (kun visning)</p>
+                        <button onClick={() => { setThresholdId(""); setThreshOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left">
+                          <span className="flex-1 text-white/85">Standard (lagret aktiv)</span>{!thresholdId && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                        </button>
+                        {thresholdList.map(t => (
+                          <button key={t.id} onClick={() => { setThresholdId(t.id); setThreshOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left">
+                            <span className="flex-1 text-white/85 truncate">{thresholdLabel(t)}{t.is_active && <span className="ml-1.5 text-[10px] text-emerald-400">aktiv</span>}</span>{thresholdId === t.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                          </button>
+                        ))}
+                        <div className="my-1 border-t border-white/8" />
+                        <button onClick={() => { setThreshOpen(false); setTab("terskler") }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left text-blue-300">
+                          <Pencil className="h-3.5 w-3.5" /><span className="flex-1">+ Opprett ny terskel…</span>
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
             {/* Download PDF — admin only */}
             {isAdmin && (
               <button onClick={downloadPdf} disabled={downloading || tooLong}
@@ -373,7 +493,9 @@ export function AnalyticsView() {
 
         {/* Content */}
         {tab === "terskler" ? (
-          <TersklerTab campaigns={campaigns} data={data} onChanged={() => void load()} />
+          <TersklerTab campaigns={campaigns} data={data} onChanged={() => { loadThresholds(); void load() }} />
+        ) : tab === "epostlogg" ? (
+          <EpostloggTab startStr={startStr} endStr={endStr} />
         ) : tab === "team" ? (
           <TeamTab startStr={startStr} endStr={endStr} />
         ) : loading ? (
@@ -711,7 +833,15 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><span className="font-mono text-xl font-bold text-white">{nbFmt.format(s.total_doors)}</span><span className="text-[10px] text-white/40">dører</span></div>
           </div>
           <div className="mt-3 space-y-1.5">
-            {donut.map(x => <div key={x.key} className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-white/60"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: x.color }} />{x.label}</span><span className="font-mono text-white/70">{nbFmt.format(x.value)}</span></div>)}
+            {donut.map(x => {
+              const pct = s.total_doors > 0 ? (x.value / s.total_doors) * 100 : 0
+              return (
+                <div key={x.key} className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2 text-white/60"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: x.color }} />{x.label}</span>
+                  <span className="flex items-baseline gap-1.5"><span className="font-mono font-semibold text-white/85">{nf1(pct)} %</span><span className="font-mono text-[10px] text-white/35">{nbFmt.format(x.value)}</span></span>
+                </div>
+              )
+            })}
           </div>
         </Glass>
       </div>
@@ -773,12 +903,6 @@ function AnsatteTab({ d, startStr, endStr }: { d: AnalyticsPreview; startStr: st
   const [view, setView] = useState<"tabell" | "spredning">("tabell")
   const [expanded, setExpanded] = useState<string | null>(null)
 
-  const alertsByEmp = useMemo(() => {
-    const m = new Map<string, AnAlert[]>()
-    for (const a of d.alerts ?? []) { if (!a.employee_id) continue; const l = m.get(a.employee_id) ?? []; l.push(a); m.set(a.employee_id, l) }
-    return m
-  }, [d.alerts])
-
   const rows = useMemo(() => {
     const base = filter === "alle" ? d.employees : d.employees.filter(e => e.worker_type === filter)
     return [...base].sort((a, b) => b.total_doors - a.total_doors)
@@ -809,18 +933,17 @@ function AnsatteTab({ d, startStr, endStr }: { d: AnalyticsPreview; startStr: st
           <EmployeeScatter rows={rows} />
         ) : (
           <div className="overflow-x-auto">
-            <div className="min-w-[860px]">
-              <div className="grid grid-cols-[1.6fr_70px_70px_70px_80px_90px_70px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-white/35">
-                <span>Ansatt</span><span className="text-right">Dører</span><span className="text-right">D/dag</span><span className="text-right">Ja %</span><span className="text-right">Kontakt %</span><span className="text-right">Konsist.</span><span className="text-right">Varsler</span>
+            <div className="min-w-[920px]">
+              <div className="grid grid-cols-[1.6fr_70px_70px_70px_80px_90px_130px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-white/35">
+                <span>Ansatt</span><span className="text-right">Dører</span><span className="text-right">D/dag</span><span className="text-right">Ja %</span><span className="text-right">Kontakt %</span><span className="text-right">Konsist.</span><span className="text-right">Dager</span>
               </div>
               <div className="divide-y divide-white/5">
                 {rows.map(e => {
-                  const empAlerts = alertsByEmp.get(e.employee_id) ?? []
-                  const worst = empAlerts.some(a => a.severity === "critical") ? "#f43f5e" : empAlerts.length ? "#f59e0b" : "#64748b"
+                  const dayCells = buildDayCells(e.daily_door_counts, startStr, endStr, d.day_classification)
                   const isOpen = expanded === e.employee_id
                   return (
                     <div key={e.employee_id}>
-                      <div onClick={() => setExpanded(isOpen ? null : e.employee_id)} className="grid grid-cols-[1.6fr_70px_70px_70px_80px_90px_70px] gap-3 items-center px-3 py-2.5 cursor-pointer hover:bg-white/[0.03] rounded-lg">
+                      <div onClick={() => setExpanded(isOpen ? null : e.employee_id)} className="grid grid-cols-[1.6fr_70px_70px_70px_80px_90px_130px] gap-3 items-center px-3 py-2.5 cursor-pointer hover:bg-white/[0.03] rounded-lg">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <ChevronRight className={cn("h-3.5 w-3.5 text-white/30 transition-transform", isOpen && "rotate-90")} />
                           <RoyMascot state={empRoy(e)} size={30} />
@@ -836,10 +959,10 @@ function AnsatteTab({ d, startStr, endStr }: { d: AnalyticsPreview; startStr: st
                         <div className="flex items-center justify-end gap-1.5">
                           <div className="w-10 h-1.5 rounded-full bg-white/8 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(100, e.consistency_score)}%`, background: e.consistency_score >= 60 ? "#10b981" : e.consistency_score >= 35 ? "#f59e0b" : "#f43f5e" }} /></div>
                         </div>
-                        <div className="flex justify-end">{empAlerts.length ? <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: `${worst}22`, color: worst }}>{empAlerts.length}</span> : <span className="text-white/20 text-xs">—</span>}</div>
+                        <div onClick={ev => ev.stopPropagation()} title="Dagsklassifisering (full / halv / under halv)"><DayStrip cells={dayCells} /></div>
                       </div>
                       <AnimatePresence>
-                        {isOpen && <EmployeeDetail e={e} alerts={empAlerts} startStr={startStr} endStr={endStr} />}
+                        {isOpen && <EmployeeDetail e={e} dc={d.day_classification} startStr={startStr} endStr={endStr} />}
                       </AnimatePresence>
                     </div>
                   )
@@ -878,7 +1001,7 @@ function EmployeeScatter({ rows }: { rows: AnEmployee[] }) {
   )
 }
 
-function EmployeeDetail({ e, alerts, startStr, endStr }: { e: AnEmployee; alerts: AnAlert[]; startStr: string; endStr: string }) {
+function EmployeeDetail({ e, dc, startStr, endStr }: { e: AnEmployee; dc?: DayClassification; startStr: string; endStr: string }) {
   const [series, setSeries] = useState<PaceDay[] | null>(null)
   useEffect(() => {
     let cancelled = false
@@ -897,6 +1020,15 @@ function EmployeeDetail({ e, alerts, startStr, endStr }: { e: AnEmployee; alerts
     const p = (series ?? []).filter(s => s.pace_doors_per_hour != null)
     return p.length ? p.reduce((a, s) => a + (s.pace_doors_per_hour ?? 0), 0) / p.length : null
   }, [series])
+  // Active window as the AVERAGE daily window over the period (not one unrepresentative day).
+  const activeDays = useMemo(() => (series ?? []).filter(s => s.doors_knocked > 0).length, [series])
+  const avgWindow = useMemo(() => {
+    const w = (series ?? []).filter(s => s.doors_knocked > 0 && s.active_window_minutes > 0)
+    return w.length ? Math.round(w.reduce((a, s) => a + s.active_window_minutes, 0) / w.length) : 0
+  }, [series])
+  // Day-classification strip across the whole selected period.
+  const dayCells = useMemo(() => buildDayCells(e.daily_door_counts, startStr, endStr, dc), [e.daily_door_counts, startStr, endStr, dc])
+  const daySum = useMemo(() => daySummary(dayCells), [dayCells])
 
   const status = [
     { label: "Ja", value: e.ja, color: "#10b981" }, { label: "Nei", value: e.nei, color: "#f43f5e" },
@@ -905,9 +1037,9 @@ function EmployeeDetail({ e, alerts, startStr, endStr }: { e: AnEmployee; alerts
   // First/last knock come from the most recent day the person actually knocked.
   const latestDate = latest ? new Date(latest.day).toLocaleDateString("nb-NO", { day: "numeric", month: "short" }) : ""
   const tempo = [
-    { label: "Første knock", value: latest ? fmtClock(latest.first_knock_at) : "—", sub: latestDate },
-    { label: "Siste knock", value: latest ? fmtClock(latest.last_knock_at) : "—", sub: latestDate },
-    { label: "Aktivt vindu", value: latest && latest.active_window_minutes > 0 ? fmtMin(latest.active_window_minutes) : "—", sub: latestDate },
+    { label: "Første knock", value: latest ? fmtClock(latest.first_knock_at) : "—", sub: `siste dag ${latestDate}` },
+    { label: "Siste knock", value: latest ? fmtClock(latest.last_knock_at) : "—", sub: `siste dag ${latestDate}` },
+    { label: "Snitt aktivt vindu", value: avgWindow > 0 ? fmtMin(avgWindow) : "—", sub: `snitt over ${activeDays} dager` },
     { label: "Snitt dører/time", value: avgPace != null ? nf1(avgPace) : "—", sub: "hele perioden" },
   ]
 
@@ -951,11 +1083,21 @@ function EmployeeDetail({ e, alerts, startStr, endStr }: { e: AnEmployee; alerts
           </div>
         </div>
 
-        {alerts.length > 0 && (
-          <div className="space-y-1.5">
-            {alerts.map((a, i) => <div key={i} className="flex items-center gap-2 text-xs"><span className="rounded px-1.5 py-0.5 text-[10px] font-bold" style={{ background: a.severity === "critical" ? "#f43f5e22" : "#f59e0b22", color: a.severity === "critical" ? "#f43f5e" : "#f59e0b" }}>{a.severity === "critical" ? "Kritisk" : "Advarsel"}</span><span className="text-white/55">{a.message}</span></div>)}
+        {/* Day-classification strip — full / halv / under-halv over the period */}
+        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+          <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <p className="text-xs text-white/45 flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5 text-white/40" />Arbeidsdager{dayCells.length > 14 ? " (ukesvis)" : ""}</p>
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="font-semibold" style={{ color: DAY_CLS.full.color }}>{daySum.full} fulle</span>
+              <span className="text-white/20">·</span>
+              <span className="font-semibold" style={{ color: DAY_CLS.half.color }}>{daySum.half} halve</span>
+              <span className="text-white/20">·</span>
+              <span className="font-semibold" style={{ color: DAY_CLS.none.color }}>{daySum.none} under halv</span>
+            </div>
           </div>
-        )}
+          <DayStrip cells={dayCells} />
+          <div className="mt-2"><DayStripLegend /></div>
+        </div>
       </div>
     </motion.div>
   )
@@ -1133,6 +1275,7 @@ const ALERT_META: Record<string, { label: string; Icon: React.ElementType; color
   low_contact_rate: { label: "Lav kontaktrate", Icon: Users, color: "#f59e0b" },
   below_target: { label: "Under mål", Icon: Target, color: "#f59e0b" },
   avvik_egen_normal: { label: "Avvik fra egen normal", Icon: Zap, color: "#06b6d4" },
+  non_full_days: { label: "Ikke full dag (sammenh.)", Icon: CalendarDays, color: "#f59e0b" },
 }
 const alertMeta = (t: string) => ALERT_META[t] ?? { label: t, Icon: AlertCircle, color: "#f59e0b" }
 
@@ -1200,6 +1343,13 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
     () => alerts.filter(a => (sev === "alle" || a.severity === sev) && (!person || a.personId === person)),
     [alerts, sev, person])
 
+  // At-a-glance breakdown by alert type (over the sev/person-filtered set).
+  const typeSummary = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const a of filtered) m.set(a.alertType, (m.get(a.alertType) ?? 0) + 1)
+    return [...m].map(([t, n]) => ({ t, n, ...alertMeta(t) })).sort((a, b) => b.n - a.n)
+  }, [filtered])
+
   const groups = useMemo(() => {
     const m = new Map<string, { key: string; name: string; items: UAlert[] }>()
     for (const a of filtered) {
@@ -1246,6 +1396,17 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
             </div>
           </div>
         </div>
+        {typeSummary.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {typeSummary.map(s => (
+              <div key={s.t} className="flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1.5">
+                <s.Icon className="h-3.5 w-3.5 shrink-0" style={{ color: s.color }} />
+                <span className="text-[11px] text-white/60">{s.label}</span>
+                <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-white/80">{s.n}</span>
+              </div>
+            ))}
+          </div>
+        )}
         {groups.length === 0 ? <PanelEmpty msg="Ingen varsler" sub="Alt innenfor terskel." /> : (
           <div className="space-y-2">
             {groups.map(g => {
@@ -1286,8 +1447,18 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
                                   {aopen && a.daily.length > 0 && (
                                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                                       <div className="px-3 pb-3">
-                                        <p className="text-[10px] text-white/40 mb-1">{a.source === "avvik" ? `Strek (${a.daily.length} dager) — søyle = dører, stiplet = baseline` : `Siste ${a.daily.length} dager`}</p>
-                                        <MiniBars values={a.daily.map(x => x.value)} below={a.daily.map(x => x.below)} threshold={a.threshold} color={a.source === "avvik" ? "#06b6d4" : "#3b82f6"} />
+                                        {a.alertType === "non_full_days" ? (
+                                          <>
+                                            <p className="text-[10px] text-white/40 mb-1.5">Siste {a.daily.length} dager — dagsklassifisering</p>
+                                            <DayStrip cells={a.daily.map(x => ({ cls: classifyDoors(x.value, d.day_classification), title: `${nbFmt.format(x.value)} dører` }))} />
+                                            <div className="mt-2"><DayStripLegend /></div>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <p className="text-[10px] text-white/40 mb-1">{a.source === "avvik" ? `Strek (${a.daily.length} dager) — søyle = dører, stiplet = baseline` : `Siste ${a.daily.length} dager`}</p>
+                                            <MiniBars values={a.daily.map(x => x.value)} below={a.daily.map(x => x.below)} threshold={a.threshold} color={a.source === "avvik" ? "#06b6d4" : "#3b82f6"} />
+                                          </>
+                                        )}
                                       </div>
                                     </motion.div>
                                   )}
@@ -1328,6 +1499,148 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
   )
 }
 
+// ─── E-postlogg (sent deviation alerts / digests) — superuser/admin only ──────
+const EMAIL_KIND_CHIPS: { k: string; label: string }[] = [
+  { k: "", label: "Alle" }, { k: "deviation_alert", label: "Avvik-varsel" },
+  { k: "deviation_digest", label: "3-dagers digest" }, { k: "weekly_report", label: "Ukentlig" },
+]
+const KIND_COLOR: Record<string, string> = { deviation_alert: "#f43f5e", deviation_digest: "#06b6d4", weekly_report: "#8b5cf6" }
+const kindColor = (k: string) => KIND_COLOR[k] ?? "#64748b"
+const fmtDT = (iso: string | null) => iso ? new Date(iso).toLocaleString("nb-NO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"
+
+function EpostloggTab({ startStr, endStr }: { startStr: string; endStr: string }) {
+  const [rows, setRows] = useState<EmailLogRow[] | null>(null)
+  const [kind, setKind] = useState("")
+  const [chiefId, setChiefId] = useState("")
+  const [chiefs, setChiefs] = useState<{ id: string; name: string }[]>([])
+  const [sel, setSel] = useState<string | null>(null)
+  const [detail, setDetail] = useState<EmailLogDetail | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+
+  useEffect(() => {
+    fetchTeamsList().then(r => {
+      const m = new Map<string, string>()
+      for (const t of r.teams) if (t.sales_chief) m.set(t.sales_chief.id, t.sales_chief.name)
+      setChiefs([...m].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)))
+    }).catch(() => {})
+  }, [])
+  useEffect(() => {
+    let cancelled = false
+    setRows(null)
+    fetchEmailLog({ startDate: startStr, endDate: endStr, salesChiefId: chiefId || undefined, kind: kind || undefined })
+      .then(r => { if (!cancelled) setRows(r.results) })
+      .catch(() => { if (!cancelled) setRows([]) })
+    return () => { cancelled = true }
+  }, [startStr, endStr, chiefId, kind])
+
+  const openDetail = (id: string) => {
+    setSel(id); setDetail(null); setDetailLoading(true)
+    fetchEmailLogDetail(id).then(setDetail).catch(() => setDetail(null)).finally(() => setDetailLoading(false))
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <Glass className="p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Mail className="h-4 w-4 text-blue-400" /> E-postlogg{rows ? ` (${rows.length})` : ""}</h3>
+            <p className="text-[11px] text-white/40">Sendte avvik-varsler og digester · filtrert på valgt datovindu</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+              {EMAIL_KIND_CHIPS.map(c => <button key={c.k} onClick={() => setKind(c.k)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", kind === c.k ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{c.label}</button>)}
+            </div>
+            <select value={chiefId} onChange={e => setChiefId(e.target.value)} className="h-8 max-w-[190px] rounded-lg bg-white/5 border border-white/8 px-2 text-xs text-white outline-none focus:border-blue-500/50 [color-scheme:dark]">
+              <option value="" className="bg-[#0d1528]">Alle salgssjefer</option>
+              {chiefs.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+            </select>
+          </div>
+        </div>
+        {rows === null ? <PanelLoading label="Laster e-postlogg…" /> : rows.length === 0 ? <PanelEmpty msg="Ingen e-poster i perioden" sub="Prøv et annet datovindu eller filter." /> : (
+          <div className="overflow-x-auto">
+            <div className="min-w-[720px] divide-y divide-white/5">
+              {rows.map(r => (
+                <button key={r.id} onClick={() => openDetail(r.id)} className="cursor-pointer w-full grid grid-cols-[140px_1fr_80px_120px_120px] gap-3 items-center px-3 py-2.5 hover:bg-white/[0.03] text-left">
+                  <span className="rounded-md px-2 py-1 text-[10px] font-bold text-center" style={{ background: `${kindColor(r.kind)}22`, color: kindColor(r.kind) }}>{r.kind_label}</span>
+                  <div className="min-w-0"><p className="text-sm text-white/85 truncate">{r.recipient_name || r.recipient_email || "—"}</p><p className="text-[10px] text-white/35 truncate">{r.recipient_email}</p></div>
+                  <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-bold text-center", r.status === "sent" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300")}>{r.status === "sent" ? "Sendt" : "Feilet"}</span>
+                  <span className="text-[11px] text-white/50">{fmtDT(r.sent_at || r.created_at)}</span>
+                  <span className="text-[11px] text-white/45 text-right">{r.team_count} team · {r.flagged_count} flagget</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </Glass>
+      <AnimatePresence>
+        {sel && <EmailLogDrawer d={detail} loading={detailLoading} onClose={() => { setSel(null); setDetail(null) }} />}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+function EmailLogDrawer({ d, loading, onClose }: { d: EmailLogDetail | null; loading: boolean; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+  return (
+    <>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <motion.aside initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", stiffness: 320, damping: 34 }}
+        className="fixed right-0 top-0 z-50 h-screen w-full sm:w-[560px] max-w-[94vw] overflow-y-auto border-l border-white/10 bg-[#0b1220] shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0b1220] px-5 py-4">
+          <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-blue-400 shrink-0" /><h3 className="text-sm font-semibold text-white truncate">{d ? d.kind_label : "E-post"}</h3></div>
+          <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 hover:bg-white/10"><X className="h-4 w-4 text-white/60" /></button>
+        </div>
+        {loading || !d ? <div className="p-6"><PanelLoading label="Laster detaljer…" /></div> : (
+          <div className="p-5 space-y-4">
+            <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 space-y-1.5">
+              <p className="text-sm text-white/90">{d.recipient_name || "—"}</p>
+              <p className="text-[11px] text-white/45">{d.recipient_email}</p>
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-bold", d.status === "sent" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300")}>{d.status === "sent" ? "Sendt" : "Feilet"}</span>
+                <span className="text-[11px] text-white/45">{fmtDT(d.sent_at || d.created_at)}</span>
+                {d.pdf_size_bytes ? <span className="flex items-center gap-1 text-[11px] text-white/40"><FileText className="h-3 w-3" />PDF {(d.pdf_size_bytes / 1024).toFixed(0)} kB</span> : null}
+              </div>
+              {d.error_message ? <p className="text-[11px] text-rose-300 mt-1">{d.error_message}</p> : null}
+            </div>
+            {d.teams.length > 0 && (
+              <div><p className="text-xs font-semibold text-white/70 mb-2">Team ({d.teams.length})</p>
+                <div className="flex flex-wrap gap-1.5">{d.teams.map(t => <span key={t.team_id} className="rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[11px] text-white/70">{t.name || t.team_id.slice(0, 8)}</span>)}</div>
+              </div>
+            )}
+            {d.flagged.length > 0 && (
+              <div><p className="text-xs font-semibold text-white/70 mb-2">Flaggede selgere ({d.flagged.length})</p>
+                <div className="space-y-2">
+                  {d.flagged.map(f => (
+                    <div key={f.person_id} className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-white/85">{f.name}</span>
+                        {f.shortfall_pct != null && <span className="font-mono text-xs font-bold text-rose-300">{Math.round(f.shortfall_pct)} % under</span>}
+                      </div>
+                      {(f.today_doors != null || f.streak_len != null) && (
+                        <p className="text-[11px] text-white/45 mt-1">
+                          {f.today_doors != null ? `I dag ${f.today_doors} dører` : ""}
+                          {f.baseline != null ? ` · snitt ${nf1(f.baseline)}` : ""}
+                          {f.streak_len ? ` · ${f.streak_len} dager strek` : ""}
+                        </p>
+                      )}
+                      {f.streak_days && f.streak_days.length > 0 && (
+                        <div className="mt-2"><MiniBars values={f.streak_days.map(s => s.doors)} below={f.streak_days.map(() => true)} color="#06b6d4" /></div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </motion.aside>
+    </>
+  )
+}
+
 // ─── Tid & tempo (Arbeidstid session-hours + Tempo pace) ──────────────────────
 function WorkTimeHistogram({ work }: { work: WorkTimeStats }) {
   const reduced = useReducedMotion()
@@ -1363,8 +1676,8 @@ function WorkTimeHistogram({ work }: { work: WorkTimeStats }) {
           ))}
         </div>
       </div>
-      <p className="text-xs text-white/45 mb-4">Antall {group === "employees" ? "ansatte" : "ledere"} etter snitt arbeidstid per dag · aktiv-terskel {thrLabel}m</p>
-      {total === 0 ? <PanelEmpty msg="Ingen arbeidstid registrert i dette tidsrommet" sub="Arbeidstid krever sporing via GPS-økter. Velg et tidsrom der øktene finnes." /> : (
+      <p className="text-xs text-white/45 mb-4">Antall {group === "employees" ? "ansatte" : "ledere"} etter snitt arbeidstid per arbeidsdag · aktiv-terskel {thrLabel}m</p>
+      {total === 0 ? <PanelEmpty msg="Ingen arbeidstid registrert i dette tidsrommet" sub="Arbeidstid beregnes fra dørtellinger. Velg et tidsrom med aktivitet." /> : (
         <div className="space-y-2.5">
           {buckets.map((b, i) => {
             const pct = (b.count / max) * 100, sharePct = total ? (b.count / total) * 100 : 0
@@ -1405,17 +1718,17 @@ function TidTempoTab({ work, campaignSelected, pace, paceLoading, effDate }: { w
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-blue-400" />
           <h2 className="text-base font-semibold text-white">Arbeidstid</h2>
-          <span className="flex items-center gap-1 text-[11px] text-white/40"><Info className="h-3 w-3" /> Basert på GPS-økter — mindre presis enn dørtellinger</span>
+          <span className="flex items-center gap-1 text-[11px] text-white/40"><Info className="h-3 w-3" /> Basert på dørtellinger (første→siste knokk, pauser over 90 min ekskludert)</span>
         </div>
         {!work || !w ? (
-          <Glass className="p-5"><PanelEmpty msg="Ingen arbeidstid registrert i dette tidsrommet" sub="Arbeidstid spores via GPS-økter (work_time_rollup). Velg et tidsrom der øktene finnes." /></Glass>
+          <Glass className="p-5"><PanelEmpty msg="Ingen arbeidstid registrert i dette tidsrommet" sub="Arbeidstid beregnes fra dørtellinger. Velg et tidsrom med aktivitet." /></Glass>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {groups.map(({ label, g, color }) => (
                 <div key={label} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
                   <RingGauge pct={g.active_pct} color={color} center={`${Math.round(g.active_pct)}%`} sub="aktive" />
-                  <div><p className="text-xs text-white/40 font-medium">{label}</p><p className="font-mono text-2xl font-bold text-white">{g.active_count}<span className="text-sm text-white/35"> / {g.total}</span></p><p className="text-xs text-white/40 mt-0.5">snitt {fmtMin(g.avg_daily_minutes)}/dag</p></div>
+                  <div><p className="text-xs text-white/40 font-medium">{label}</p><p className="font-mono text-2xl font-bold text-white">{g.active_count}<span className="text-sm text-white/35"> / {g.total}</span></p><p className="text-xs text-white/40 mt-0.5">snitt {fmtMin(g.avg_daily_minutes)}/arbeidsdag</p></div>
                 </div>
               ))}
             </div>
@@ -1427,7 +1740,7 @@ function TidTempoTab({ work, campaignSelected, pace, paceLoading, effDate }: { w
                   {people.map(p => (
                     <div key={p.id} className="flex items-center justify-between px-3 py-2.5">
                       <div className="flex items-center gap-2.5"><span className={cn("h-2 w-2 rounded-full", p.is_active ? "bg-emerald-500" : "bg-white/20")} /><span className="text-sm text-white/85">{p.name}</span></div>
-                      <div className="flex items-center gap-4 text-right"><span className="font-mono text-sm text-white/70">{fmtMin(p.total_minutes)}</span><span className="font-mono text-xs text-white/35 w-20">{fmtMin(p.avg_daily_minutes)}/dag</span></div>
+                      <div className="flex items-center gap-4 text-right"><span className="font-mono text-sm text-white/70">{fmtMin(p.total_minutes)}</span><span className="font-mono text-xs text-white/35 w-20">{fmtMin(p.avg_daily_minutes)}/arb.dag</span></div>
                     </div>
                   ))}
                 </div>
@@ -1442,30 +1755,36 @@ function TidTempoTab({ work, campaignSelected, pace, paceLoading, effDate }: { w
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-cyan-400" />
           <h2 className="text-base font-semibold text-white">Tempo</h2>
-          <span className="flex items-center gap-1 text-[11px] text-white/40"><Info className="h-3 w-3" /> Dører per aktiv time (første→siste knock){effDate ? ` · ${new Date(effDate).toLocaleDateString("nb-NO", { day: "numeric", month: "long" })}` : ""}</span>
+          <span className="flex items-center gap-1 text-[11px] text-white/40"><Info className="h-3 w-3" /> Dører per aktiv time · hele perioden (siste aktive dag vist separat)</span>
         </div>
         {!campaignSelected ? (
           <Glass className="p-5"><PanelEmpty msg="Velg en kampanje" sub="Tempo beregnes per kampanje eller team. Velg en kampanje øverst for å se dører/time." /></Glass>
         ) : paceLoading ? (
           <Glass className="p-5"><PanelLoading label="Laster tempo…" /></Glass>
         ) : !paceRows.length ? (
-          <Glass className="p-5"><PanelEmpty msg="Ingen tempodata for valgt dag" /></Glass>
+          <Glass className="p-5"><PanelEmpty msg="Ingen tempodata i perioden" /></Glass>
         ) : (
           <Glass className="p-5">
-            <div className="overflow-x-auto"><div className="min-w-[720px]">
-              <div className="grid grid-cols-[1.6fr_80px_90px_110px_90px_90px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-white/35">
-                <span>Selger</span><span className="text-right">Dører</span><span className="text-right">Dører/time</span><span className="text-right">Aktivt vindu</span><span className="text-right">Snitt</span><span className="text-right">Status</span>
+            <div className="overflow-x-auto"><div className="min-w-[840px]">
+              <div className="grid grid-cols-[1.6fr_70px_80px_100px_140px_70px_80px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-white/35">
+                <span>Selger</span><span className="text-right">Dører</span><span className="text-right">Dører/time</span><span className="text-right">Snitt vindu/dag</span><span className="text-right">Siste dag</span><span className="text-right">Snitt</span><span className="text-right">Status</span>
               </div>
               <div className="divide-y divide-white/5">
                 {paceRows.map(p => (
-                  <div key={`${p.employee_id}-${p.person_kind}`} className="grid grid-cols-[1.6fr_80px_90px_110px_90px_90px] gap-3 items-center px-3 py-2.5">
+                  <div key={`${p.employee_id}-${p.person_kind}`} className="grid grid-cols-[1.6fr_70px_80px_100px_140px_70px_80px] gap-3 items-center px-3 py-2.5">
                     <div className="min-w-0 flex items-center gap-2">
                       <span className="rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ background: p.person_kind === "manager" ? "#8b5cf622" : "#3b82f622", color: p.person_kind === "manager" ? "#a78bfa" : "#60a5fa" }}>{p.person_kind === "manager" ? "Leder" : "Ansatt"}</span>
-                      <div className="min-w-0"><p className="text-sm font-medium text-white/90 truncate">{p.name}</p><p className="text-[10px] text-white/35">{fmtClock(p.first_knock_at)}–{fmtClock(p.last_knock_at)}</p></div>
+                      <div className="min-w-0"><p className="text-sm font-medium text-white/90 truncate">{p.name}</p><p className="text-[10px] text-white/35">{p.working_days ?? 0} arbeidsdager</p></div>
                     </div>
-                    <span className="text-right font-mono text-sm text-white/80">{p.doors_knocked}</span>
+                    <span className="text-right font-mono text-sm text-white/80">{nbFmt.format(p.doors_knocked)}</span>
                     <span className="text-right font-mono text-sm" style={{ color: "#06b6d4" }}>{p.pace_doors_per_hour !== null ? nf1(p.pace_doors_per_hour) : "—"}</span>
                     <span className="text-right font-mono text-sm text-white/60">{p.active_window_minutes > 0 ? fmtMin(p.active_window_minutes) : "—"}</span>
+                    <div className="text-right">
+                      {p.last_day ? (
+                        <><p className="text-[10px] text-white/40">{new Date(p.last_day).toLocaleDateString("nb-NO", { day: "numeric", month: "short" })}</p>
+                          <p className="font-mono text-xs text-white/70">{p.last_day_doors} d · {p.last_day_pace_doors_per_hour != null ? `${nf1(p.last_day_pace_doors_per_hour)}/t` : "—"}</p></>
+                      ) : <span className="text-white/25 text-xs">—</span>}
+                    </div>
                     <span className="text-right font-mono text-sm text-white/60">{p.personal_average !== null ? nf1(p.personal_average) : "—"}</span>
                     <div className="flex justify-end">
                       {p.is_alert ? <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300">avvik ×{p.streak_len}</span>
@@ -1553,6 +1872,11 @@ const TERSKEL_GROUPS: { label: string; color: string; fields: TField[] }[] = [
   { label: "Tid", color: "#8b5cf6", fields: [
     { key: "consecutive_days_threshold", label: "Sammenhengende dager", ph: "3" },
     { key: "max_inactive_hours", label: "Maks inaktive timer" },
+  ] },
+  { label: "Arbeidsdag (dører)", color: "#f59e0b", fields: [
+    { key: "full_day_doors", label: "Full dag – dører", ph: "80" },
+    { key: "half_day_doors", label: "Halv dag – dører", ph: "40" },
+    { key: "day_tolerance_pct", label: "Toleranse % (full)", ph: "20" },
   ] },
   { label: "Avvik (personlig baseline)", color: "#06b6d4", fields: [
     { key: "baseline_window_days", label: "Baseline-vindu (dager)", ph: "10" },

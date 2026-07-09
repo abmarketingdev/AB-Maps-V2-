@@ -22,6 +22,11 @@ export interface PaceRow {
   is_alert: boolean;
   streak_len: number;
   below_company_standard_today: boolean;
+  // Present in PERIOD mode (start_date+end_date): range aggregate + latest-active-day snapshot.
+  working_days?: number;
+  last_day?: string | null;
+  last_day_doors?: number;
+  last_day_pace_doors_per_hour?: number | null;
 }
 
 export interface TeamPacePage {
@@ -33,6 +38,8 @@ export interface TeamPacePage {
   // The day the backend actually returned pace for — auto-falls back to the latest
   // day with data when the requested date is empty (per-day data is sparse).
   effective_date: string;
+  mode?: 'day' | 'period';
+  period?: { start_date: string; end_date: string };
 }
 
 // One person's per-day pace over a range (sparse — only days they knocked).
@@ -55,7 +62,9 @@ export interface PaceSeries {
 export interface TeamPaceParams {
   campaignId?: string;
   teamId?: string;
-  date?: string;      // YYYY-MM-DD (Oslo); default = today
+  date?: string;      // YYYY-MM-DD (Oslo) — single-day mode; default = today
+  startDate?: string; // start+end → PERIOD mode (range aggregate + latest-day snapshot)
+  endDate?: string;
   page?: number;
   pageSize?: number;
 }
@@ -64,7 +73,8 @@ function qp(p: TeamPaceParams): string {
   const qs = new URLSearchParams();
   if (p.campaignId) qs.set('campaign_id', p.campaignId);
   if (p.teamId) qs.set('team_id', p.teamId);
-  if (p.date) qs.set('date', p.date);
+  if (p.startDate && p.endDate) { qs.set('start_date', p.startDate); qs.set('end_date', p.endDate); }
+  else if (p.date) qs.set('date', p.date);
   if (p.page) qs.set('page', String(p.page));
   if (p.pageSize) qs.set('page_size', String(p.pageSize));
   return qs.toString();

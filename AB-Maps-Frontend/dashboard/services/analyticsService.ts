@@ -145,6 +145,10 @@ export interface Threshold {
   consecutive_days_threshold: number;
   performance_drop_alert_percent: number;
   max_inactive_hours: number;
+  // Workday classification (full / half / none by door count).
+  full_day_doors: number;
+  half_day_doors: number;
+  day_tolerance_pct: number;
   // Personal-baseline deviation model (Feature 2).
   baseline_window_days: number;
   min_history_days: number;
@@ -168,6 +172,9 @@ export interface CreateThresholdData {
   consecutive_days_threshold?: number;
   performance_drop_alert_percent?: number;
   max_inactive_hours?: number;
+  full_day_doors?: number;
+  half_day_doors?: number;
+  day_tolerance_pct?: number;
   baseline_window_days?: number;
   min_history_days?: number;
   normal_variation_band_pct?: number;

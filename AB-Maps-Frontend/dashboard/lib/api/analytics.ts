@@ -37,6 +37,11 @@ export interface AnTopPerformers { top_yes_rate: AnPerfEntry; top_doors: AnPerfE
 export interface AnAlertDaily {
   date: string; doors?: number; ja?: number; yes_rate?: number; value?: number;
   below_doors_threshold?: boolean; below_yes_rate_threshold?: boolean;
+  classification?: 'full' | 'non_full' | 'off';
+}
+// Effective workday-classification thresholds (echoed by the preview API).
+export interface DayClassification {
+  full_day_doors: number; half_day_doors: number; day_tolerance_pct: number; full_day_cutoff: number;
 }
 export interface AnAlert {
   alert_type: string; severity: 'critical' | 'warning' | string;
@@ -59,6 +64,7 @@ export interface AnalyticsPreview {
   top_performers: AnTopPerformers;
   work_time_summary: AnWorkTimeSummary;
   alerts: AnAlert[];
+  day_classification?: DayClassification;
 }
 
 export interface WorkTimePerson { id: string; name: string; total_seconds: number; total_minutes: number; avg_daily_seconds: number; avg_daily_minutes: number; is_active: boolean }
@@ -70,7 +76,7 @@ export interface WorkTimeStats {
   managers: WorkTimePerson[];
 }
 
-export interface AnalyticsParams { startDate: string; endDate: string; campaignIds?: string[]; employeeIds?: string[] }
+export interface AnalyticsParams { startDate: string; endDate: string; campaignIds?: string[]; employeeIds?: string[]; thresholdId?: string }
 
 function qp(p: AnalyticsParams): string {
   const qs = new URLSearchParams();
@@ -79,6 +85,8 @@ function qp(p: AnalyticsParams): string {
   if (p.campaignIds && p.campaignIds.length) qs.set('campaign_ids', p.campaignIds.join(','));
   // Sales-chief scoping passes the team members' employee ids (backend accepts CSV).
   if (p.employeeIds && p.employeeIds.length) qs.set('employee_ids', p.employeeIds.join(','));
+  // Apply-Thresholds "what-if": recompute the whole view against this threshold set (view-only).
+  if (p.thresholdId) qs.set('threshold_id', p.thresholdId);
   return qs.toString();
 }
 
