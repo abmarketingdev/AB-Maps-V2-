@@ -38,18 +38,57 @@ const qp = (params: Record<string, string | number | undefined>): string => {
   return s ? `?${s}` : '';
 };
 
-export function listTasks(o: TaskListOpts): Promise<TaskPage> {
-  return getJSON<TaskPage>(`/api/todos/v2/tasks/${qp({
-    perspective: o.perspective, status: o.status, assignee_id: o.assigneeId,
-    campaign: o.campaign, ordering: o.ordering, page: o.page,
-  })}`);
+// ─── Backend adapter ────────────────────────────────────────────────────────
+// The maps-service serves a single-user Todo model at /api/todos/v2/tasks/ (status
+// pending/in_progress/completed, `deadline`, `user_id`, `related_campaign`) and returns a
+// FLAT array (it ignores group_by/perspective). Map it onto the dashboard's Task shape and
+// group the board client-side. NOTE: multi-assignee/team/assigned_by_me are backend-limited —
+// the list is always the caller's own tasks until the backend implements those perspectives.
+interface RawTodo {
+  id: string; title: string; description?: string;
+  user_id?: string | null; assigned_by_id?: string | null;
+  status?: string; priority?: TaskPriority;
+  deadline?: string | null; related_campaign?: string | null; related_campaign_name?: string | null;
+}
+const BE_TO_FE_STATUS: Record<string, TaskStatus> = { pending: 'todo', in_progress: 'in_progress', completed: 'done' };
+const FE_TO_BE_STATUS: Record<TaskStatus, string> = { todo: 'pending', in_progress: 'in_progress', done: 'completed' };
+
+function mapTodo(r: RawTodo): Task {
+  return {
+    id: r.id, title: r.title, description: r.description ?? '',
+    assigner_id: r.assigned_by_id ?? null,
+    assignee_ids: r.user_id ? [String(r.user_id)] : [],
+    status: BE_TO_FE_STATUS[r.status ?? 'pending'] ?? 'todo',
+    priority: r.priority ?? 'medium',
+    due: r.deadline ?? null,
+    campaign: r.related_campaign ?? null,
+    campaign_name: r.related_campaign_name ?? null,
+  };
+}
+// The endpoint returns a bare array (or, if paginated later, {results:[...]}). Tolerate both.
+function extractRows(raw: unknown): RawTodo[] {
+  if (Array.isArray(raw)) return raw as RawTodo[];
+  const r = raw as { results?: RawTodo[] } | null;
+  return r?.results ?? [];
 }
 
-export function boardTasks(o: Omit<TaskListOpts, 'page'>): Promise<TaskBoard> {
-  return getJSON<TaskBoard>(`/api/todos/v2/tasks/${qp({
-    group_by: 'status', perspective: o.perspective, status: o.status,
-    assignee_id: o.assigneeId, campaign: o.campaign, ordering: o.ordering,
+export async function listTasks(o: TaskListOpts): Promise<TaskPage> {
+  const raw = await getJSON<unknown>(`/api/todos/v2/tasks/${qp({
+    perspective: o.perspective, status: o.status ? FE_TO_BE_STATUS[o.status] : undefined,
+    campaign: o.campaign, ordering: o.ordering, page: o.page,
   })}`);
+  const results = extractRows(raw).map(mapTodo);
+  return { results, total_count: results.length, page: 1, page_size: results.length, total_pages: 1 };
+}
+
+export async function boardTasks(o: Omit<TaskListOpts, 'page'>): Promise<TaskBoard> {
+  const raw = await getJSON<unknown>(`/api/todos/v2/tasks/${qp({
+    perspective: o.perspective, status: o.status ? FE_TO_BE_STATUS[o.status] : undefined,
+    campaign: o.campaign, ordering: o.ordering,
+  })}`);
+  const board: TaskBoard = { todo: [], in_progress: [], done: [] };
+  for (const t of extractRows(raw).map(mapTodo)) board[t.status].push(t);
+  return board;
 }
 
 export interface CreateTaskBody {
@@ -71,11 +110,27 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// Map the dashboard's create/patch body onto the backend Todo fields (single-user model:
+// `deadline`/`related_campaign`/backend status; assignee_ids is not supported server-side yet,
+// so a created task is owned by the requester).
+function toBackendBody(body: Partial<CreateTaskBody>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (body.title !== undefined) out.title = body.title;
+  if (body.description !== undefined) out.description = body.description;
+  if (body.priority !== undefined) out.priority = body.priority;
+  if (body.status !== undefined) out.status = FE_TO_BE_STATUS[body.status];
+  if (body.due !== undefined) out.deadline = body.due;
+  if (body.campaign !== undefined) out.related_campaign = body.campaign;
+  return out;
+}
+
 export async function createTask(body: CreateTaskBody): Promise<Task> {
-  return jsonOrThrow<Task>(await fetchWithAuth('/api/todos/v2/tasks/', { method: 'POST', body: JSON.stringify(body) }));
+  const raw = await jsonOrThrow<RawTodo>(await fetchWithAuth('/api/todos/v2/tasks/', { method: 'POST', body: JSON.stringify(toBackendBody(body)) }));
+  return mapTodo(raw);
 }
 export async function patchTask(id: string, body: Partial<CreateTaskBody>): Promise<Task> {
-  return jsonOrThrow<Task>(await fetchWithAuth(`/api/todos/v2/tasks/${id}/`, { method: 'PATCH', body: JSON.stringify(body) }));
+  const raw = await jsonOrThrow<RawTodo>(await fetchWithAuth(`/api/todos/v2/tasks/${id}/`, { method: 'PATCH', body: JSON.stringify(toBackendBody(body)) }));
+  return mapTodo(raw);
 }
 export async function deleteTask(id: string): Promise<void> {
   const res = await fetchWithAuth(`/api/todos/v2/tasks/${id}/`, { method: 'DELETE' });
