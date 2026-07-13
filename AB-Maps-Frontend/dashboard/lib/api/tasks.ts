@@ -25,11 +25,20 @@ export interface TaskBoard { todo: Task[]; in_progress: Task[]; done: Task[] }
 
 export interface TaskListOpts {
   perspective: Perspective;
+  tab?: string;                 // UI status tab: aktive|idag|forsinket|ferdig (undefined = alle)
+  search?: string;
   status?: TaskStatus;
   assigneeId?: string;
   campaign?: string;
   ordering?: string;
   page?: number;
+  pageSize?: number;
+  paginate?: boolean;           // default true; false → fetch the whole set (flat array)
+}
+
+export interface TaskStats {
+  total: number; pending: number; in_progress: number; completed: number;
+  overdue: number; today: number; this_week: number; high_priority: number; with_deadline: number;
 }
 
 const qp = (params: Record<string, string | number | undefined>): string => {
@@ -75,12 +84,28 @@ function extractRows(raw: unknown): RawTodo[] {
 }
 
 export async function listTasks(o: TaskListOpts): Promise<TaskPage> {
+  const paginate = o.paginate ?? true;
+  const pageSize = o.pageSize ?? 20;
+  const page = o.page ?? 1;
   const raw = await getJSON<unknown>(`/api/todos/v2/tasks/${qp({
-    perspective: o.perspective, status: o.status ? FE_TO_BE_STATUS[o.status] : undefined,
-    campaign: o.campaign, ordering: o.ordering, page: o.page,
+    perspective: o.perspective, tab: o.tab, search: o.search,
+    status: o.status ? FE_TO_BE_STATUS[o.status] : undefined,
+    campaign: o.campaign, ordering: o.ordering,
+    // Sending page/page_size opts into server-side pagination (OptInPagination). Omitting
+    // them returns the full flat array (used by the delegation view, which regroups all rows).
+    page: paginate ? page : undefined, page_size: paginate ? pageSize : undefined,
   })}`);
   const results = extractRows(raw).map(mapTodo);
-  return { results, total_count: results.length, page: 1, page_size: results.length, total_pages: 1 };
+  // Paginated response is {count,next,previous,results}; a flat array falls back to its length.
+  const r = raw as { count?: number } | null;
+  const total = (r && typeof r === 'object' && typeof r.count === 'number') ? r.count : results.length;
+  const total_pages = paginate ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+  return { results, total_count: total, page: paginate ? page : 1, page_size: pageSize, total_pages };
+}
+
+export async function fetchTaskStats(perspective: Perspective): Promise<TaskStats> {
+  // No `tab` → counts cover the whole perspective (used to label the status tabs).
+  return getJSON<TaskStats>(`/api/todos/v2/tasks/stats/${qp({ perspective })}`);
 }
 
 export async function boardTasks(o: Omit<TaskListOpts, 'page'>): Promise<TaskBoard> {

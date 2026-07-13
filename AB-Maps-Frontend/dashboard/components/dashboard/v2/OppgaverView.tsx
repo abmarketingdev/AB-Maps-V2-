@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils"
 import { RoyMascot, type RoyState } from "@/components/gamification/RoyMascot"
 import { useAuth } from "@/lib/auth/AuthContext"
 import {
-  listTasks, createTask as apiCreateTask, deleteTask as apiDeleteTask,
+  listTasks, fetchTaskStats, createTask as apiCreateTask, deleteTask as apiDeleteTask,
   startTask, completeTask, patchTask,
   fetchAssignmentUsers, assignTaskToUsers,
   type Task as ApiTask, type Perspective as ApiPerspective,
@@ -750,6 +750,9 @@ export function OppgaverView() {
   const currentUserId = user?.user_info?.id ?? ""
 
   const [tasks, setTasks] = useState<Task[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [counts, setCounts] = useState({ aktive: 0, idag: 0, forsinket: 0, ferdig: 0, alle: 0 })
   const [people, setPeople] = useState<Person[]>([])
   const [campaigns, setCampaigns] = useState<CampaignVM[]>([])
   const [loading, setLoading] = useState(true)
@@ -767,7 +770,11 @@ export function OppgaverView() {
   const [perspective, setPerspective] = useState<Perspective>("mine")
   const [statusTab, setStatusTab] = useState<StatusTab>("alle")
   const [layout, setLayout] = useState<LayoutMode>("board")
-  const [search, setSearch] = useState("")
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")            // debounced → drives the server query
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 12
+  const isTildelt = perspective === "tildelt"
   const [modalOpen, setModalOpen] = useState(false)
   const [modalStatus, setModalStatus] = useState<TaskStatus>("todo")
   const openModal = (status: TaskStatus = "todo") => { setModalStatus(status); setModalOpen(true) }
@@ -808,53 +815,45 @@ export function OppgaverView() {
       .catch(() => { /* leave empty */ })
   }, [])
 
-  // Load tasks for the selected perspective (server-scoped).
+  // Debounce the search box → server query.
+  React.useEffect(() => {
+    const id = setTimeout(() => setSearch(searchInput.trim()), 300)
+    return () => clearTimeout(id)
+  }, [searchInput])
+
+  // Reset to page 1 whenever the query basis changes.
+  React.useEffect(() => { setPage(1) }, [perspective, statusTab, search])
+
+  // Load a page of tasks (server-scoped, server-filtered by tab/search, server-paginated) plus
+  // perspective-level counts for the tabs. The delegation view ("tildelt") groups ALL of my
+  // delegated rows by person, so it fetches unpaginated (bounded — only tasks I assigned).
   const loadTasks = React.useCallback(() => {
     setLoading(true); setErrored(false)
-    return listTasks({ perspective: toApiPerspective(perspective) })
-      .then((page) => setTasks(page.results.map(toViewTask)))
-      .catch(() => setErrored(true))
-      .finally(() => setLoading(false))
-  }, [perspective])
+    const p = toApiPerspective(perspective)
+    const tabParam = statusTab === "alle" ? undefined : statusTab
+    const listP = listTasks({
+      perspective: p,
+      tab: isTildelt ? undefined : tabParam,
+      search: isTildelt ? undefined : (search || undefined),
+      page, pageSize: PAGE_SIZE, paginate: !isTildelt,
+    })
+    const statsP = fetchTaskStats(p).catch(() => null)
+    return Promise.all([listP, statsP]).then(([pg, s]) => {
+      setTasks(pg.results.map(toViewTask))
+      setTotalCount(pg.total_count)
+      setTotalPages(pg.total_pages)
+      if (s) setCounts({ alle: s.total, aktive: s.pending + s.in_progress, idag: s.today, forsinket: s.overdue, ferdig: s.completed })
+    }).catch(() => setErrored(true)).finally(() => setLoading(false))
+  }, [perspective, statusTab, search, page, isTildelt])
   React.useEffect(() => { void loadTasks() }, [loadTasks])
 
-  // Server already scopes by perspective.
-  const perspectiveTasks = tasks
+  // If the current page fell past the end (e.g. after completing the last item on it), step back.
+  React.useEffect(() => { if (page > totalPages) setPage(totalPages) }, [page, totalPages])
 
-  // Status tab + search filter
-  const filtered = useMemo(() => {
-    let out = perspectiveTasks
-    if (search) out = out.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
-    const now = new Date()
-    if (statusTab === "aktive")    out = out.filter(t => t.status !== "done")
-    else if (statusTab === "idag") out = out.filter(t => isSameDay(t.due, now))
-    else if (statusTab === "forsinket") out = out.filter(isOverdue)
-    else if (statusTab === "ferdig")    out = out.filter(t => t.status === "done")
-    return out
-  }, [perspectiveTasks, search, statusTab])
-
-  // Pagination (Liste view) — all rows are already loaded, so page client-side to keep
-  // the page compact. Reset to page 1 whenever the underlying set or view changes.
-  const PAGE_SIZE = 8
-  const [page, setPage] = useState(1)
-  React.useEffect(() => { setPage(1) }, [perspective, statusTab, search, layout])
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const safePage = Math.min(page, totalPages)
-  const pageTasks = useMemo(() => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE), [filtered, safePage])
-  const pageFrom = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
-  const pageTo = Math.min(safePage * PAGE_SIZE, filtered.length)
-
-  // Tab counts (from perspective tasks, ignoring status tab)
-  const counts = useMemo(() => {
-    const now = new Date()
-    return {
-      aktive: perspectiveTasks.filter(t => t.status !== "done").length,
-      idag: perspectiveTasks.filter(t => isSameDay(t.due, now)).length,
-      forsinket: perspectiveTasks.filter(isOverdue).length,
-      ferdig: perspectiveTasks.filter(t => t.status === "done").length,
-      alle: perspectiveTasks.length,
-    }
-  }, [perspectiveTasks])
+  // The server returns exactly the rows to render for this page.
+  const pageTasks = tasks
+  const pageFrom = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
+  const pageTo = (page - 1) * PAGE_SIZE + tasks.length
 
   // Optimistic move + live status transition, then refetch.
   const moveTask = (id: string, status: TaskStatus) => {
@@ -951,7 +950,7 @@ export function OppgaverView() {
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk i oppgaver…"
+                <input value={searchInput} onChange={e => setSearchInput(e.target.value)} placeholder="Søk i oppgaver…"
                   className="h-9 w-48 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all" />
               </div>
               {/* Layout toggle */}
@@ -973,16 +972,16 @@ export function OppgaverView() {
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelLoading label="Laster oppgaver…" /></div>
           ) : errored ? (
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelError onRetry={() => void loadTasks()} /></div>
-          ) : filtered.length === 0 && perspective !== "tildelt" ? (
+          ) : totalCount === 0 && !isTildelt ? (
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelEmpty msg="Ingen oppgaver" sub="Opprett en ny oppgave for å komme i gang." /></div>
-          ) : perspective === "tildelt" ? (
-            <DelegationView tasks={perspectiveTasks} currentUserId={currentUserId} />
-          ) : layout === "board" ? (
-            <Board tasks={filtered} onMove={moveTask} onQuickAdd={(s) => openModal(s)} />
+          ) : isTildelt ? (
+            <DelegationView tasks={pageTasks} currentUserId={currentUserId} />
           ) : (
             <>
-              <TaskList tasks={pageTasks} />
-              <Pagination page={safePage} totalPages={totalPages} total={filtered.length} from={pageFrom} to={pageTo} onPage={setPage} />
+              {layout === "board"
+                ? <Board tasks={pageTasks} onMove={moveTask} onQuickAdd={(s) => openModal(s)} />
+                : <TaskList tasks={pageTasks} />}
+              <Pagination page={page} totalPages={totalPages} total={totalCount} from={pageFrom} to={pageTo} onPage={setPage} />
             </>
           )}
         </div>
