@@ -47,6 +47,14 @@ export function CampaignPicker({ className }: { className?: string }) {
     return () => window.removeEventListener("ab:campaign-changed", onChange)
   }, [])
 
+  // Lock background scroll while the modal is open (the list has its own scroll).
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = prev }
+  }, [open])
+
   // Load real campaigns when the modal opens (Module 6).
   useEffect(() => {
     if (!open) return
@@ -104,7 +112,9 @@ export function CampaignPicker({ className }: { className?: string }) {
           {open && (
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4"
+              // pointer-events-auto: a modal opened while another portal (e.g. a Radix Sheet)
+              // set body pointer-events:none would otherwise let taps fall through to the page.
+              className="fixed inset-0 z-[200] flex items-start justify-center pt-[10vh] px-4 pointer-events-auto"
               style={{ background: "rgba(5,8,16,0.7)", backdropFilter: "blur(4px)" }}
               onClick={() => setOpen(false)}
             >

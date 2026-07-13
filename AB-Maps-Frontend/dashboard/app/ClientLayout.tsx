@@ -642,9 +642,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 </div>
               </Link>
             </div>
-            <div className="px-2 pt-3 shrink-0">
-              <CampaignPicker className="w-full" />
-            </div>
+            {/* Campaign selection on mobile lives in the top bar (header chip), NOT here — a
+                picker modal opened from inside this Radix Sheet inherits the sheet's
+                pointer-events:none + scroll-lock, which breaks taps and scrolling. */}
             <nav className="flex-1 px-2 pt-4 pb-3 space-y-5 overflow-y-auto">
               {groupedNav.map(({ group, items }) => (
                 <div key={group}>
