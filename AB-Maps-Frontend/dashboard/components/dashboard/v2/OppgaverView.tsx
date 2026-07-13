@@ -24,7 +24,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
   Plus, Search, LayoutGrid, List as ListIcon, Calendar as CalIcon, X, Check,
   Flag, Clock, AlertTriangle, CheckCircle2, Circle, CircleDot, Users, ChevronDown,
-  Hash, UserPlus, CornerDownLeft,
+  Hash, UserPlus, CornerDownLeft, ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { RoyMascot, type RoyState } from "@/components/gamification/RoyMascot"
@@ -275,8 +275,8 @@ function Board({ tasks, onMove, onQuickAdd }: {
               </button>
             </div>
 
-            {/* Cards */}
-            <div className="space-y-2">
+            {/* Cards (capped height + scroll so a long column never sprawls the page) */}
+            <div className="space-y-2 max-h-[58vh] overflow-y-auto pr-1">
               {colTasks.map(t => (
                 <TaskCard
                   key={t.id}
@@ -346,6 +346,24 @@ function EmptyState() {
     <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col items-center justify-center py-20 text-center">
       <CheckCircle2 className="h-8 w-8 text-white/15 mb-3" />
       <p className="text-sm text-white/35">Ingen oppgaver i denne visningen</p>
+    </div>
+  )
+}
+
+// ─── Pagination ─────────────────────────────────────────────────────────────
+function Pagination({ page, totalPages, total, from, to, onPage }: {
+  page: number; totalPages: number; total: number; from: number; to: number; onPage: (p: number) => void
+}) {
+  if (totalPages <= 1) return null
+  const btn = "cursor-pointer flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/60 hover:text-white hover:border-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+  return (
+    <div className="mt-3 flex items-center justify-between px-1">
+      <span className="text-xs text-white/40">Viser <span className="text-white/70 font-medium">{from}–{to}</span> av {total}</span>
+      <div className="flex items-center gap-1.5">
+        <button className={btn} disabled={page <= 1} onClick={() => onPage(page - 1)} title="Forrige"><ChevronLeft className="h-4 w-4" /></button>
+        <span className="px-2 text-xs font-medium text-white/60 tabular-nums">{page} / {totalPages}</span>
+        <button className={btn} disabled={page >= totalPages} onClick={() => onPage(page + 1)} title="Neste"><ChevronRight className="h-4 w-4" /></button>
+      </div>
     </div>
   )
 }
@@ -815,6 +833,17 @@ export function OppgaverView() {
     return out
   }, [perspectiveTasks, search, statusTab])
 
+  // Pagination (Liste view) — all rows are already loaded, so page client-side to keep
+  // the page compact. Reset to page 1 whenever the underlying set or view changes.
+  const PAGE_SIZE = 8
+  const [page, setPage] = useState(1)
+  React.useEffect(() => { setPage(1) }, [perspective, statusTab, search, layout])
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageTasks = useMemo(() => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE), [filtered, safePage])
+  const pageFrom = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
+  const pageTo = Math.min(safePage * PAGE_SIZE, filtered.length)
+
   // Tab counts (from perspective tasks, ignoring status tab)
   const counts = useMemo(() => {
     const now = new Date()
@@ -951,7 +980,10 @@ export function OppgaverView() {
           ) : layout === "board" ? (
             <Board tasks={filtered} onMove={moveTask} onQuickAdd={(s) => openModal(s)} />
           ) : (
-            <TaskList tasks={filtered} />
+            <>
+              <TaskList tasks={pageTasks} />
+              <Pagination page={safePage} totalPages={totalPages} total={filtered.length} from={pageFrom} to={pageTo} onPage={setPage} />
+            </>
           )}
         </div>
       </div>
