@@ -434,6 +434,10 @@ table.ab-table tbody tr.selected { background: var(--ab-accent-3); }
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--ab-scroll-thumb-hover); }
 
+/* Hide the scrollbar but keep scrolling (used by horizontally-scrollable tab strips on mobile). */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 .skeleton {
   background: linear-gradient(90deg, var(--ab-bg-elevated) 0%, var(--ab-bg-overlay) 50%, var(--ab-bg-elevated) 100%);
   background-size: 200% 100%;

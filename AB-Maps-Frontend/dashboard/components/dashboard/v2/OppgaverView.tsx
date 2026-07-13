@@ -903,27 +903,27 @@ export function OppgaverView() {
         <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-purple-600/8 blur-3xl" />
       </div>
 
-      <div className="relative px-6 py-6 max-w-[1600px] mx-auto space-y-5">
+      <div className="relative px-4 sm:px-6 py-5 sm:py-6 max-w-[1600px] mx-auto space-y-5">
         {/* Header */}
-        <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Oppgaver · {ROLE_LABEL[role]}</p>
-            <h1 className="text-3xl font-bold text-white">Oppgaver</h1>
+        <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-widest text-white/30 mb-1 truncate">Oppgaver · {ROLE_LABEL[role]}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Oppgaver</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <button onClick={() => openModal("todo")}
-              className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.35)] hover:bg-blue-500 transition-all">
-              <Plus className="h-4 w-4" /> Ny oppgave
+              className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-3 sm:px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.35)] hover:bg-blue-500 transition-all">
+              <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Ny oppgave</span><span className="sm:hidden">Ny</span>
             </button>
           </div>
         </motion.div>
 
-        {/* Perspective switch */}
+        {/* Perspective switch (scrolls horizontally on narrow screens) */}
         <motion.div initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="flex gap-1 rounded-2xl bg-white/5 border border-white/8 p-1 w-fit">
+          className="flex gap-1 rounded-2xl bg-white/5 border border-white/8 p-1 w-full sm:w-fit overflow-x-auto no-scrollbar">
           {perspectives.map(p => (
             <button key={p.key} onClick={() => setPerspective(p.key)}
-              className={cn("cursor-pointer rounded-xl px-5 py-2.5 text-sm font-semibold transition-all", perspective === p.key ? "bg-white/15 text-white shadow-sm" : "text-white/45 hover:text-white/80")}>
+              className={cn("cursor-pointer whitespace-nowrap shrink-0 rounded-xl px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all", perspective === p.key ? "bg-white/15 text-white shadow-sm" : "text-white/45 hover:text-white/80")}>
               {p.label}
             </button>
           ))}

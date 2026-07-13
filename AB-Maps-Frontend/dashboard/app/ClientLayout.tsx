@@ -118,6 +118,7 @@ export function useCampaignContext() {
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false) // pinned-open; default = slim rail
   const [sidebarHovered, setSidebarHovered] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false) // controlled mobile drawer
   const expanded = sidebarOpen || sidebarHovered // visual expansion (hover floats over content)
   const [campaignModalOpen, setCampaignModalOpen] = useState(false)
   // Selected-campaign color → drives the subtle ambient accent in the chrome.
@@ -146,6 +147,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const pathname = usePathname()
   const router = useRouter()
+  // Close the mobile drawer whenever the route changes (nav item tapped, back button, etc.)
+  // so it never lingers over the destination page.
+  useEffect(() => { setMobileNavOpen(false) }, [pathname])
   const { toast } = useToast()
   const { user, logout: authLogout, isAuthenticated, isLoading, isSuperuser: authIsSuperuser, isSalesChief, isStaff } = useAuth()
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
@@ -612,22 +616,23 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </aside>
 
-        {/* Mobile Sidebar */}
-        <Sheet>
+        {/* Mobile Sidebar (controlled → closes on navigation) */}
+        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
           <SheetTrigger asChild>
             <Button
               variant="outline"
               size="icon"
-              className="fixed left-3 top-3 z-40 md:hidden h-9 w-9 bg-ab-elevated border-ab-line hover:bg-ab-hover"
+              aria-label="Åpne meny"
+              className="fixed left-3 top-2.5 z-50 md:hidden h-9 w-9 bg-ab-elevated border-ab-line hover:bg-ab-hover shadow-sm"
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Vis Meny</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0 bg-ab-canvas border-ab-line">
+          <SheetContent side="left" className="w-[82vw] max-w-xs p-0 bg-ab-canvas border-ab-line flex flex-col">
             <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-            <div className="h-12 px-3 flex items-center border-b border-ab-line-1">
-              <Link href="/dashbord" className="flex items-center gap-2">
+            <div className="h-12 px-3 flex items-center border-b border-ab-line-1 shrink-0">
+              <Link href="/dashbord" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center">
                   <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" />
                 </div>
@@ -637,27 +642,38 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 </div>
               </Link>
             </div>
-            <div className="px-2 pt-3">
+            <div className="px-2 pt-3 shrink-0">
               <CampaignPicker className="w-full" />
             </div>
-            <nav className="px-2 pt-4 pb-3 space-y-5 overflow-y-auto">
+            <nav className="flex-1 px-2 pt-4 pb-3 space-y-5 overflow-y-auto">
               {groupedNav.map(({ group, items }) => (
                 <div key={group}>
                   <div className="eyebrow px-2.5 pb-2">{group}</div>
                   <div className="space-y-0.5">
                     {items.map((item, idx) => (
-                      <div key={`${item.href}-${idx}`}>{renderNavItem(item, true, true)}</div>
+                      <div key={`${item.href}-${idx}`} onClick={() => setMobileNavOpen(false)}>
+                        {renderNavItem(item, true, true)}
+                      </div>
                     ))}
                   </div>
                 </div>
               ))}
             </nav>
+            {/* Logout in the drawer footer — mobile users otherwise had no visible way out. */}
+            <div className="border-t border-ab-line-1 p-2 shrink-0">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 h-10 rounded-lg px-3 text-[14px] font-medium text-ab-danger hover:bg-ab-danger-bg/30 transition-colors"
+              >
+                <LogOut className="h-4 w-4" /> Logg ut
+              </button>
+            </div>
           </SheetContent>
         </Sheet>
 
         {/* Main column */}
         <div className={cn("flex flex-1 flex-col min-w-0 transition-[padding] duration-200 ease-out-cubic", sidebarOpen ? "md:pl-64" : "md:pl-16")}>
-          <header className="relative overflow-hidden sticky top-0 z-30 h-12 flex items-center gap-3 px-3 md:px-5 bg-ab-base/85 backdrop-blur-md border-b border-ab-line-1">
+          <header className="relative overflow-hidden sticky top-0 z-30 h-12 flex items-center gap-3 pl-14 pr-3 md:px-5 bg-ab-base/85 backdrop-blur-md border-b border-ab-line-1">
             {/* Subtle campaign-color accent — ambient identity, not branding */}
             {campaignColor && (
               <>
