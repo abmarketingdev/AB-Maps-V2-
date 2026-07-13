@@ -29,25 +29,27 @@ import {
 import { cn } from "@/lib/utils"
 import { RoyMascot, type RoyState } from "@/components/gamification/RoyMascot"
 import { useAuth } from "@/lib/auth/AuthContext"
-import { fetchAssignable } from "@/lib/api/users"
 import {
   listTasks, createTask as apiCreateTask, deleteTask as apiDeleteTask,
   startTask, completeTask, patchTask,
+  fetchAssignmentUsers, assignTaskToUsers,
   type Task as ApiTask, type Perspective as ApiPerspective,
 } from "@/lib/api/tasks"
+import { fetchCampaignsWithStats, type CampaignVM } from "@/lib/api/campaigns"
 import { PanelLoading, PanelEmpty, PanelError } from "./_states"
 
 // ─── People & roles ───────────────────────────────────────────────────────────
 
 type Role = "admin" | "manager" | "employee"
 
-interface Person { id: string; name: string; role: Role }
+interface Person { id: string; name: string; role: Role; isMaps: boolean }
 
-// Assignable users are loaded live (/api/users/assignable/). A module-level
-// registry lets the leaf components (avatars/lookups) resolve names by id
+// Assignable users are loaded live (/api/todos/assignment-users/ — the server already
+// enforces the role matrix, so the list only contains valid targets for the caller). A
+// module-level registry lets the leaf components (avatars/lookups) resolve names by id
 // without prop-drilling; tolerant fallback avoids crashes on unknown ids.
 let peopleRegistry: Person[] = []
-const byId = (id: string): Person => peopleRegistry.find(p => p.id === id) ?? { id, name: "Bruker", role: "employee" }
+const byId = (id: string): Person => peopleRegistry.find(p => p.id === id) ?? { id, name: "Bruker", role: "employee", isMaps: true }
 
 const ROLE_LABEL: Record<Role, string> = { admin: "Admin", manager: "Manager", employee: "Ansatt" }
 const ROLE_ORDER: Role[] = ["admin", "manager", "employee"]
@@ -80,6 +82,18 @@ interface Task {
   priority: Priority
   due: Date
   campaign?: string
+}
+
+// What the "Ny oppgave" composer emits — assignees + the campaign *id* (not name), so
+// the caller can route to the assignment saga and write the real campaign FK.
+interface CreateInput {
+  title: string
+  description?: string
+  priority: Priority
+  due: Date | null
+  campaignId: string | null
+  assigneeIds: string[]
+  status: TaskStatus
 }
 
 const STATUS_META: Record<TaskStatus, { label: string; color: string; Icon: React.ElementType }> = {
@@ -439,37 +453,40 @@ function PopPanel({ children, align = "left" }: { children: React.ReactNode; ali
 
 type PropKey = "priority" | "assignee" | "due" | "campaign"
 
-function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCreate, people }: {
+function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCreate, people, campaigns }: {
   open: boolean; onClose: () => void; role: Role; currentUserId: string
-  initialStatus: TaskStatus; onCreate: (t: Omit<Task, "id">) => void; people: Person[]
+  initialStatus: TaskStatus; onCreate: (t: CreateInput) => void; people: Person[]; campaigns: CampaignVM[]
 }) {
   const [title, setTitle] = useState("")
   const [desc, setDesc] = useState("")
   const [priority, setPriority] = useState<Priority>("medium")
   const [due, setDue] = useState<Date | null>(null)
-  const [campaign, setCampaign] = useState("")
+  const [campaignId, setCampaignId] = useState<string>("")
   const [assignees, setAssignees] = useState<string[]>([])
   const [openProp, setOpenProp] = useState<PropKey | null>(null)
   const [search, setSearch] = useState("")
   const canAssignOthers = assignableRoles(role).length > 0
+  const campaignName = campaigns.find(c => c.id === campaignId)?.name
 
   const grouped = useMemo(() => {
     const roles = assignableRoles(role)
-    const targets = people.filter(p => roles.includes(p.role) && p.name.toLowerCase().includes(search.toLowerCase()))
+    // Only maps-owned users are pickable here — a task is created in the assignee's own
+    // service and the maps saga can only create maps rows (qc/hr assignment lands in Phase 2).
+    const targets = people.filter(p => p.isMaps && roles.includes(p.role) && p.name.toLowerCase().includes(search.toLowerCase()))
     const g: Record<Role, Person[]> = { admin: [], manager: [], employee: [] }
     targets.forEach(p => g[p.role].push(p))
     return g
   }, [role, search, people])
 
   const toggle = (id: string) => setAssignees(a => a.includes(id) ? a.filter(x => x !== id) : [...a, id])
-  const reset = () => { setTitle(""); setDesc(""); setPriority("medium"); setDue(null); setCampaign(""); setAssignees([]); setSearch(""); setOpenProp(null) }
+  const reset = () => { setTitle(""); setDesc(""); setPriority("medium"); setDue(null); setCampaignId(""); setAssignees([]); setSearch(""); setOpenProp(null) }
   const submit = () => {
     if (!title.trim()) return
     const finalAssignees = assignees.length > 0 ? assignees : [currentUserId]
     onCreate({
       title: title.trim(), description: desc.trim() || undefined,
-      assignerId: currentUserId, assigneeIds: finalAssignees,
-      status: initialStatus, priority, due: due ?? dShift(0), campaign: campaign || undefined,
+      assigneeIds: finalAssignees,
+      status: initialStatus, priority, due: due ?? null, campaignId: campaignId || null,
     })
     reset(); onClose()
   }
@@ -644,22 +661,35 @@ function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCre
                   )}
                 </div>
 
-                {/* Campaign */}
+                {/* Campaign (live) */}
                 <div className="relative">
                   <PropPill active={openProp === "campaign"} onClick={() => setOpenProp(openProp === "campaign" ? null : "campaign")}>
-                    <Hash className="h-3.5 w-3.5" /> {campaign || "Kampanje"}
+                    <Hash className="h-3.5 w-3.5" style={{ color: campaignId ? (campaigns.find(c => c.id === campaignId)?.color ?? undefined) : undefined }} />
+                    {campaignName || "Kampanje"}
                   </PropPill>
                   {openProp === "campaign" && (
                     <PopPanel>
-                      <div className="w-52 py-1">
-                        {["Norsk Folkehjelp", "Talkmore", "CARE", "Blå Kors"].map(c => (
-                          <button key={c} onClick={() => { setCampaign(campaign === c ? "" : c); setOpenProp(null) }}
-                            className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left">
-                            <Hash className="h-3.5 w-3.5 text-white/40" />
-                            <span className="flex-1 text-white/85">{c}</span>
-                            {campaign === c && <Check className="h-3.5 w-3.5 text-blue-400" />}
-                          </button>
-                        ))}
+                      <div className="w-60 py-1">
+                        {campaigns.length === 0 ? (
+                          <p className="px-3 py-3 text-xs text-white/40">Ingen kampanjer</p>
+                        ) : (
+                          <div className="max-h-56 overflow-y-auto">
+                            {campaignId && (
+                              <button onClick={() => { setCampaignId(""); setOpenProp(null) }}
+                                className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left text-white/50">
+                                <X className="h-3.5 w-3.5" /> Fjern kampanje
+                              </button>
+                            )}
+                            {campaigns.map(c => (
+                              <button key={c.id} onClick={() => { setCampaignId(campaignId === c.id ? "" : c.id); setOpenProp(null) }}
+                                className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left">
+                                <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: c.color }} />
+                                <span className="flex-1 text-white/85 truncate">{c.name}</span>
+                                {campaignId === c.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </PopPanel>
                   )}
@@ -703,8 +733,10 @@ export function OppgaverView() {
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [people, setPeople] = useState<Person[]>([])
+  const [campaigns, setCampaigns] = useState<CampaignVM[]>([])
   const [loading, setLoading] = useState(true)
   const [errored, setErrored] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const perspectives: { key: Perspective; label: string }[] = role === "employee"
     ? [{ key: "mine", label: "Mine oppgaver" }]
@@ -722,22 +754,39 @@ export function OppgaverView() {
   const [modalStatus, setModalStatus] = useState<TaskStatus>("todo")
   const openModal = (status: TaskStatus = "todo") => { setModalStatus(status); setModalOpen(true) }
 
+  // Auto-dismiss the toast.
+  React.useEffect(() => {
+    if (!notice) return
+    const id = setTimeout(() => setNotice(null), 4000)
+    return () => clearTimeout(id)
+  }, [notice])
+
   // Reset perspective if role change makes it invalid
   React.useEffect(() => {
     if (!perspectives.find(p => p.key === perspective)) setPerspective("mine")
   }, [role]) // eslint-disable-line
 
-  // Load assignable users (for the picker + name lookups).
+  // Load assignable users (server already applies the role matrix; each row is platform-tagged).
+  // Employees get a 403 here (they can't assign) — the catch simply leaves the list empty.
   React.useEffect(() => {
-    fetchAssignable()
+    fetchAssignmentUsers()
       .then(({ results }) => {
         const mapped: Person[] = results.map(u => ({
-          id: u.id, name: u.name || u.username,
-          role: (u.user_type === "superuser" || u.user_type === "admin" || u.is_superuser) ? "admin" : u.user_type === "manager" ? "manager" : "employee",
+          id: u.user_id, name: u.name || u.username,
+          // sales-chiefs are manager-level for display grouping.
+          role: u.role === "admin" ? "admin" : u.role === "employee" ? "employee" : "manager",
+          isMaps: u.is_maps_user,
         }))
         peopleRegistry = mapped
         setPeople(mapped)
       })
+      .catch(() => { /* leave empty */ })
+  }, [])
+
+  // Load campaigns for the composer's campaign picker (dynamic, not hardcoded).
+  React.useEffect(() => {
+    fetchCampaignsWithStats()
+      .then(setCampaigns)
       .catch(() => { /* leave empty */ })
   }, [])
 
@@ -784,12 +833,29 @@ export function OppgaverView() {
     const op = status === "in_progress" ? startTask(id) : status === "done" ? completeTask(id) : patchTask(id, { status: "todo" })
     Promise.resolve(op).then(() => loadTasks()).catch(() => loadTasks())
   }
-  const createTask = (t: Omit<Task, "id">) => {
-    apiCreateTask({
-      title: t.title, description: t.description, priority: t.priority,
-      due: t.due && t.due.getTime() !== NO_DUE.getTime() ? t.due.toISOString().slice(0, 10) : null,
-      campaign: t.campaign ?? null, status: t.status, assignee_ids: t.assigneeIds,
-    }).then(() => loadTasks()).catch(() => { /* surfaced by reload */ })
+  const createTask = (i: CreateInput) => {
+    const dueIso = i.due && i.due.getTime() !== NO_DUE.getTime() ? i.due.toISOString() : null
+    const onlySelf = i.assigneeIds.length === 1 && i.assigneeIds[0] === currentUserId
+    if (onlySelf) {
+      // Personal todo — stays is_admin_assigned=false, shows under "Mine oppgaver".
+      apiCreateTask({
+        title: i.title, description: i.description, priority: i.priority,
+        due: dueIso, campaign: i.campaignId, status: i.status, assignee_ids: [currentUserId],
+      }).then(() => loadTasks()).catch(() => { /* surfaced by reload */ })
+      return
+    }
+    // Delegated — fan out to the assignees' own service (one shared assignment_group_id).
+    assignTaskToUsers({
+      title: i.title, description: i.description, priority: i.priority,
+      due: dueIso, campaign: i.campaignId, userIds: i.assigneeIds,
+    }).then(res => {
+      if (res.skipped_cross_platform.length > 0) {
+        setNotice(`${res.assigned_count} tildelt. ${res.skipped_cross_platform.length} QC-bruker(e) støttes ikke ennå og ble hoppet over.`)
+      } else {
+        setNotice(`Oppgave tildelt ${res.assigned_count} person(er).`)
+      }
+      loadTasks()
+    }).catch(() => setNotice("Kunne ikke tildele oppgaven."))
   }
   const deleteTaskById = (id: string) => { apiDeleteTask(id).then(() => loadTasks()).catch(() => loadTasks()) }
   void deleteTaskById
@@ -890,7 +956,20 @@ export function OppgaverView() {
         </div>
       </div>
 
-      <NewTaskModal open={modalOpen} onClose={() => setModalOpen(false)} role={role} currentUserId={currentUserId} initialStatus={modalStatus} onCreate={createTask} people={people} />
+      <NewTaskModal open={modalOpen} onClose={() => setModalOpen(false)} role={role} currentUserId={currentUserId} initialStatus={modalStatus} onCreate={createTask} people={people} campaigns={campaigns} />
+
+      {/* Toast */}
+      <AnimatePresence>
+        {notice && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 rounded-xl border border-white/12 bg-[#111a2e] px-4 py-3 shadow-2xl">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+            <span className="text-sm text-white/85">{notice}</span>
+            <button onClick={() => setNotice(null)} className="cursor-pointer text-white/35 hover:text-white"><X className="h-3.5 w-3.5" /></button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

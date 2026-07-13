@@ -12,6 +12,7 @@ export interface Task {
   description: string;
   assigner_id: string | null;
   assignee_ids: string[];
+  group_id: string | null;        // assignment_group_id — links the fan-out rows of one assignment
   status: TaskStatus;
   priority: TaskPriority;
   due: string | null;
@@ -46,7 +47,7 @@ const qp = (params: Record<string, string | number | undefined>): string => {
 // the list is always the caller's own tasks until the backend implements those perspectives.
 interface RawTodo {
   id: string; title: string; description?: string;
-  user_id?: string | null; assigned_by_id?: string | null;
+  user_id?: string | null; assigned_by_id?: string | null; assignment_group_id?: string | null;
   status?: string; priority?: TaskPriority;
   deadline?: string | null; related_campaign?: string | null; related_campaign_name?: string | null;
 }
@@ -58,6 +59,7 @@ function mapTodo(r: RawTodo): Task {
     id: r.id, title: r.title, description: r.description ?? '',
     assigner_id: r.assigned_by_id ?? null,
     assignee_ids: r.user_id ? [String(r.user_id)] : [],
+    group_id: r.assignment_group_id ?? null,
     status: BE_TO_FE_STATUS[r.status ?? 'pending'] ?? 'todo',
     priority: r.priority ?? 'medium',
     due: r.deadline ?? null,
@@ -147,4 +149,77 @@ export async function bulkComplete(ids: string[]): Promise<void> {
 }
 export async function bulkDelete(ids: string[]): Promise<void> {
   await fetchWithAuth('/api/todos/v2/tasks/bulk_delete/', { method: 'POST', body: JSON.stringify({ todo_ids: ids }) });
+}
+
+// ─── Assignable users picker ─────────────────────────────────────────────────
+// The maps `assignment-users` endpoint returns EXACTLY the users the acting caller may
+// assign to (the server enforces the role matrix: admin → everyone incl. cross-platform;
+// manager → maps employees/managers only, no admins/superusers/sales-chiefs; employee → 403).
+// Each row is platform-tagged (`is_maps_user`) so the frontend knows which service owns it.
+export interface AssignableUser {
+  user_id: string;
+  name: string;
+  username: string;
+  role: 'admin' | 'sales_chief' | 'manager' | 'employee';
+  employee_type: string | null;   // maps_emp / qc_emp / hr_emp
+  admin_type: string | null;       // maps_admin / qc_admin
+  is_maps_user: boolean;           // false → owned by another service (qc); maps can't create its row
+}
+export interface AssignmentUsersResponse { requester_role: string; count: number; results: AssignableUser[] }
+
+export async function fetchAssignmentUsers(): Promise<AssignmentUsersResponse> {
+  return getJSON<AssignmentUsersResponse>('/api/todos/assignment-users/');
+}
+
+// ─── Assignment saga (fan-out) ───────────────────────────────────────────────
+export interface AssignInput {
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  due?: string | null;          // full ISO datetime
+  campaign?: string | null;     // campaign id (FK) to stamp on every row
+  userIds: string[];            // maps assignees
+  groupId?: string;             // client-generated to correlate across services
+}
+export interface AssignResult {
+  assigned_count: number;
+  assignment_group_id: string;
+  skipped_cross_platform: string[];   // ids maps could not own (qc/hr) — pending Phase 2 wiring
+  created_todos: { todo_id: string; user_id: string; name: string | null; user_type: string }[];
+}
+
+// One assignment → N single-owner maps Todo rows sharing an assignment_group_id.
+export async function assignTaskToUsers(input: AssignInput): Promise<AssignResult> {
+  const body: Record<string, unknown> = {
+    user_ids: input.userIds,
+    title: input.title,
+    description: input.description ?? '',
+    priority: input.priority,
+  };
+  if (input.due) body.deadline = input.due;
+  if (input.campaign) body.related_campaign = input.campaign;
+  if (input.groupId) body.assignment_group_id = input.groupId;
+  return jsonOrThrow<AssignResult>(
+    await fetchWithAuth('/api/todos/assign-users/', { method: 'POST', body: JSON.stringify(body) }),
+  );
+}
+
+// Collapse the fan-out rows of one assignment (same group_id) into a single logical Task
+// carrying every assignee. Rows without a group_id (personal / folg_opp) pass through as-is.
+export function regroupByGroup(tasks: Task[]): Task[] {
+  const out: Task[] = [];
+  const byGroup = new Map<string, Task>();
+  for (const t of tasks) {
+    if (!t.group_id) { out.push(t); continue; }
+    const g = byGroup.get(t.group_id);
+    if (g) {
+      for (const a of t.assignee_ids) if (!g.assignee_ids.includes(a)) g.assignee_ids.push(a);
+      if (t.status !== 'done') g.status = t.status; // surface the least-complete state
+    } else {
+      const clone: Task = { ...t, assignee_ids: [...t.assignee_ids] };
+      byGroup.set(t.group_id, clone);
+      out.push(clone);
+    }
+  }
+  return out;
 }
