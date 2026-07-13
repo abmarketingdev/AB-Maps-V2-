@@ -695,6 +695,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               )}
             </div>
 
+            {/* Mobile: one-tap campaign selector in the top bar (no need to open the drawer). */}
+            <div className="relative md:hidden min-w-0 flex-1 max-w-[220px]">
+              <CampaignPicker className="w-full h-9 py-0 text-[13px] rounded-lg" />
+            </div>
+
             <div className="ml-auto flex items-center gap-2">
               <button
                 type="button"

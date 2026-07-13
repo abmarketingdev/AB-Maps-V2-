@@ -40,6 +40,13 @@ export function CampaignPicker({ className }: { className?: string }) {
   useEffect(() => { setMounted(true); setSelected(getStoredCampaign()) }, [])
   useEffect(() => { if (open) setSearch("") }, [open])
 
+  // Keep every CampaignPicker instance (sidebar + mobile header) in sync when one changes it.
+  useEffect(() => {
+    const onChange = () => setSelected(getStoredCampaign())
+    window.addEventListener("ab:campaign-changed", onChange)
+    return () => window.removeEventListener("ab:campaign-changed", onChange)
+  }, [])
+
   // Load real campaigns when the modal opens (Module 6).
   useEffect(() => {
     if (!open) return
@@ -78,17 +85,17 @@ export function CampaignPicker({ className }: { className?: string }) {
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          "group flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all cursor-pointer",
-          "bg-white/[0.04] text-white/85 hover:bg-white/[0.07]",
+          "group flex items-center gap-2 rounded-xl border border-ab-line px-3 py-2.5 text-sm font-medium transition-all cursor-pointer",
+          "bg-ab-elevated text-ab-fg-2 hover:bg-ab-hover hover:text-ab-fg",
           className,
         )}
-        style={selected ? { borderColor: `${selected.color}66`, boxShadow: `inset 0 0 0 1px ${selected.color}22, 0 0 16px -6px ${selected.color}` } : { borderColor: "rgba(255,255,255,0.12)" }}
+        style={selected ? { borderColor: `${selected.color}66`, boxShadow: `inset 0 0 0 1px ${selected.color}22, 0 0 16px -6px ${selected.color}` } : undefined}
       >
         {selected
           ? <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: selected.color, boxShadow: `0 0 8px ${selected.color}` }} />
-          : <MapPin className="h-4 w-4 shrink-0 text-white/50" />}
+          : <MapPin className="h-4 w-4 shrink-0 text-ab-fg-3" />}
         <span className="flex-1 truncate text-left">{selected ? selected.name : "Velg kampanje"}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-white/40 transition-transform group-hover:translate-y-0.5" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-ab-fg-3 transition-transform group-hover:translate-y-0.5" />
       </button>
 
       {/* Modal (portal) */}
