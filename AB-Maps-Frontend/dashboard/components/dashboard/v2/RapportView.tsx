@@ -779,6 +779,17 @@ export function RapportView() {
   const [loadingTable, setLoadingTable]         = useState(false)
   const [selectedUser, setSelectedUser]         = useState<UserSummary | null>(null)
   const filtersRef = useRef({ campaign_ids: [] as string[], start_date: startDate, end_date: endDate })
+  const detailRef = useRef<HTMLDivElement>(null)
+
+  // On mobile the detail panel stacks BELOW the (tall) user list, so selecting a person
+  // would otherwise require scrolling all the way down. Auto-scroll the detail into view.
+  useEffect(() => {
+    if (!selectedUser) return
+    if (typeof window !== "undefined" && window.innerWidth < 1280) {
+      const id = setTimeout(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80)
+      return () => clearTimeout(id)
+    }
+  }, [selectedUser])
 
   // Load campaigns on mount
   useEffect(() => {
@@ -984,8 +995,9 @@ export function RapportView() {
               {/* Main two-panel */}
               <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-5" style={{ minHeight: 600 }}>
 
-                {/* Left: User list */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden flex flex-col">
+                {/* Left: User list (capped on mobile so it scrolls internally instead of
+                    pushing the detail panel far down the page) */}
+                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden flex flex-col max-h-[55vh] xl:max-h-none">
                   <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between shrink-0">
                     <div>
                       <h3 className="text-sm font-semibold text-white">Ansatte</h3>
@@ -1019,7 +1031,7 @@ export function RapportView() {
                 </div>
 
                 {/* Right: Employee detail or placeholder */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+                <div ref={detailRef} className="scroll-mt-16 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
                   <AnimatePresence mode="wait">
                     {selectedUser ? (
                       <EmployeeDetail

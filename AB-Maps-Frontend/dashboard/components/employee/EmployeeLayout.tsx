@@ -8,7 +8,7 @@
  * on active items, avatar dropdown footer).
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { launchMap, currentCampaignId } from "@/lib/maps/launchMap";
@@ -84,6 +84,9 @@ export function EmployeeLayout({
   const expanded = sidebarOpen || sidebarHovered; // hover floats over content
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Close the mobile drawer on navigation so it never lingers over the destination.
+  useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
   const handleLogout = async () => {
     setLoading(true);
@@ -318,10 +321,9 @@ export function EmployeeLayout({
             </Link>
           </div>
 
-          <div className="px-2 pt-3">
-            <CampaignPicker className="w-full" />
-          </div>
-
+          {/* Campaign selection on mobile lives in the top bar (header chip), NOT here — a
+              picker modal opened from inside this Radix Sheet inherits the sheet's
+              pointer-events:none + scroll-lock, which breaks taps and scrolling. */}
           <nav className="flex-1 overflow-y-auto px-2 pt-4 pb-3 space-y-5">
             {NAV_GROUPS.map(({ group, items }) => (
               <div key={group}>
@@ -370,7 +372,11 @@ export function EmployeeLayout({
         {/* Top Bar */}
         <header className="sticky top-0 z-40 w-full border-b border-white/[0.06] bg-[#0a0f1e]/80 backdrop-blur-xl">
           <div className="flex h-14 items-center justify-between px-4 md:px-6 lg:px-8">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0 pl-11 md:pl-0">
+              {/* Mobile: one-tap campaign selector (no need to open the drawer). */}
+              <div className="md:hidden min-w-0 max-w-[210px]">
+                <CampaignPicker className="w-full h-9 py-0 text-[13px] rounded-lg bg-white/[0.05] text-white/85 border-white/10 hover:bg-white/10 hover:text-white" />
+              </div>
               <div className="hidden md:block" />
             </div>
             <div className="flex items-center gap-3">
@@ -417,7 +423,7 @@ export function EmployeeLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 bg-[#0a0f1e]">{children}</main>
+        <main className="flex-1 bg-[#0a0f1e] pt-3 md:pt-0">{children}</main>
       </div>
     </div>
   );

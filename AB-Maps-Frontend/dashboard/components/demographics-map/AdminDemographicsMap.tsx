@@ -57,6 +57,9 @@ export function AdminDemographicsMap() {
   // State for grunnkrets stats drawer (Phase 5/6)
   const [selectedGrunnkrets, setSelectedGrunnkrets] = useState<SelectedGrunnkrets | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // True when MapLibre can't create a WebGL context (some mobile browsers / webviews) — we
+  // show a friendly fallback instead of letting the thrown error white-screen the page.
+  const [mapError, setMapError] = useState(false);
 
   // Area locking store
   const {
@@ -75,33 +78,41 @@ export function AdminDemographicsMap() {
   const initializeMap = useCallback(() => {
     if (!mapContainer.current || mapInitialized.current) return;
 
-    // Create MapLibre map instance
-    const map = new maplibregl.Map({
-      container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          // OpenStreetMap base tiles
-          "osm-tiles": {
-            type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            attribution: "© OpenStreetMap contributors",
+    // Create MapLibre map instance. Guard against WebGL init failure (unsupported/disabled
+    // GPU on some mobile browsers/webviews) so the whole page doesn't crash.
+    let map: maplibregl.Map;
+    try {
+      map = new maplibregl.Map({
+        container: mapContainer.current,
+        style: {
+          version: 8,
+          sources: {
+            // OpenStreetMap base tiles
+            "osm-tiles": {
+              type: "raster",
+              tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+              tileSize: 256,
+              attribution: "© OpenStreetMap contributors",
+            },
           },
+          layers: [
+            {
+              id: "osm-tiles",
+              type: "raster",
+              source: "osm-tiles",
+            },
+          ],
         },
-        layers: [
-          {
-            id: "osm-tiles",
-            type: "raster",
-            source: "osm-tiles",
-          },
-        ],
-      },
-      center: [10.7522, 59.9139], // Oslo, Norway
-      zoom: 4, // Start at fylke level
-      minZoom: 4,
-      maxZoom: 18,
-    });
+        center: [10.7522, 59.9139], // Oslo, Norway
+        zoom: 4, // Start at fylke level
+        minZoom: 4,
+        maxZoom: 18,
+      });
+    } catch (err) {
+      console.error("[AdminDemographicsMap] Failed to initialize map (WebGL?):", err);
+      setMapError(true);
+      return;
+    }
 
     // Store map reference
     mapRef.current = map;
@@ -441,7 +452,22 @@ export function AdminDemographicsMap() {
     <div className="relative h-full w-full">
       {/* Map container */}
       <div ref={mapContainer} className="h-full w-full" />
-      
+
+      {/* WebGL/init failure fallback — keeps the page usable instead of white-screening */}
+      {mapError && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[#0a0f1e] px-6 text-center">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white/25"><path d="M12 21s-7-5.686-7-11a7 7 0 0 1 14 0c0 5.314-7 11-7 11Z"/><path d="m3 3 18 18"/></svg>
+          <p className="text-sm font-medium text-white/70">Kartet kunne ikke lastes på denne enheten</p>
+          <p className="max-w-xs text-xs text-white/40">Nettleseren eller enheten støtter ikke WebGL-kart. Prøv en annen nettleser, eller åpne siden på en datamaskin.</p>
+          <button
+            onClick={() => { mapInitialized.current = false; setMapError(false); initializeMap(); }}
+            className="mt-1 inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3.5 py-2 text-sm text-white/75 hover:bg-white/10 transition-colors"
+          >
+            Prøv igjen
+          </button>
+        </div>
+      )}
+
       {/* Metric selector dropdown (Phase 2) */}
       <MetricSelector
         selectedMetric={selectedMetric}

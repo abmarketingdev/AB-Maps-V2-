@@ -764,7 +764,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             </div>
           </header>
 
-          <main className="flex-1 min-w-0">
+          <main className="flex-1 min-w-0 pt-3 md:pt-0">
             <Suspense fallback={<div className="p-6 text-ab-fg-3">Laster…</div>}>{children}</Suspense>
           </main>
         </div>
