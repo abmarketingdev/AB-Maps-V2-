@@ -27,7 +27,7 @@ export function StreakFlame({ days, atRisk, minDoors, doorsToday }: StreakFlameP
 
   return (
     <div
-      className="relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5"
+      className="relative flex flex-col overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5"
       style={atRisk ? { borderColor: "rgba(245,158,11,0.35)", boxShadow: "0 0 24px -10px rgba(245,158,11,0.5)" } : undefined}
     >
       <div className="flex items-center gap-3">
@@ -47,10 +47,10 @@ export function StreakFlame({ days, atRisk, minDoors, doorsToday }: StreakFlameP
         </motion.div>
         <div className="min-w-0">
           <div className="flex items-baseline gap-1.5">
-            <CountUp value={days} duration={1} className="font-mono text-3xl font-bold text-white leading-none" />
-            <span className="text-sm text-white/45">dager</span>
+            <CountUp value={days} duration={1} className="font-mono text-3xl font-bold text-ab-fg leading-none" />
+            <span className="text-sm text-ab-fg-3">dager</span>
           </div>
-          <p className="text-[12px] text-white/45 mt-0.5">streak på rad{isMilestone ? " · milepæl!" : ""}</p>
+          <p className="text-[12px] text-ab-fg-3 mt-0.5">streak på rad{isMilestone ? " · milepæl!" : ""}</p>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export function StreakFlame({ days, atRisk, minDoors, doorsToday }: StreakFlameP
           Ikke mist streaken — {remaining} dører igjen for å holde den i live i dag.
         </motion.p>
       ) : (
-        <p className="mt-4 text-[12px] text-white/40 leading-snug">
+        <p className="mt-4 text-[12px] text-ab-fg-3 leading-snug">
           Du holder streaken så lenge du banker minst {minDoors} dører per dag.
         </p>
       )}

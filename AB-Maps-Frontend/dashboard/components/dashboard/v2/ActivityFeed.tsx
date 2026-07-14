@@ -22,7 +22,7 @@ const TONE_STYLES: Record<Tone, { dot: string; label: string }> = {
   success: { dot: "bg-emerald-500", label: "bg-emerald-500/15 text-emerald-400" },
   warn:    { dot: "bg-amber-500",   label: "bg-amber-500/15 text-amber-400" },
   danger:  { dot: "bg-rose-500",    label: "bg-rose-500/15 text-rose-400"   },
-  neutral: { dot: "bg-white/40",    label: "bg-white/10 text-white/50"      },
+  neutral: { dot: "bg-ab-fg-3",    label: "bg-ab-hover text-ab-fg-3"      },
 }
 
 interface ActivityFeedProps {
@@ -39,13 +39,13 @@ export function ActivityFeed({ className, rows }: ActivityFeedProps) {
       initial={reduced ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, duration: 0.5 }}
-      className={`rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex flex-col ${className ?? ""}`}
+      className={`rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5 flex flex-col ${className ?? ""}`}
     >
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-white">Live aktivitet</h3>
-          <p className="mt-0.5 text-xs text-white/40">Siste hendelser</p>
+          <h3 className="text-sm font-semibold text-ab-fg">Live aktivitet</h3>
+          <p className="mt-0.5 text-xs text-ab-fg-3">Siste hendelser</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
@@ -57,7 +57,7 @@ export function ActivityFeed({ className, rows }: ActivityFeedProps) {
       </div>
 
       {/* Feed list */}
-      <div className="flex-1 space-y-2 overflow-y-auto max-h-[340px] pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+      <div className="flex-1 space-y-2 overflow-y-auto max-h-[340px] pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-ab-line">
         <AnimatePresence initial={false}>
           {feed.map((row) => (
             <motion.div
@@ -66,20 +66,20 @@ export function ActivityFeed({ className, rows }: ActivityFeedProps) {
               animate={{ opacity: 1, x: 0, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="flex items-start gap-2.5 rounded-xl border border-white/5 bg-white/3 px-3 py-2.5"
+              className="flex items-start gap-2.5 rounded-xl border border-ab-line-1 bg-ab-elevated px-3 py-2.5"
             >
               <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", TONE_STYLES[row.tone].dot)} />
               <div className="flex-1 min-w-0">
-                <p className="text-xs leading-relaxed text-white/75">
-                  <span className="font-semibold text-white/90">{row.agent}</span>
+                <p className="text-xs leading-relaxed text-ab-fg-2">
+                  <span className="font-semibold text-ab-fg">{row.agent}</span>
                   {" "}{row.action}{" "}
-                  <span className="text-white/60">{row.location}</span>
+                  <span className="text-ab-fg-2">{row.location}</span>
                   {row.campaign && (
                     <> · <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-medium", TONE_STYLES[row.tone].label)}>{row.campaign}</span></>
                   )}
                 </p>
               </div>
-              <span className="shrink-0 font-mono text-[10px] text-white/25">{row.time}</span>
+              <span className="shrink-0 font-mono text-[10px] text-ab-fg-4">{row.time}</span>
             </motion.div>
           ))}
         </AnimatePresence>

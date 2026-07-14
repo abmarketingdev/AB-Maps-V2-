@@ -630,7 +630,7 @@ export default function EnhancedAssignEmployeesModal({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-700">Tilgjengelige Ansatte</span>
+                  <span className="text-sm font-medium text-ab-fg-2">Tilgjengelige Ansatte</span>
                 </div>
                 <DropZone
                   id="available"
@@ -646,7 +646,7 @@ export default function EnhancedAssignEmployeesModal({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-700">Tildelte Ansatte</span>
+                  <span className="text-sm font-medium text-ab-fg-2">Tildelte Ansatte</span>
                 </div>
                 <DropZone
                   id="assigned"

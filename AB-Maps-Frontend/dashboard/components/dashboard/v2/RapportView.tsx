@@ -149,7 +149,7 @@ function StatBand({ tableData }: { tableData: TableDataResponse }) {
     <motion.div
       initial={reduced ? false : { opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl px-6 py-5"
+      className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl px-6 py-5"
     >
       {/* Stacked bar */}
       <div className="flex h-2 w-full overflow-hidden rounded-full gap-0.5 mb-4">
@@ -176,38 +176,38 @@ function StatBand({ tableData }: { tableData: TableDataResponse }) {
       {/* Inline numbers — no cards */}
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
         <div className="flex flex-col">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Totale registreringer</span>
-          <span className="font-mono text-2xl font-bold text-white">{nbFmt.format(total)}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-ab-fg-4">Totale registreringer</span>
+          <span className="font-mono text-2xl font-bold text-ab-fg">{nbFmt.format(total)}</span>
         </div>
-        <div className="h-8 w-px bg-white/10 self-center hidden sm:block" />
+        <div className="h-8 w-px bg-ab-hover self-center hidden sm:block" />
         {[
           { label: "Ja",          n: ja,  pct: jaPct,  color: "#10b981" },
           { label: "Nei",         n: nei, pct: neiPct, color: "#f43f5e" },
           { label: "Ikke hjemme", n: ih,  pct: ihPct,  color: "#f59e0b" },
         ].map((s, i) => (
           <React.Fragment key={s.label}>
-            {i > 0 && <div className="h-8 w-px bg-white/10 self-center hidden sm:block" />}
+            {i > 0 && <div className="h-8 w-px bg-ab-hover self-center hidden sm:block" />}
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.color }} />
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">{s.label}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-ab-fg-4">{s.label}</span>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="font-mono text-2xl font-bold text-white">{nbFmt.format(s.n)}</span>
-                <span className="font-mono text-xs text-white/40">{s.pct.toFixed(1)}%</span>
+                <span className="font-mono text-2xl font-bold text-ab-fg">{nbFmt.format(s.n)}</span>
+                <span className="font-mono text-xs text-ab-fg-3">{s.pct.toFixed(1)}%</span>
               </div>
             </div>
           </React.Fragment>
         ))}
-        <div className="h-8 w-px bg-white/10 self-center hidden lg:block" />
+        <div className="h-8 w-px bg-ab-hover self-center hidden lg:block" />
         <div className="hidden lg:flex flex-col">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Byer</span>
-          <span className="font-mono text-2xl font-bold text-white">{tableData.summary.total_cities}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-ab-fg-4">Byer</span>
+          <span className="font-mono text-2xl font-bold text-ab-fg">{tableData.summary.total_cities}</span>
         </div>
-        <div className="h-8 w-px bg-white/10 self-center hidden lg:block" />
+        <div className="h-8 w-px bg-ab-hover self-center hidden lg:block" />
         <div className="hidden lg:flex flex-col">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Ansatte</span>
-          <span className="font-mono text-2xl font-bold text-white">{tableData.summary.total_users}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-ab-fg-4">Ansatte</span>
+          <span className="font-mono text-2xl font-bold text-ab-fg">{tableData.summary.total_users}</span>
         </div>
       </div>
     </motion.div>
@@ -248,32 +248,32 @@ function EntryState({
       initial={reduced ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
-      className="flex flex-col items-center justify-center min-h-[60vh] px-6"
+      className="flex flex-col items-center justify-center min-h-[60vh] px-4 sm:px-6"
     >
       <div className="w-full max-w-xl text-center">
         {/* Heading */}
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25 mb-2">Analyse · Salgsaktivitet</p>
-        <h1 className="text-4xl font-bold text-white mb-2">Rapport</h1>
-        <p className="text-sm text-white/35 mb-10">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ab-fg-4 mb-2">Analyse · Salgsaktivitet</p>
+        <h1 className="text-4xl font-bold text-ab-fg mb-2">Rapport</h1>
+        <p className="text-sm text-ab-fg-3 mb-10">
           Velg kampanje og periode, deretter klikk "Last inn rapport" — søk er valgfritt
         </p>
 
         {/* Search */}
         <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 pointer-events-none" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ab-fg-4 pointer-events-none" />
           <input
             type="text"
             placeholder="Valgfritt: filtrer på navn…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full h-12 rounded-2xl border border-white/15 bg-white/8 pl-11 pr-4 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all duration-150 backdrop-blur-xl"
+            className="w-full h-12 rounded-2xl border border-ab-line bg-ab-hover pl-11 pr-4 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 focus:bg-ab-hover transition-all duration-150 backdrop-blur-xl"
           />
         </div>
 
         {/* Campaign pills */}
         {campaigns.length > 0 && (
           <div className="mb-6">
-            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Kampanje</p>
+            <p className="text-[10px] uppercase tracking-widest text-ab-fg-4 mb-3">Kampanje</p>
             <div className="flex flex-wrap justify-center gap-2">
               {campaigns.map(c => (
                 <button
@@ -283,7 +283,7 @@ function EntryState({
                     "cursor-pointer rounded-full px-4 py-2 text-sm font-medium transition-all duration-150",
                     activeCampaignIds.has(c.id)
                       ? "bg-blue-600 text-white shadow-[0_0_16px_rgba(59,130,246,0.4)]"
-                      : "bg-white/8 text-white/50 border border-white/10 hover:text-white/80 hover:bg-white/12"
+                      : "bg-ab-hover text-ab-fg-3 border border-ab-line hover:text-ab-fg-2 hover:bg-ab-hover"
                   )}
                 >
                   {c.name}
@@ -295,15 +295,15 @@ function EntryState({
 
         {/* Period */}
         <div className="mb-8">
-          <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Periode</p>
-          <div className="flex justify-center gap-1 rounded-2xl bg-white/5 p-1 border border-white/8">
+          <p className="text-[10px] uppercase tracking-widest text-ab-fg-4 mb-3">Periode</p>
+          <div className="flex justify-center gap-1 rounded-2xl bg-ab-elevated p-1 border border-ab-line">
             {PERIODS.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setPeriod(key)}
                 className={cn(
                   "cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150",
-                  period === key ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"
+                  period === key ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2"
                 )}
               >
                 {label}
@@ -356,7 +356,7 @@ const UserRow = memo(function UserRow({
         "cursor-pointer w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150",
         selected
           ? "bg-blue-600/15 border-l-2 border-blue-500"
-          : "border-l-2 border-transparent hover:bg-white/5"
+          : "border-l-2 border-transparent hover:bg-ab-hover"
       )}
     >
       {/* Rank */}
@@ -374,8 +374,8 @@ const UserRow = memo(function UserRow({
 
       {/* Name */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white/90 truncate">{user.name}</p>
-        <p className="text-[10px] text-white/35 uppercase tracking-wider">
+        <p className="text-sm font-semibold text-ab-fg truncate">{user.name}</p>
+        <p className="text-[10px] text-ab-fg-3 uppercase tracking-wider">
           {user.role === "manager" ? "Manager" : "Ansatt"} · {user.total_cities} {user.total_cities === 1 ? "by" : "byer"}
         </p>
       </div>
@@ -387,10 +387,10 @@ const UserRow = memo(function UserRow({
           <span className="rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-rose-400">{nei} nei</span>
           <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">{ih} ih</span>
         </div>
-        <span className="font-mono text-[10px] text-white/35">{nbFmt.format(user.total_responses)} dører</span>
+        <span className="font-mono text-[10px] text-ab-fg-3">{nbFmt.format(user.total_responses)} dører</span>
       </div>
 
-      <ChevronRight className={cn("h-3.5 w-3.5 shrink-0 transition-colors", selected ? "text-blue-400" : "text-white/20")} />
+      <ChevronRight className={cn("h-3.5 w-3.5 shrink-0 transition-colors", selected ? "text-blue-400" : "text-ab-fg-4")} />
     </button>
   )
 })
@@ -421,22 +421,22 @@ const CityBlock = memo(function CityBlock({ city }: { city: CityDetail }) {
   }, [city.addresses])
 
   return (
-    <div className="border-b border-white/8 last:border-0">
+    <div className="border-b border-ab-line last:border-0">
       <button
         onClick={() => setOpen(o => !o)}
-        className="cursor-pointer w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-white/5 transition-colors"
+        className="cursor-pointer w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-ab-hover transition-colors"
       >
         <motion.div animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.15 }}>
-          <ChevronRight className="h-3 w-3 text-white/30 shrink-0" />
+          <ChevronRight className="h-3 w-3 text-ab-fg-4 shrink-0" />
         </motion.div>
         <MapPin className="h-3 w-3 text-blue-400 shrink-0" />
-        <span className="flex-1 text-sm font-semibold text-white/80">{city.city_name}</span>
+        <span className="flex-1 text-sm font-semibold text-ab-fg-2">{city.city_name}</span>
         <div className="flex gap-1.5">
           <span className="text-[10px] font-mono text-emerald-400">{city.ja_count}j</span>
           <span className="text-[10px] font-mono text-rose-400">{city.nei_count}n</span>
           <span className="text-[10px] font-mono text-amber-400">{city.ikke_hjemme_count}ih</span>
         </div>
-        <span className="font-mono text-xs text-white/35">{city.total}</span>
+        <span className="font-mono text-xs text-ab-fg-3">{city.total}</span>
       </button>
 
       <AnimatePresence initial={false}>
@@ -449,11 +449,11 @@ const CityBlock = memo(function CityBlock({ city }: { city: CityDetail }) {
             className="overflow-hidden"
           >
             {byPostal.map(([postal, addrs]) => (
-              <div key={postal} className="ml-4 border-l border-white/8 pl-3">
+              <div key={postal} className="ml-4 border-l border-ab-line pl-3">
                 {/* Postal code row */}
-                <div className="flex items-center gap-2 px-3 py-1.5 text-[10px] text-white/40">
-                  <span className="font-mono font-bold text-white/50">{postal}</span>
-                  <span className="text-white/25">·</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 text-[10px] text-ab-fg-3">
+                  <span className="font-mono font-bold text-ab-fg-3">{postal}</span>
+                  <span className="text-ab-fg-4">·</span>
                   <span>{addrs.length} registreringer</span>
                 </div>
                 {/* Address rows */}
@@ -466,9 +466,9 @@ const CityBlock = memo(function CityBlock({ city }: { city: CityDetail }) {
                     ? new Date(a.recorded_at).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })
                     : null
                   return (
-                    <div key={a.address_id ?? i} className="flex items-center gap-2.5 px-3 py-2 hover:bg-white/4 transition-colors">
-                      <span className="flex-1 truncate text-xs text-white/60">{display}</span>
-                      {time && <span className="font-mono text-[10px] text-white/25 shrink-0">{time}</span>}
+                    <div key={a.address_id ?? i} className="flex items-center gap-2.5 px-3 py-2 hover:bg-ab-hover transition-colors">
+                      <span className="flex-1 truncate text-xs text-ab-fg-2">{display}</span>
+                      {time && <span className="font-mono text-[10px] text-ab-fg-4 shrink-0">{time}</span>}
                       <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", s.bg)} style={{ color: s.color }}>
                         {s.label}
                       </span>
@@ -543,12 +543,12 @@ function EmployeeDetail({
       className="flex flex-col h-full overflow-hidden"
     >
       {/* Header */}
-      <div className="shrink-0 px-5 py-4 border-b border-white/8">
+      <div className="shrink-0 px-5 py-4 border-b border-ab-line">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <RoyMascot state={royState} size={52} />
             <div>
-              <h3 className="text-lg font-bold text-white">{user.name}</h3>
+              <h3 className="text-lg font-bold text-ab-fg">{user.name}</h3>
               <span className={cn("mt-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold", moodOut.bgClass, moodOut.colorClass)}>
                 {moodOut.label}
               </span>
@@ -556,7 +556,7 @@ function EmployeeDetail({
           </div>
           <button
             onClick={onClose}
-            className="cursor-pointer h-8 w-8 flex items-center justify-center rounded-xl text-white/30 hover:text-white hover:bg-white/8 transition-all"
+            className="cursor-pointer h-8 w-8 flex items-center justify-center rounded-xl text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover transition-all"
           >
             <X className="h-4 w-4" />
           </button>
@@ -571,9 +571,9 @@ function EmployeeDetail({
             { label: "Ikke hjemme", value: `${ih} (${user.ikke_hjemme_percentage.toFixed(1)}%)`,  color: "#f59e0b" },
           ].map((s, i) => (
             <React.Fragment key={s.label}>
-              {i > 0 && <div className="h-6 w-px bg-white/10" />}
+              {i > 0 && <div className="h-6 w-px bg-ab-hover" />}
               <div>
-                <p className="text-[9px] uppercase tracking-widest font-bold text-white/30">{s.label}</p>
+                <p className="text-[9px] uppercase tracking-widest font-bold text-ab-fg-4">{s.label}</p>
                 <p className="font-mono text-sm font-bold" style={{ color: s.color }}>{s.value}</p>
               </div>
             </React.Fragment>
@@ -589,7 +589,7 @@ function EmployeeDetail({
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 flex border-b border-white/8 px-3">
+      <div className="shrink-0 flex border-b border-ab-line px-3">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -598,7 +598,7 @@ function EmployeeDetail({
               "cursor-pointer flex items-center gap-1.5 px-3 py-3 text-xs font-semibold border-b-2 transition-all duration-150",
               tab === key
                 ? "border-blue-500 text-blue-400"
-                : "border-transparent text-white/35 hover:text-white/60"
+                : "border-transparent text-ab-fg-3 hover:text-ab-fg-2"
             )}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -619,28 +619,28 @@ function EmployeeDetail({
             )}
             {!loading && !addressData && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <MapPin className="h-6 w-6 text-white/15 mb-2" />
-                <p className="text-xs text-white/30">Ingen lokasjonsdata funnet</p>
+                <MapPin className="h-6 w-6 text-ab-fg-4 mb-2" />
+                <p className="text-xs text-ab-fg-4">Ingen lokasjonsdata funnet</p>
               </div>
             )}
             {!loading && addressData && addressData.cities.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <MapPin className="h-6 w-6 text-white/15 mb-2" />
-                <p className="text-xs text-white/30">Ingen byer registrert</p>
+                <MapPin className="h-6 w-6 text-ab-fg-4 mb-2" />
+                <p className="text-xs text-ab-fg-4">Ingen byer registrert</p>
               </div>
             )}
             {!loading && addressData && addressData.cities.length > 0 && (
               <div>
                 {/* City summary header */}
-                <div className="px-4 py-3 border-b border-white/8">
-                  <p className="text-[10px] uppercase tracking-widest text-white/30 mb-2">
+                <div className="px-4 py-3 border-b border-ab-line">
+                  <p className="text-[10px] uppercase tracking-widest text-ab-fg-4 mb-2">
                     {addressData.cities.length} {addressData.cities.length === 1 ? "by" : "byer"}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {addressData.cities.map(c => (
-                      <div key={c.city_name} className="flex items-center gap-1.5 rounded-xl bg-white/5 border border-white/8 px-3 py-1.5">
-                        <span className="text-xs font-medium text-white/75">{c.city_name}</span>
-                        <span className="font-mono text-[10px] text-white/35">{c.total}</span>
+                      <div key={c.city_name} className="flex items-center gap-1.5 rounded-xl bg-ab-elevated border border-ab-line px-3 py-1.5">
+                        <span className="text-xs font-medium text-ab-fg-2">{c.city_name}</span>
+                        <span className="font-mono text-[10px] text-ab-fg-3">{c.total}</span>
                       </div>
                     ))}
                   </div>
@@ -659,7 +659,7 @@ function EmployeeDetail({
           <div className="p-4 space-y-5">
             {/* Status bar chart */}
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Svarfordeling</p>
+              <p className="text-[10px] uppercase tracking-widest text-ab-fg-4 mb-3">Svarfordeling</p>
               <div style={{ height: 140 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={statusChartData} margin={{ top: 0, right: 0, left: -32, bottom: 0 }}>
@@ -667,7 +667,7 @@ function EmployeeDetail({
                     <XAxis dataKey="name" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} tickLine={false} axisLine={false} />
                     <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }} tickLine={false} axisLine={false} />
                     <Tooltip
-                      contentStyle={{ background: "#0d1528", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 11 }}
+                      contentStyle={{ background: "var(--ab-bg-overlay)", border: "1px solid var(--ab-border-default)", borderRadius: 8, fontSize: 11 }}
                       cursor={{ fill: "rgba(255,255,255,0.05)" }}
                     />
                     <Bar dataKey="verdi" radius={[4, 4, 0, 0]} isAnimationActive={true}>
@@ -682,7 +682,7 @@ function EmployeeDetail({
 
             {/* 7-day trend */}
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Aktivitet siste 7 dager</p>
+              <p className="text-[10px] uppercase tracking-widest text-ab-fg-4 mb-3">Aktivitet siste 7 dager</p>
               <div style={{ height: 120 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendData}>
@@ -691,7 +691,7 @@ function EmployeeDetail({
                     <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }} tickLine={false} axisLine={false} />
                     <ReferenceLine y={trendAvg} stroke="rgba(255,255,255,0.15)" strokeDasharray="3 5" />
                     <Tooltip
-                      contentStyle={{ background: "#0d1528", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 11 }}
+                      contentStyle={{ background: "var(--ab-bg-overlay)", border: "1px solid var(--ab-border-default)", borderRadius: 8, fontSize: 11 }}
                       cursor={{ stroke: "rgba(255,255,255,0.1)" }}
                       formatter={(v: number) => [v, "Aktivitet"]}
                     />
@@ -704,13 +704,13 @@ function EmployeeDetail({
             {/* Status by city (if address data available) */}
             {addressData && addressData.cities.length > 0 && (
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Per by</p>
+                <p className="text-[10px] uppercase tracking-widest text-ab-fg-4 mb-3">Per by</p>
                 <div className="space-y-2">
                   {addressData.cities.map(city => (
-                    <div key={city.city_name} className="rounded-xl bg-white/4 border border-white/8 px-3 py-2.5">
+                    <div key={city.city_name} className="rounded-xl bg-ab-elevated border border-ab-line px-3 py-2.5">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-semibold text-white/75">{city.city_name}</span>
-                        <span className="font-mono text-[10px] text-white/35">{city.total} totalt</span>
+                        <span className="text-xs font-semibold text-ab-fg-2">{city.city_name}</span>
+                        <span className="font-mono text-[10px] text-ab-fg-3">{city.total} totalt</span>
                       </div>
                       <div className="flex h-1.5 overflow-hidden rounded-full gap-0.5 mb-1.5">
                         <div className="h-full rounded-l-full bg-emerald-500" style={{ width: `${city.ja_percentage}%` }} />
@@ -733,7 +733,7 @@ function EmployeeDetail({
         {/* Profil */}
         {tab === "profil" && (
           <div className="p-4 space-y-4">
-            <div className="rounded-xl bg-white/4 border border-white/8 divide-y divide-white/8">
+            <div className="rounded-xl bg-ab-elevated border border-ab-line divide-y divide-ab-line">
               {[
                 { label: "Navn",       value: user.name },
                 { label: "Rolle",      value: user.role === "manager" ? "Manager" : "Ansatt" },
@@ -743,8 +743,8 @@ function EmployeeDetail({
                 { label: "Ikke hjemme %", value: pctFmt(user.ikke_hjemme_percentage) },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between px-4 py-2.5">
-                  <span className="text-xs text-white/40">{label}</span>
-                  <span className="text-xs font-semibold text-white/80">{value}</span>
+                  <span className="text-xs text-ab-fg-3">{label}</span>
+                  <span className="text-xs font-semibold text-ab-fg-2">{value}</span>
                 </div>
               ))}
             </div>
@@ -887,7 +887,7 @@ export function RapportView() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen bg-ab-base">
       {/* Ambient */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-blue-600/8 blur-3xl" />
@@ -916,23 +916,23 @@ export function RapportView() {
               key="active"
               initial={reduced ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="px-6 py-6 max-w-[1600px] mx-auto space-y-5"
+              className="px-4 sm:px-6 py-5 sm:py-6 max-w-[1600px] mx-auto space-y-5"
             >
               {/* Page header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-white/25 mb-1">Analyse · Drill-down</p>
-                  <h1 className="text-2xl font-bold text-white">Rapport</h1>
+                  <p className="text-[10px] uppercase tracking-widest text-ab-fg-4 mb-1">Analyse · Drill-down</p>
+                  <h1 className="text-2xl font-bold text-ab-fg">Rapport</h1>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => { setHasLoaded(false); setTableData(null) }}
-                    className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/50 hover:text-white hover:border-white/20 transition-all"
+                    className="cursor-pointer flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-3 py-2 text-xs text-ab-fg-3 hover:text-ab-fg hover:border-ab-line transition-all"
                   >
                     <Search className="h-3.5 w-3.5" />
                     Endre søk
                   </button>
-                  <button onClick={exportCsv} disabled={!tableData || tableData.users.length === 0} className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/50 hover:text-white hover:border-white/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  <button onClick={exportCsv} disabled={!tableData || tableData.users.length === 0} className="cursor-pointer flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-3 py-2 text-xs text-ab-fg-3 hover:text-ab-fg hover:border-ab-line transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                     <Download className="h-3.5 w-3.5" />
                     Eksporter
                   </button>
@@ -944,14 +944,14 @@ export function RapportView() {
 
               {/* Filter row */}
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+                <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
                   {PERIODS.map(({ key, label }) => (
                     <button
                       key={key}
                       onClick={() => { handlePeriodChange(key); loadReport() }}
                       className={cn(
                         "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150",
-                        period === key ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"
+                        period === key ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2"
                       )}
                     >
                       {label}
@@ -969,7 +969,7 @@ export function RapportView() {
                         "cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150",
                         activeCampaignIds.has(c.id)
                           ? "bg-blue-600 text-white shadow-[0_0_10px_rgba(59,130,246,0.35)]"
-                          : "bg-white/5 text-white/40 border border-white/10 hover:text-white/70"
+                          : "bg-ab-elevated text-ab-fg-3 border border-ab-line hover:text-ab-fg-2"
                       )}
                     >
                       {c.name}
@@ -977,17 +977,17 @@ export function RapportView() {
                   ))}
                 </div>
 
-                <div className="h-6 w-px bg-white/10" />
+                <div className="h-6 w-px bg-ab-hover" />
 
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25 pointer-events-none" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-4 pointer-events-none" />
                   <input
                     type="text"
                     placeholder="Søk ansatt…"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="h-9 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-xs text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all w-48"
+                    className="h-9 rounded-xl border border-ab-line bg-ab-elevated pl-8 pr-3 text-xs text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 transition-all w-48"
                   />
                 </div>
               </div>
@@ -997,13 +997,13 @@ export function RapportView() {
 
                 {/* Left: User list (capped on mobile so it scrolls internally instead of
                     pushing the detail panel far down the page) */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden flex flex-col max-h-[55vh] xl:max-h-none">
-                  <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between shrink-0">
+                <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl overflow-hidden flex flex-col max-h-[55vh] xl:max-h-none">
+                  <div className="px-4 py-3 border-b border-ab-line flex items-center justify-between shrink-0">
                     <div>
-                      <h3 className="text-sm font-semibold text-white">Ansatte</h3>
-                      <p className="text-[10px] text-white/35 mt-0.5">{filteredUsers.length} ansatte · klikk for detaljer</p>
+                      <h3 className="text-sm font-semibold text-ab-fg">Ansatte</h3>
+                      <p className="text-[10px] text-ab-fg-3 mt-0.5">{filteredUsers.length} ansatte · klikk for detaljer</p>
                     </div>
-                    <Users className="h-4 w-4 text-white/20" />
+                    <Users className="h-4 w-4 text-ab-fg-4" />
                   </div>
 
                   {loadingTable ? (
@@ -1012,11 +1012,11 @@ export function RapportView() {
                     </div>
                   ) : filteredUsers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                      <Search className="h-6 w-6 text-white/15 mb-2" />
-                      <p className="text-xs text-white/30">Ingen ansatte funnet</p>
+                      <Search className="h-6 w-6 text-ab-fg-4 mb-2" />
+                      <p className="text-xs text-ab-fg-4">Ingen ansatte funnet</p>
                     </div>
                   ) : (
-                    <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+                    <div className="flex-1 overflow-y-auto divide-y divide-ab-line">
                       {filteredUsers.map((user, idx) => (
                         <UserRow
                           key={user.user_id}
@@ -1031,7 +1031,7 @@ export function RapportView() {
                 </div>
 
                 {/* Right: Employee detail or placeholder */}
-                <div ref={detailRef} className="scroll-mt-16 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+                <div ref={detailRef} className="scroll-mt-16 rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl overflow-hidden">
                   <AnimatePresence mode="wait">
                     {selectedUser ? (
                       <EmployeeDetail
@@ -1049,11 +1049,11 @@ export function RapportView() {
                         exit={{ opacity: 0 }}
                         className="flex flex-col items-center justify-center h-full py-20 text-center"
                       >
-                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 border border-white/10">
-                          <Users className="h-6 w-6 text-white/20" />
+                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-ab-elevated border border-ab-line">
+                          <Users className="h-6 w-6 text-ab-fg-4" />
                         </div>
-                        <p className="text-sm text-white/30 font-medium">Velg en ansatt</p>
-                        <p className="text-xs text-white/20 mt-1">for å se detaljer, lokasjoner og aktivitet</p>
+                        <p className="text-sm text-ab-fg-4 font-medium">Velg en ansatt</p>
+                        <p className="text-xs text-ab-fg-4 mt-1">for å se detaljer, lokasjoner og aktivitet</p>
                       </motion.div>
                     )}
                   </AnimatePresence>

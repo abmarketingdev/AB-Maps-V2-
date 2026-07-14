@@ -376,16 +376,16 @@ export default function RegisterSalePopup({ open, onClose }: RegisterSalePopupPr
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg w-full p-8 rounded-2xl shadow-2xl bg-white border border-black/10">
+      <DialogContent className="max-w-lg w-full p-6 sm:p-8 rounded-2xl shadow-2xl bg-ab-overlay border border-ab-line">
         <DialogHeader className="mb-4">
-          <DialogTitle className="text-xl font-bold tracking-tight text-black">Registrer salg manuelt</DialogTitle>
+          <DialogTitle className="text-xl font-bold tracking-tight text-ab-fg">Registrer salg manuelt</DialogTitle>
         </DialogHeader>
 
         {currentStep === 'selection' && (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-black mb-2">Velg betalingsmetode</h3>
-              <p className="text-gray-600 text-sm">Velg hvordan du vil registrere salget</p>
+              <h3 className="text-lg font-semibold text-ab-fg mb-2">Velg betalingsmetode</h3>
+              <p className="text-ab-fg-2 text-sm">Velg hvordan du vil registrere salget</p>
             </div>
             
             <div className="space-y-4">
@@ -435,31 +435,31 @@ export default function RegisterSalePopup({ open, onClose }: RegisterSalePopupPr
             )}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input placeholder="Fornavn" value={form.first_name} onChange={e => handleChange('first_name', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Etternavn" value={form.last_name} onChange={e => handleChange('last_name', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="E-post" type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Mobilnummer" value={form.sms_phone_number} onChange={e => handleChange('sms_phone_number', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Fødselsdato" type="date" value={form.date_of_birth} onChange={e => handleChange('date_of_birth', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Adresse" value={form.address_text} onChange={e => handleChange('address_text', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Postnummer" value={form.postnummer} onChange={e => handleChange('postnummer', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Poststed" value={form.posted} onChange={e => handleChange('posted', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Kontonummer" value={form.kontonummer} onChange={e => handleChange('kontonummer', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Gavebeløp" type="number" value={form.gavebeløp} onChange={e => handleChange('gavebeløp', e.target.value)} required className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Beløpsgrense" type="number" value={form.beløpsgrense} onChange={e => handleChange('beløpsgrense', e.target.value)} className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
-                <Input placeholder="Skattefradrag Fødselsnummer" value={form.skattefradrag_fødselsnummer} onChange={e => handleChange('skattefradrag_fødselsnummer', e.target.value)} className="rounded-lg border border-black/10 bg-white focus:border-black focus:ring-2 focus:ring-black/20 text-black placeholder:text-gray-400" />
+                <Input placeholder="Fornavn" value={form.first_name} onChange={e => handleChange('first_name', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Etternavn" value={form.last_name} onChange={e => handleChange('last_name', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="E-post" type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Mobilnummer" value={form.sms_phone_number} onChange={e => handleChange('sms_phone_number', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Fødselsdato" type="date" value={form.date_of_birth} onChange={e => handleChange('date_of_birth', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Adresse" value={form.address_text} onChange={e => handleChange('address_text', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Postnummer" value={form.postnummer} onChange={e => handleChange('postnummer', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Poststed" value={form.posted} onChange={e => handleChange('posted', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Kontonummer" value={form.kontonummer} onChange={e => handleChange('kontonummer', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Gavebeløp" type="number" value={form.gavebeløp} onChange={e => handleChange('gavebeløp', e.target.value)} required className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Beløpsgrense" type="number" value={form.beløpsgrense} onChange={e => handleChange('beløpsgrense', e.target.value)} className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
+                <Input placeholder="Skattefradrag Fødselsnummer" value={form.skattefradrag_fødselsnummer} onChange={e => handleChange('skattefradrag_fødselsnummer', e.target.value)} className="rounded-lg border border-ab-line bg-ab-elevated focus:border-ab-line-2 focus:ring-2 focus:ring-ab-line text-ab-fg placeholder:text-ab-fg-3" />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" checked={form.skip} onChange={e => handleChange('skip', e.target.checked)} id="skip" className="accent-black w-4 h-4" />
-                <label htmlFor="skip" className="text-sm text-black select-none">Hopp over varsler</label>
+                <label htmlFor="skip" className="text-sm text-ab-fg select-none">Hopp over varsler</label>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-black">Signatur</label>
-                <div className="border border-black/10 rounded-lg bg-gray-50 p-2 flex flex-col items-center">
+                <label className="block text-sm font-medium mb-1 text-ab-fg">Signatur</label>
+                <div className="border border-ab-line rounded-lg bg-ab-subtle p-2 flex flex-col items-center">
                   <canvas
                     ref={canvasRef}
                     width={420}
                     height={120}
-                    className="w-full h-32 border border-black/10 bg-white rounded-lg cursor-crosshair"
+                    className="w-full h-32 border border-ab-line bg-white rounded-lg cursor-crosshair"
                     onMouseDown={startDrawing}
                     onMouseMove={draw}
                     onMouseUp={stopDrawing}
@@ -469,7 +469,7 @@ export default function RegisterSalePopup({ open, onClose }: RegisterSalePopupPr
                     onTouchEnd={stopDrawing}
                     style={{ touchAction: 'none' }}
                   />
-                  <Button type="button" variant="ghost" size="sm" className="mt-2 text-black hover:bg-black/5" onClick={clearSignature}>Tøm signatur</Button>
+                  <Button type="button" variant="ghost" size="sm" className="mt-2 text-ab-fg hover:bg-ab-hover" onClick={clearSignature}>Tøm signatur</Button>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -477,7 +477,7 @@ export default function RegisterSalePopup({ open, onClose }: RegisterSalePopupPr
                   type="button" 
                   variant="outline" 
                   onClick={() => setCurrentStep('selection')}
-                  className="flex-1 border-black/10 text-black hover:bg-black/5 rounded-lg py-3"
+                  className="flex-1 border-ab-line text-ab-fg hover:bg-ab-hover rounded-lg py-3"
                 >
                   Tilbake
                 </Button>
@@ -493,8 +493,8 @@ export default function RegisterSalePopup({ open, onClose }: RegisterSalePopupPr
         {currentStep === 'vipps' && submitting && (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
-            <div className="text-lg font-semibold text-black">Behandler VIPPS betaling...</div>
-            <p className="text-gray-600 text-sm mt-2">Du vil bli omdirigert til VIPPS snart</p>
+            <div className="text-lg font-semibold text-ab-fg">Behandler VIPPS betaling...</div>
+            <p className="text-ab-fg-2 text-sm mt-2">Du vil bli omdirigert til VIPPS snart</p>
           </div>
         )}
       </DialogContent>

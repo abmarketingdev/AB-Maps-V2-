@@ -65,10 +65,10 @@ export function GoalRing({ value, goal, size = 240, unit = "dører i dag" }: Goa
       {/* center */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         <div style={{ fontSize: Math.round(size * 0.26) }}>
-          <CountUp value={value} duration={1.3} delay={0.3} className="font-mono font-bold text-white leading-none" />
+          <CountUp value={value} duration={1.3} delay={0.3} className="font-mono font-bold text-ab-fg leading-none" />
         </div>
-        <span className="mt-1 text-[11px] uppercase tracking-widest text-white/40">{unit}</span>
-        <div className="mt-2 h-px w-10 bg-white/10" />
+        <span className="mt-1 text-[11px] uppercase tracking-widest text-ab-fg-3">{unit}</span>
+        <div className="mt-2 h-px w-10 bg-ab-hover" />
         <span className="mt-2 text-xs font-medium" style={{ color: reached ? "#10b981" : "rgba(255,255,255,0.5)" }}>
           {reached ? "Mål nådd 🎯" : `${remaining} igjen til ${goal}`}
         </span>

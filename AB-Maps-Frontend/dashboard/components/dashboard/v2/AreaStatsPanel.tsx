@@ -25,7 +25,7 @@ function SegmentedBar({ b }: { b: StatusBucket }) {
   const reduced = useReducedMotion()
   const total = b.total || 1
   return (
-    <div className="h-3 w-full overflow-hidden rounded-full bg-white/8 flex">
+    <div className="h-3 w-full overflow-hidden rounded-full bg-ab-hover flex">
       {STATUS.map(s => (
         <motion.div key={s.key} className="h-full" style={{ background: s.color }}
           initial={reduced ? false : { width: 0 }} animate={{ width: `${(b[s.key] / total) * 100}%` }}
@@ -39,21 +39,21 @@ function PersonRow({ p }: { p: PersonStat }) {
   const [open, setOpen] = useState(false)
   const total = p.total || 1
   return (
-    <div className="rounded-xl border border-white/8 bg-white/[0.03] overflow-hidden">
+    <div className="rounded-xl border border-ab-line bg-ab-elevated overflow-hidden">
       <button onClick={() => setOpen(o => !o)}
-        className="cursor-pointer w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/[0.03] transition-colors">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/8 text-xs font-bold text-white/70">
+        className="cursor-pointer w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-ab-hover transition-colors">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ab-hover text-xs font-bold text-ab-fg-2">
           {(p.name || "?").slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-white/90 truncate">{p.name}</p>
-          <p className="text-[11px] text-white/35">{p.kind === "manager" ? "Leder" : "Selger"} · {nbFmt.format(p.total)} dører</p>
+          <p className="text-sm font-medium text-ab-fg truncate">{p.name}</p>
+          <p className="text-[11px] text-ab-fg-4">{p.kind === "manager" ? "Leder" : "Selger"} · {nbFmt.format(p.total)} dører</p>
         </div>
         <div className="text-right shrink-0">
           <p className="font-mono text-sm font-bold text-emerald-400">{nbFmt.format(p.ja)}</p>
-          <p className="text-[10px] text-white/30">salg · {p.ja_rate.toFixed(1)}%</p>
+          <p className="text-[10px] text-ab-fg-4">salg · {p.ja_rate.toFixed(1)}%</p>
         </div>
-        <ChevronDown className={cn("h-3.5 w-3.5 text-white/30 transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("h-3.5 w-3.5 text-ab-fg-4 transition-transform", open && "rotate-180")} />
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -64,8 +64,8 @@ function PersonRow({ p }: { p: PersonStat }) {
               {STATUS.map(s => (
                 <div key={s.key} className="text-center">
                   <p className="font-mono text-sm font-bold" style={{ color: s.color }}>{nbFmt.format(p[s.key])}</p>
-                  <p className="text-[10px] text-white/35">{s.label}</p>
-                  <p className="font-mono text-[10px] text-white/25">{((p[s.key] / total) * 100).toFixed(0)}%</p>
+                  <p className="text-[10px] text-ab-fg-4">{s.label}</p>
+                  <p className="font-mono text-[10px] text-ab-fg-4">{((p[s.key] / total) * 100).toFixed(0)}%</p>
                 </div>
               ))}
             </div>
@@ -111,18 +111,18 @@ export function AreaStatsPanel({ areaId, campaign, fallbackName, accent, start, 
 
   return (
     <motion.div initial={reduced ? false : { opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden flex flex-col">
+      className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/8 flex items-center gap-3">
+      <div className="px-4 py-3 border-b border-ab-line flex items-center gap-3">
         <button onClick={onBack} aria-label="Tilbake til liste"
-          className="cursor-pointer h-8 w-8 shrink-0 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all">
+          className="cursor-pointer h-8 w-8 shrink-0 flex items-center justify-center rounded-lg text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-all">
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0 flex-1 flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-sm shrink-0" style={{ background: accent || "#3b82f6" }} />
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">{data?.name ?? fallbackName ?? "Område"}</p>
-            <p className="text-[11px] text-white/40 truncate">{data?.campaign?.name ?? "Områdestatistikk"}</p>
+            <p className="text-sm font-bold text-ab-fg truncate">{data?.name ?? fallbackName ?? "Område"}</p>
+            <p className="text-[11px] text-ab-fg-3 truncate">{data?.campaign?.name ?? "Områdestatistikk"}</p>
           </div>
         </div>
       </div>
@@ -135,14 +135,14 @@ export function AreaStatsPanel({ areaId, campaign, fallbackName, accent, start, 
                 {/* KPIs */}
                 <div className="grid grid-cols-2 gap-3">
                   {kpis.map(({ label, value, accent: a, Icon }) => (
-                    <div key={label} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
+                    <div key={label} className="rounded-xl border border-ab-line bg-ab-elevated p-3">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] text-white/40 font-medium">{label}</span>
+                        <span className="text-[11px] text-ab-fg-3 font-medium">{label}</span>
                         <span className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ background: `${a}22` }}>
                           <Icon className="h-3.5 w-3.5" style={{ color: a }} />
                         </span>
                       </div>
-                      <p className="font-mono text-xl font-bold text-white">{value}</p>
+                      <p className="font-mono text-xl font-bold text-ab-fg">{value}</p>
                     </div>
                   ))}
                 </div>
@@ -150,19 +150,19 @@ export function AreaStatsPanel({ areaId, campaign, fallbackName, accent, start, 
                 {/* Status breakdown */}
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-white/40">Statusfordeling</p>
-                    <p className="text-[11px] text-white/35">{nbFmt.format(k?.total ?? 0)} dører besøkt</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-ab-fg-3">Statusfordeling</p>
+                    <p className="text-[11px] text-ab-fg-4">{nbFmt.format(k?.total ?? 0)} dører besøkt</p>
                   </div>
                   <SegmentedBar b={k!} />
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {STATUS.map(s => (
-                      <div key={s.key} className="rounded-xl border border-white/8 bg-white/[0.03] p-2.5">
+                      <div key={s.key} className="rounded-xl border border-ab-line bg-ab-elevated p-2.5">
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
-                          <span className="text-[11px] text-white/45">{s.label}</span>
+                          <span className="text-[11px] text-ab-fg-3">{s.label}</span>
                         </div>
                         <p className="font-mono text-lg font-bold" style={{ color: s.color }}>{nbFmt.format((k as any)[s.key])}</p>
-                        <p className="font-mono text-[10px] text-white/30">{(((k as any)[s.key] / (k?.total || 1)) * 100).toFixed(0)}%</p>
+                        <p className="font-mono text-[10px] text-ab-fg-4">{(((k as any)[s.key] / (k?.total || 1)) * 100).toFixed(0)}%</p>
                       </div>
                     ))}
                   </div>
@@ -170,11 +170,11 @@ export function AreaStatsPanel({ areaId, campaign, fallbackName, accent, start, 
 
                 {/* Assignees */}
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2.5 flex items-center gap-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ab-fg-3 mb-2.5 flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5" /> Tildelte selgere ({data.assignees.length})
                   </p>
                   {data.assignees.length === 0 ? (
-                    <p className="text-sm text-white/30">Ingen tildelte i dette området.</p>
+                    <p className="text-sm text-ab-fg-4">Ingen tildelte i dette området.</p>
                   ) : (
                     <div className="space-y-2">{data.assignees.map(p => <PersonRow key={`${p.person_id}-${p.kind}`} p={p} />)}</div>
                   )}
@@ -182,7 +182,7 @@ export function AreaStatsPanel({ areaId, campaign, fallbackName, accent, start, 
                   {data.unassigned_contributors.length > 0 && (
                     <div className="mt-3">
                       <button onClick={() => setShowOthers(o => !o)}
-                        className="cursor-pointer flex items-center gap-1.5 text-[11px] font-medium text-white/40 hover:text-white/70 transition-colors">
+                        className="cursor-pointer flex items-center gap-1.5 text-[11px] font-medium text-ab-fg-3 hover:text-ab-fg-2 transition-colors">
                         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showOthers && "rotate-180")} />
                         Andre bidragsytere ({data.unassigned_contributors.length})
                       </button>
@@ -201,7 +201,7 @@ export function AreaStatsPanel({ areaId, campaign, fallbackName, accent, start, 
                 {/* Postal breakdown */}
                 {data.postals.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2.5 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-ab-fg-3 mb-2.5 flex items-center gap-1.5">
                       <MapPin className="h-3.5 w-3.5" /> Postnummer ({data.postals.length})
                     </p>
                     <div className="space-y-2">
@@ -209,11 +209,11 @@ export function AreaStatsPanel({ areaId, campaign, fallbackName, accent, start, 
                         const max = data.postals[0]?.total || 1
                         return (
                           <div key={pc.postal_code} className="flex items-center gap-3">
-                            <span className="w-12 shrink-0 font-mono text-xs text-white/60">{pc.postal_code}</span>
-                            <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-white/8">
+                            <span className="w-12 shrink-0 font-mono text-xs text-ab-fg-2">{pc.postal_code}</span>
+                            <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-ab-hover">
                               <div className="h-full rounded-full bg-blue-500/70" style={{ width: `${(pc.total / max) * 100}%` }} />
                             </div>
-                            <span className="w-14 shrink-0 text-right font-mono text-xs font-semibold text-white/70">{nbFmt.format(pc.total)}</span>
+                            <span className="w-14 shrink-0 text-right font-mono text-xs font-semibold text-ab-fg-2">{nbFmt.format(pc.total)}</span>
                             <span className="w-12 shrink-0 text-right font-mono text-[11px] text-emerald-400">{pc.ja_rate.toFixed(1)}%</span>
                           </div>
                         )

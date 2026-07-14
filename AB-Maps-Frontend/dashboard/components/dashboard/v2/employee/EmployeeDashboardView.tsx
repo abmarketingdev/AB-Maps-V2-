@@ -62,16 +62,16 @@ export function EmployeeDashboardView() {
 
   if (status !== "ok") {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center gap-3 text-center" style={{ background: "linear-gradient(180deg, #0a0f1e 0%, #0b1120 100%)" }}>
+      <div className="min-h-full flex flex-col items-center justify-center gap-3 text-center bg-ab-base">
         {status === "loading"
-          ? <><Loader2 className="h-7 w-7 animate-spin text-white/40" /><p className="text-sm text-white/40">Laster dagen din…</p></>
-          : <><p className="text-sm text-white/50">Kunne ikke laste dagsdataene.</p><button onClick={() => window.location.reload()} className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white">Prøv igjen</button></>}
+          ? <><Loader2 className="h-7 w-7 animate-spin text-ab-fg-3" /><p className="text-sm text-ab-fg-3">Laster dagen din…</p></>
+          : <><p className="text-sm text-ab-fg-3">Kunne ikke laste dagsdataene.</p><button onClick={() => window.location.reload()} className="cursor-pointer rounded-lg border border-ab-line bg-ab-elevated px-3 py-1.5 text-xs font-medium text-ab-fg-2 hover:text-ab-fg">Prøv igjen</button></>}
       </div>
     )
   }
 
   return (
-    <div className="min-h-full" style={{ background: "linear-gradient(180deg, #0a0f1e 0%, #0b1120 100%)" }}>
+    <div className="min-h-full bg-ab-base">
       {/* one-shot milestone celebration */}
       {!celebrated && <Celebration milestone={milestone} onDone={() => setCelebrated(true)} />}
 
@@ -79,8 +79,8 @@ export function EmployeeDashboardView() {
         {/* header */}
         <motion.div {...fade(0)} className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm capitalize text-white/40">{data.weekday} {data.dateStr}</p>
-            <h1 className="text-2xl font-bold text-white mt-0.5">Hei, {firstName} 👋</h1>
+            <p className="text-sm capitalize text-ab-fg-3">{data.weekday} {data.dateStr}</p>
+            <h1 className="text-2xl font-bold text-ab-fg mt-0.5">Hei, {firstName} 👋</h1>
           </div>
           <button
             onClick={() => setRegisterOpen(true)}
@@ -93,7 +93,7 @@ export function EmployeeDashboardView() {
         {/* hero: ring + Roy + flanking tiles */}
         <motion.section {...fade(0.1)} className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-6">
           {/* ring hero */}
-          <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
+          <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-3xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-8">
             <div className="flex flex-col sm:flex-row items-center gap-8">
               <GoalRing value={data.doorsToday} goal={data.doorGoal} size={240} />
               <div className="flex flex-col items-center">
@@ -104,7 +104,7 @@ export function EmployeeDashboardView() {
                   <div className="absolute inset-0 rounded-full blur-2xl -z-10" style={{ background: `${glow}2e`, transform: "scale(1.4)" }} />
                   <RoyMascot state={mascot} size={96} accent={glow} />
                 </motion.div>
-                <p className="mt-3 max-w-[180px] text-center text-sm text-white/55 leading-snug">
+                <p className="mt-3 max-w-[180px] text-center text-sm text-ab-fg-3 leading-snug">
                   {mascot === "win-big" ? "Du knuser det i dag!" : aheadOfPace ? "Du ligger foran ditt eget snitt." : "Hold tempoet — du nærmer deg."}
                 </p>
               </div>
@@ -115,16 +115,16 @@ export function EmployeeDashboardView() {
           <div className="grid grid-cols-1 gap-6">
             <StreakFlame days={data.streakDays} atRisk={data.streakAtRisk} minDoors={data.streakMinDoors} doorsToday={data.doorsToday} />
             {/* ja-rate tile */}
-            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">
+            <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5">
               <div className="flex items-center gap-3">
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15">
                   <Zap className="h-6 w-6 text-emerald-400" />
                 </span>
                 <div>
                   <div className="flex items-baseline gap-1">
-                    <CountUp value={data.jaProsent} decimals={1} suffix="%" className="font-mono text-3xl font-bold text-white leading-none" />
+                    <CountUp value={data.jaProsent} decimals={1} suffix="%" className="font-mono text-3xl font-bold text-ab-fg leading-none" />
                   </div>
-                  <p className="text-[12px] text-white/45 mt-0.5">ja-rate i dag</p>
+                  <p className="text-[12px] text-ab-fg-3 mt-0.5">ja-rate i dag</p>
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-1.5 text-[12px] font-medium" style={{ color: data.jaProsentDelta >= 0 ? "#10b981" : "#f43f5e" }}>
@@ -136,11 +136,11 @@ export function EmployeeDashboardView() {
         </motion.section>
 
         {/* pace strip */}
-        <motion.div {...fade(0.2)} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl px-5 py-4">
+        <motion.div {...fade(0.2)} className="flex items-center gap-3 rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl px-5 py-4">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl shrink-0" style={{ background: aheadOfPace ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)" }}>
             {aheadOfPace ? <TrendingUp className="h-4 w-4 text-emerald-400" /> : <TrendingDown className="h-4 w-4 text-amber-400" />}
           </span>
-          <p className="text-sm text-white/65">
+          <p className="text-sm text-ab-fg-2">
             {aheadOfPace
               ? <>Du er <span className="font-semibold text-emerald-400">{paceDelta} dører foran</span> ditt 7-dagers snitt på {data.avgDoors7}.</>
               : <>Du er <span className="font-semibold text-amber-400">{Math.abs(paceDelta)} dører bak</span> ditt 7-dagers snitt på {data.avgDoors7}.</>}

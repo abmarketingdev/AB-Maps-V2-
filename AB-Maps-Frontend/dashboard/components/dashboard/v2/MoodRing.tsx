@@ -34,9 +34,9 @@ function CustomTooltip({ active, payload, total }: any) {
   const seg: MoodSegment = payload[0].payload
   const pct = total > 0 ? Math.round((seg.value / total) * 100) : 0
   return (
-    <div className="rounded-xl border border-white/15 bg-[#0d1528]/90 backdrop-blur-xl px-4 py-3 shadow-xl">
+    <div className="rounded-xl border border-ab-line bg-ab-overlay/90 backdrop-blur-xl px-4 py-3 shadow-xl">
       <p className="text-sm font-semibold" style={{ color: seg.color }}>{seg.label}</p>
-      <p className="mt-1 text-xs text-white/50">{seg.value} ansatte · {pct}%</p>
+      <p className="mt-1 text-xs text-ab-fg-3">{seg.value} ansatte · {pct}%</p>
     </div>
   )
 }
@@ -56,11 +56,11 @@ export function MoodRing({ className, segments }: MoodRingProps) {
       initial={reduced ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, duration: 0.5 }}
-      className={`rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex flex-col ${className ?? ""}`}
+      className={`rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5 flex flex-col ${className ?? ""}`}
     >
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-white">Stemningsring</h3>
-        <p className="mt-0.5 text-xs text-white/40">Ansattfordeling etter humør</p>
+        <h3 className="text-sm font-semibold text-ab-fg">Stemningsring</h3>
+        <p className="mt-0.5 text-xs text-ab-fg-3">Ansattfordeling etter humør</p>
       </div>
 
       <div className="relative flex-1 flex items-center justify-center" style={{ minHeight: 160 }}>
@@ -88,8 +88,8 @@ export function MoodRing({ className, segments }: MoodRingProps) {
 
         {/* Centre label */}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-mono text-2xl font-bold text-white">{total}</span>
-          <span className="text-xs text-white/40">ansatte</span>
+          <span className="font-mono text-2xl font-bold text-ab-fg">{total}</span>
+          <span className="text-xs text-ab-fg-3">ansatte</span>
         </div>
       </div>
 
@@ -99,16 +99,16 @@ export function MoodRing({ className, segments }: MoodRingProps) {
           <div key={seg.mood} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <seg.icon className="h-3.5 w-3.5 shrink-0" style={{ color: seg.color }} />
-              <span className="text-xs text-white/60">{seg.label}</span>
+              <span className="text-xs text-ab-fg-2">{seg.label}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-1 w-16 overflow-hidden rounded-full bg-white/10">
+              <div className="h-1 w-16 overflow-hidden rounded-full bg-ab-hover">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{ width: `${(seg.value / total) * 100}%`, background: seg.color }}
                 />
               </div>
-              <span className="w-5 text-right font-mono text-xs font-medium text-white/70">{seg.value}</span>
+              <span className="w-5 text-right font-mono text-xs font-medium text-ab-fg-2">{seg.value}</span>
             </div>
           </div>
         ))}

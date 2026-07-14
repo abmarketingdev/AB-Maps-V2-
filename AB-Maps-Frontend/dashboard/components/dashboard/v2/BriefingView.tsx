@@ -61,7 +61,7 @@ function Donut({ pct, color, label }: { pct: number; color: string; label: strin
         <motion.circle cx="32" cy="32" r={r} fill="none" stroke={color} strokeWidth="7" strokeLinecap="round" strokeDasharray={c}
           initial={{ strokeDashoffset: c }} animate={{ strokeDashoffset: c * (1 - pct / 100) }} transition={{ delay: 0.9, duration: 0.9, ease: [0.23, 1, 0.32, 1] }} />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono text-lg font-bold text-white">{label}</span></div>
+      <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono text-lg font-bold text-ab-fg">{label}</span></div>
     </div>
   )
 }
@@ -114,16 +114,16 @@ export function BriefingView() {
 
   if (status !== "ok") {
     return (
-      <main className="relative flex min-h-screen flex-col items-center justify-center gap-5 px-6 text-center" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 55%, #0a0f1e 100%)" }}>
+      <main className="relative flex min-h-screen flex-col items-center justify-center gap-5 px-4 sm:px-6 text-center bg-ab-base">
         {status === "loading" ? (
           <>
-            <Loader2 className="h-7 w-7 animate-spin text-white/40" />
-            <p className="text-sm text-white/40">Henter dagens oversikt…</p>
+            <Loader2 className="h-7 w-7 animate-spin text-ab-fg-3" />
+            <p className="text-sm text-ab-fg-3">Henter dagens oversikt…</p>
           </>
         ) : (
           <>
-            <p className="text-lg font-semibold text-white">God {data.timeOfDay}, {firstName}</p>
-            <p className="text-sm text-white/45 max-w-sm">Kunne ikke hente dagens oversikt akkurat nå.</p>
+            <p className="text-lg font-semibold text-ab-fg">God {data.timeOfDay}, {firstName}</p>
+            <p className="text-sm text-ab-fg-3 max-w-sm">Kunne ikke hente dagens oversikt akkurat nå.</p>
             <button onClick={goDashboard} className="mt-1 cursor-pointer rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500 transition-colors">Gå til dashbord</button>
           </>
         )}
@@ -132,7 +132,7 @@ export function BriefingView() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 55%, #0a0f1e 100%)" }}>
+    <main className="relative min-h-screen overflow-hidden bg-ab-base">
       {/* Ambient playful blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <motion.div className="absolute -top-32 left-1/4 h-[28rem] w-[28rem] rounded-full bg-blue-600/10 blur-3xl"
@@ -143,7 +143,7 @@ export function BriefingView() {
           animate={reduced ? {} : { scale: [1, 1.15, 1] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} />
       </div>
 
-      <div className="relative mx-auto max-w-3xl px-6 py-16 pb-40">
+      <div className="relative mx-auto max-w-3xl px-4 sm:px-6 py-16 pb-40">
         {/* 1. Hero */}
         <section aria-labelledby="hero-h" className="flex items-center gap-6 mb-12">
           <motion.div
@@ -167,19 +167,19 @@ export function BriefingView() {
             </motion.div>
           </motion.div>
           <div className="min-w-0">
-            <motion.p {...fade(0.25)} className="text-sm text-white/45 mb-1.5 capitalize">
+            <motion.p {...fade(0.25)} className="text-sm text-ab-fg-3 mb-1.5 capitalize">
               {data.weekday} {data.dateStr} · god {data.timeOfDay}, {firstName}
             </motion.p>
-            <motion.h1 {...fade(0.35)} id="hero-h" className="text-2xl sm:text-3xl font-bold text-white leading-snug">
+            <motion.h1 {...fade(0.35)} id="hero-h" className="text-2xl sm:text-3xl font-bold text-ab-fg leading-snug">
               {headline}
             </motion.h1>
-            {supporting && <motion.p {...fade(0.5)} className="mt-2 text-base text-white/50 leading-relaxed">{supporting}</motion.p>}
+            {supporting && <motion.p {...fade(0.5)} className="mt-2 text-base text-ab-fg-3 leading-relaxed">{supporting}</motion.p>}
           </div>
         </section>
 
         {/* 2. Dine fokuspunkter */}
         <section aria-labelledby="focus-h" className="mb-12">
-          <motion.h2 {...fade(0.6)} id="focus-h" className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">Dine fokuspunkter</motion.h2>
+          <motion.h2 {...fade(0.6)} id="focus-h" className="text-xs font-bold uppercase tracking-widest text-ab-fg-4 mb-4">Dine fokuspunkter</motion.h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {cards.map((c, i) => {
               const Icon = CARD_ICON[c.kind]
@@ -191,47 +191,47 @@ export function BriefingView() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: 0.7 + i * 0.12, type: "spring", stiffness: 180, damping: 16 }}
                   whileHover={reduced ? {} : { y: -4 }}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 cursor-pointer transition-all hover:border-white/15 hover:bg-white/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated p-5 cursor-pointer transition-all hover:border-ab-line hover:bg-ab-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
                 >
                   {/* top accent */}
                   <div className="absolute inset-x-0 top-0 h-[3px] opacity-70" style={{ background: `linear-gradient(90deg, ${tint}, transparent)` }} />
                   {/* header */}
                   <div className="flex items-center gap-2.5 mb-4">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: `${tint}1f` }}><Icon className="h-3.5 w-3.5" style={{ color: tint }} /></span>
-                    <span className="text-[13px] font-semibold text-white/70">{c.label}</span>
+                    <span className="text-[13px] font-semibold text-ab-fg-2">{c.label}</span>
                   </div>
 
                   {/* kind-specific body */}
                   {c.kind === "alerts" && (
                     <div className="flex-1 flex flex-col">
                       <div className="flex items-baseline gap-1.5 mb-3">
-                        <span className="font-mono text-4xl font-bold text-white leading-none">{c.value}</span>
-                        {c.valueSuffix && <span className="text-sm text-white/35">{c.valueSuffix}</span>}
+                        <span className="font-mono text-4xl font-bold text-ab-fg leading-none">{c.value}</span>
+                        {c.valueSuffix && <span className="text-sm text-ab-fg-4">{c.valueSuffix}</span>}
                       </div>
                       <DotGrid total={data.totalCount} filled={data.underThresholdNames.length} color={tint} />
-                      <p className="mt-3 text-xs text-white/45 truncate">{c.context}</p>
+                      <p className="mt-3 text-xs text-ab-fg-3 truncate">{c.context}</p>
                     </div>
                   )}
 
                   {c.kind === "trend" && (
                     <div className="flex-1 flex flex-col">
-                      <span className="font-mono text-4xl font-bold text-white leading-none mb-2">{c.value}</span>
+                      <span className="font-mono text-4xl font-bold text-ab-fg leading-none mb-2">{c.value}</span>
                       {c.sparkline && <AreaSpark data={c.sparkline} color="#10b981" />}
-                      <p className="mt-2 text-xs text-white/45">{c.context}</p>
+                      <p className="mt-2 text-xs text-ab-fg-3">{c.context}</p>
                     </div>
                   )}
 
                   {c.kind === "concentration" && (
                     <div className="flex-1 flex items-center gap-4">
                       <Donut pct={data.topConcentrationPct} color={tint} label={c.value} />
-                      <p className="text-xs text-white/45 leading-relaxed">{c.context}</p>
+                      <p className="text-xs text-ab-fg-3 leading-relaxed">{c.context}</p>
                     </div>
                   )}
 
                   {/* delta + link */}
                   <div className="mt-4 flex items-center justify-between gap-2">
                     {c.delta ? <DeltaPill text={c.delta} tone={c.deltaTone} /> : <span />}
-                    <span className="flex items-center gap-1 text-[11px] font-medium text-white/25 group-hover:text-blue-400 transition-colors shrink-0">Se mer <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></span>
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-ab-fg-4 group-hover:text-blue-400 transition-colors shrink-0">Se mer <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></span>
                   </div>
                 </motion.a>
               )
@@ -242,33 +242,33 @@ export function BriefingView() {
         {/* 3. Mønster vi har lagt merke til */}
         <motion.section {...fade(1.0)} aria-labelledby="insight-h" className="mb-10">
           <h2 className="sr-only" id="insight-h">Mønster vi har lagt merke til</h2>
-          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 border-l-2" style={{ borderLeftColor: "#3b82f6" }}>
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-6 border-l-2" style={{ borderLeftColor: "#3b82f6" }}>
             <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400/70 mb-2">Mønster vi har lagt merke til</p>
-            <h3 className="text-lg font-semibold text-white leading-snug">{insight.headline}</h3>
-            <p className="mt-1.5 text-sm text-white/50 leading-relaxed">{insight.supporting}</p>
+            <h3 className="text-lg font-semibold text-ab-fg leading-snug">{insight.headline}</h3>
+            <p className="mt-1.5 text-sm text-ab-fg-3 leading-relaxed">{insight.supporting}</p>
 
             <div className="mt-5 space-y-2.5">
               {insight.bars.map((b, i) => (
                 <div key={b.label} className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 text-xs text-white/45 text-right truncate">{b.label}</span>
-                  <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                  <span className="w-24 shrink-0 text-xs text-ab-fg-3 text-right truncate">{b.label}</span>
+                  <div className="flex-1 h-2.5 rounded-full overflow-hidden bg-ab-inset">
                     <motion.div className="h-full rounded-full bg-blue-500"
                       initial={reduced ? false : { width: 0 }} animate={{ width: `${(b.raw / insightMax) * 100}%` }}
                       transition={{ delay: 1.2 + i * 0.08, duration: 0.7, ease: [0.23, 1, 0.32, 1] }} />
                   </div>
-                  <span className="w-24 shrink-0 text-xs font-mono text-white/55 text-right">{b.value}</span>
+                  <span className="w-24 shrink-0 text-xs font-mono text-ab-fg-3 text-right">{b.value}</span>
                 </div>
               ))}
             </div>
 
-            <p className="mt-5 text-sm italic text-white/45 leading-relaxed">Implikasjon: {insight.implikasjon}</p>
+            <p className="mt-5 text-sm italic text-ab-fg-3 leading-relaxed">Implikasjon: {insight.implikasjon}</p>
           </div>
         </motion.section>
 
         {/* 4. Footer line */}
-        <motion.div {...fade(1.2)} className="flex items-center justify-between gap-3 pt-5 border-t border-white/8 text-sm">
-          <span className="text-white/35">{data.totalDoors.toLocaleString("nb-NO")} dører · {data.contactPct}% kontakt · {data.activeCount}/{data.totalCount} aktive</span>
-          <button onClick={goDashboard} className="cursor-pointer flex items-center gap-1 text-white/40 hover:text-white transition-colors">Åpne full analyse <ArrowRight className="h-3.5 w-3.5" /></button>
+        <motion.div {...fade(1.2)} className="flex items-center justify-between gap-3 pt-5 border-t border-ab-line text-sm">
+          <span className="text-ab-fg-4">{data.totalDoors.toLocaleString("nb-NO")} dører · {data.contactPct}% kontakt · {data.activeCount}/{data.totalCount} aktive</span>
+          <button onClick={goDashboard} className="cursor-pointer flex items-center gap-1 text-ab-fg-3 hover:text-ab-fg transition-colors">Åpne full analyse <ArrowRight className="h-3.5 w-3.5" /></button>
         </motion.div>
       </div>
 
@@ -277,13 +277,13 @@ export function BriefingView() {
         initial={false}
         animate={showCta ? { opacity: 1, y: 0, pointerEvents: "auto" } : { opacity: 0, y: 24, pointerEvents: "none" }}
         transition={{ type: "spring", stiffness: 200, damping: 18 }}
-        className="fixed bottom-8 left-0 right-0 flex justify-center px-6 z-20"
+        className="fixed bottom-8 left-0 right-0 flex justify-center px-4 sm:px-6 z-20"
       >
         <motion.button
           onClick={goDashboard}
           animate={reduced || !showCta ? {} : { y: [0, -4, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="cursor-pointer flex items-center gap-2.5 rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-semibold text-white shadow-[0_8px_32px_-4px_rgba(59,130,246,0.55)] hover:bg-blue-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0f1e]"
+          className="cursor-pointer flex items-center gap-2.5 rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-semibold text-white shadow-[0_8px_32px_-4px_rgba(59,130,246,0.55)] hover:bg-blue-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-ab-base"
         >
           Gå til dashbord
           <ArrowRight className="h-5 w-5" />

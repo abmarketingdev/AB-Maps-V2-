@@ -66,7 +66,7 @@ export function DashboardV2() {
   const firstName = user?.username ?? "der"
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 50%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen bg-ab-base">
       {/* Ambient glow blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-600/10 blur-3xl" />
@@ -74,7 +74,7 @@ export function DashboardV2() {
         <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-emerald-600/6 blur-3xl" />
       </div>
 
-      <div className="relative px-6 py-8 space-y-6 max-w-[1600px] mx-auto">
+      <div className="relative px-4 sm:px-6 py-6 sm:py-8 space-y-6 max-w-[1600px] mx-auto">
 
         {/* Page header */}
         <motion.div
@@ -84,10 +84,10 @@ export function DashboardV2() {
           className="flex items-center justify-between"
         >
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-ab-fg">
               {greeting}, {firstName} 👋
             </h1>
-            <p className="mt-1 text-sm text-white/40">
+            <p className="mt-1 text-sm text-ab-fg-3">
               {now.toLocaleDateString("nb-NO", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               {isAdmin && <span className="ml-2 rounded-full bg-blue-600/20 px-2 py-0.5 text-xs text-blue-400 font-medium">Admin</span>}
             </p>

@@ -97,7 +97,7 @@ function empRoy(e: AnEmployee): RoyState {
 
 function Glass({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const reduced = useReducedMotion()
-  return <motion.div initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className={cn("rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl", className)}>{children}</motion.div>
+  return <motion.div initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className={cn("rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl", className)}>{children}</motion.div>
 }
 
 function LineSpark({ data, color }: { data: number[]; color: string }) {
@@ -113,19 +113,19 @@ function LineSpark({ data, color }: { data: number[]; color: string }) {
 
 function KpiTile({ label, value, deltaPct, color, Icon, spark }: { label: string; value: string; deltaPct?: number; color: string; Icon: React.ElementType; spark?: number[] }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+    <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-white/40 font-medium">{label}</span>
+        <span className="text-xs text-ab-fg-3 font-medium">{label}</span>
         <div className="h-7 w-7 flex items-center justify-center rounded-lg" style={{ background: `${color}22` }}><Icon className="h-3.5 w-3.5" style={{ color }} /></div>
       </div>
       <div className="flex items-baseline gap-2">
-        <p className="font-mono text-2xl font-bold text-white">{value}</p>
+        <p className="font-mono text-2xl font-bold text-ab-fg">{value}</p>
         {deltaPct !== undefined && Number.isFinite(deltaPct) && (
           <span className="flex items-baseline gap-1">
             <span className={cn("flex items-center gap-0.5 text-xs font-semibold", deltaPct >= 0 ? "text-emerald-400" : "text-rose-400")}>
               {deltaPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}{Math.abs(Math.round(deltaPct))}%
             </span>
-            <span className="text-[10px] text-white/30">vs forrige</span>
+            <span className="text-[10px] text-ab-fg-4">vs forrige</span>
           </span>
         )}
       </div>
@@ -206,7 +206,7 @@ function DayStripLegend() {
   return (
     <div className="flex items-center gap-3 flex-wrap">
       {(["full", "half", "none", "off"] as DayCls[]).map(k => (
-        <span key={k} className="flex items-center gap-1.5 text-[10px] text-white/45">
+        <span key={k} className="flex items-center gap-1.5 text-[10px] text-ab-fg-3">
           <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: DAY_CLS[k].color }} />{DAY_CLS[k].label}
         </span>
       ))}
@@ -232,14 +232,14 @@ function RingGauge({ pct, color, center, sub }: { pct: number; color: string; ce
           strokeDasharray={c} strokeDashoffset={c * (1 - clamped / 100)} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-mono text-lg font-bold text-white">{center}</span>
-        <span className="text-[9px] text-white/40">{sub}</span>
+        <span className="font-mono text-lg font-bold text-ab-fg">{center}</span>
+        <span className="text-[9px] text-ab-fg-3">{sub}</span>
       </div>
     </div>
   )
 }
 
-const chartTooltip = { background: "#0d1528", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, fontSize: 12 } as const
+const chartTooltip = { background: "var(--ab-bg-overlay)", border: "1px solid var(--ab-border-default)", borderRadius: 12, fontSize: 12 } as const
 
 type Tab = "oversikt" | "ansatte" | "kampanjer" | "team" | "varsler" | "arbeidstid" | "terskler" | "epostlogg"
 
@@ -370,52 +370,52 @@ export function AnalyticsView() {
       ]
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen bg-ab-base">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-blue-600/8 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-purple-600/8 blur-3xl" />
       </div>
 
-      <div className="relative px-6 py-6 max-w-[1600px] mx-auto space-y-5">
+      <div className="relative px-4 sm:px-6 py-5 sm:py-6 max-w-[1600px] mx-auto space-y-5">
         {/* Header */}
         <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Analyse · Observabilitet{isSalesChief && !isAdmin ? " · Salgssjef" : ""}</p>
-            <h1 className="text-3xl font-bold text-white">Analytics</h1>
+            <p className="text-xs uppercase tracking-widest text-ab-fg-4 mb-1">Analyse · Observabilitet{isSalesChief && !isAdmin ? " · Salgssjef" : ""}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-ab-fg">Analytics</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {/* Range presets */}
-            <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+            <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
               {RANGES.map(r => (
                 <button key={r.d} onClick={() => setPreset(r.d)}
-                  className={cn("cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-all", activePreset === r.d ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{r.label}</button>
+                  className={cn("cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-all", activePreset === r.d ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>{r.label}</button>
               ))}
             </div>
             {/* Custom from–to */}
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
-              <CalendarDays className="h-3.5 w-3.5 text-white/40" />
+            <div className="flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-3 py-1.5">
+              <CalendarDays className="h-3.5 w-3.5 text-ab-fg-3" />
               <input type="date" value={startStr} max={endStr}
                 onChange={e => { if (e.target.value) { setActivePreset(0); setStartStr(e.target.value) } }}
-                className="bg-transparent text-xs text-white outline-none [color-scheme:dark]" />
-              <span className="text-white/30 text-xs">→</span>
+                className="bg-transparent text-xs text-ab-fg outline-none [color-scheme:dark]" />
+              <span className="text-ab-fg-4 text-xs">→</span>
               <input type="date" value={endStr} min={startStr} max={ymd(anchorDate())}
                 onChange={e => { if (e.target.value) { setActivePreset(0); setEndStr(e.target.value) } }}
-                className="bg-transparent text-xs text-white outline-none [color-scheme:dark]" />
+                className="bg-transparent text-xs text-ab-fg outline-none [color-scheme:dark]" />
             </div>
             {/* Campaign */}
             <div className="relative">
-              <button onClick={() => setCampOpen(o => !o)} className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-sm font-medium text-white/70 hover:text-white transition-all">
-                {campaignId ? (campaigns.find(c => c.id === campaignId)?.name ?? "Kampanje") : "Alle kampanjer"} <ChevronDown className="h-3.5 w-3.5 text-white/40" />
+              <button onClick={() => setCampOpen(o => !o)} className="cursor-pointer flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2 text-sm font-medium text-ab-fg-2 hover:text-ab-fg transition-all">
+                {campaignId ? (campaigns.find(c => c.id === campaignId)?.name ?? "Kampanje") : "Alle kampanjer"} <ChevronDown className="h-3.5 w-3.5 text-ab-fg-3" />
               </button>
               <AnimatePresence>
                 {campOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setCampOpen(false)} />
-                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="absolute right-0 top-full mt-2 z-20 w-56 max-h-72 overflow-y-auto rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl py-1">
-                      <button onClick={() => { setCampaignId(""); setCampOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left"><span className="flex-1 text-white/85">Alle kampanjer</span>{!campaignId && <Check className="h-3.5 w-3.5 text-blue-400" />}</button>
+                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="absolute right-0 top-full mt-2 z-20 w-56 max-h-72 overflow-y-auto rounded-xl border border-ab-line bg-ab-overlay shadow-2xl py-1">
+                      <button onClick={() => { setCampaignId(""); setCampOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-ab-hover text-left"><span className="flex-1 text-ab-fg-2">Alle kampanjer</span>{!campaignId && <Check className="h-3.5 w-3.5 text-blue-400" />}</button>
                       {campaigns.map(c => (
-                        <button key={c.id} onClick={() => { setCampaignId(c.id); setCampOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left">
-                          <span className="h-2 w-2 rounded-full" style={{ background: c.color }} /><span className="flex-1 text-white/85 truncate">{c.name}</span>{campaignId === c.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                        <button key={c.id} onClick={() => { setCampaignId(c.id); setCampOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-ab-hover text-left">
+                          <span className="h-2 w-2 rounded-full" style={{ background: c.color }} /><span className="flex-1 text-ab-fg-2 truncate">{c.name}</span>{campaignId === c.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
                         </button>
                       ))}
                     </motion.div>
@@ -428,27 +428,27 @@ export function AnalyticsView() {
               <div className="relative">
                 <button onClick={() => setThreshOpen(o => !o)} title="Beregn visningen mot et valgt terskelsett (kun visning)"
                   className={cn("cursor-pointer flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all",
-                    thresholdId ? "border-amber-400/40 bg-amber-400/10 text-amber-200" : "border-white/10 bg-white/5 text-white/70 hover:text-white")}>
+                    thresholdId ? "border-amber-400/40 bg-amber-400/10 text-amber-200" : "border-ab-line bg-ab-elevated text-ab-fg-2 hover:text-ab-fg")}>
                   <SlidersHorizontal className="h-3.5 w-3.5" />
                   {thresholdId ? (thresholdLabel(thresholdList.find(t => t.id === thresholdId)) ?? "Terskel") : "Standard terskel"}
-                  <ChevronDown className="h-3.5 w-3.5 text-white/40" />
+                  <ChevronDown className="h-3.5 w-3.5 text-ab-fg-3" />
                 </button>
                 <AnimatePresence>
                   {threshOpen && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setThreshOpen(false)} />
-                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="absolute right-0 top-full mt-2 z-20 w-72 max-h-80 overflow-y-auto rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl py-1">
-                        <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-white/35">Aktiv terskel (kun visning)</p>
-                        <button onClick={() => { setThresholdId(""); setThreshOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left">
-                          <span className="flex-1 text-white/85">Standard (lagret aktiv)</span>{!thresholdId && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="absolute right-0 top-full mt-2 z-20 w-72 max-h-80 overflow-y-auto rounded-xl border border-ab-line bg-ab-overlay shadow-2xl py-1">
+                        <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-ab-fg-4">Aktiv terskel (kun visning)</p>
+                        <button onClick={() => { setThresholdId(""); setThreshOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-ab-hover text-left">
+                          <span className="flex-1 text-ab-fg-2">Standard (lagret aktiv)</span>{!thresholdId && <Check className="h-3.5 w-3.5 text-blue-400" />}
                         </button>
                         {thresholdList.map(t => (
-                          <button key={t.id} onClick={() => { setThresholdId(t.id); setThreshOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left">
-                            <span className="flex-1 text-white/85 truncate">{thresholdLabel(t)}{t.is_active && <span className="ml-1.5 text-[10px] text-emerald-400">aktiv</span>}</span>{thresholdId === t.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
+                          <button key={t.id} onClick={() => { setThresholdId(t.id); setThreshOpen(false) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-ab-hover text-left">
+                            <span className="flex-1 text-ab-fg-2 truncate">{thresholdLabel(t)}{t.is_active && <span className="ml-1.5 text-[10px] text-emerald-400">aktiv</span>}</span>{thresholdId === t.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
                           </button>
                         ))}
-                        <div className="my-1 border-t border-white/8" />
-                        <button onClick={() => { setThreshOpen(false); setTab("terskler") }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left text-blue-300">
+                        <div className="my-1 border-t border-ab-line" />
+                        <button onClick={() => { setThreshOpen(false); setTab("terskler") }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-ab-hover text-left text-blue-300">
                           <Pencil className="h-3.5 w-3.5" /><span className="flex-1">+ Opprett ny terskel…</span>
                         </button>
                       </motion.div>
@@ -460,7 +460,7 @@ export function AnalyticsView() {
             {/* Download PDF — admin only */}
             {isAdmin && (
               <button onClick={downloadPdf} disabled={downloading || tooLong}
-                className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-sm font-semibold text-white/80 hover:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                className="cursor-pointer flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2 text-sm font-semibold text-ab-fg-2 hover:bg-ab-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Last ned PDF
               </button>
             )}
@@ -483,9 +483,9 @@ export function AnalyticsView() {
         <EmailReportModal open={emailOpen} onClose={() => setEmailOpen(false)} />
 
         {/* Tabs */}
-        <div className="flex gap-1 overflow-x-auto rounded-2xl bg-white/5 border border-white/8 p-1">
+        <div className="flex gap-1 overflow-x-auto rounded-2xl bg-ab-elevated border border-ab-line p-1">
           {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all whitespace-nowrap", tab === t.key ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+            <button key={t.key} onClick={() => setTab(t.key)} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all whitespace-nowrap", tab === t.key ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
               {t.label}{t.badge ? <span className="rounded-full bg-rose-500/80 px-1.5 py-0.5 text-[10px] font-bold text-white">{t.badge}</span> : null}
             </button>
           ))}
@@ -560,19 +560,19 @@ function TeamTab({ startStr, endStr }: { startStr: string; endStr: string }) {
   if (errored) return <Glass className="min-h-[300px]"><PanelError onRetry={loadList} /></Glass>
 
   const selName = teams.find(t => t.team_id === sel)?.name ?? "Team"
-  const selCls = "h-9 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
+  const selCls = "h-9 rounded-xl border border-ab-line bg-ab-elevated px-3 text-sm text-ab-fg outline-none focus:border-blue-500/50 [color-scheme:dark]"
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <select value={campaignFilter} onChange={e => setCampaignFilter(e.target.value)} className={selCls}>
-          <option value="" className="bg-[#0d1528]">Alle kampanjer</option>
-          {campaignOpts.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+          <option value="" className="bg-ab-overlay">Alle kampanjer</option>
+          {campaignOpts.map(c => <option key={c.id} value={c.id} className="bg-ab-overlay">{c.name}</option>)}
         </select>
         <select value={chiefFilter} onChange={e => setChiefFilter(e.target.value)} className={selCls}>
-          <option value="" className="bg-[#0d1528]">Alle salgssjefer</option>
-          {chiefOpts.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+          <option value="" className="bg-ab-overlay">Alle salgssjefer</option>
+          {chiefOpts.map(c => <option key={c.id} value={c.id} className="bg-ab-overlay">{c.name}</option>)}
         </select>
-        <span className="text-xs text-white/40 ml-1">{filtered.length} team</span>
+        <span className="text-xs text-ab-fg-3 ml-1">{filtered.length} team</span>
         {(campaignFilter || chiefFilter) && <button onClick={() => { setCampaignFilter(""); setChiefFilter("") }} className="cursor-pointer text-xs text-blue-300/80 hover:text-blue-200">Nullstill</button>}
       </div>
 
@@ -582,13 +582,13 @@ function TeamTab({ startStr, endStr }: { startStr: string; endStr: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map(t => (
             <motion.button key={t.team_id} onClick={() => openTeam(t.team_id)} whileHover={{ y: -2 }}
-              className={cn("cursor-pointer text-left rounded-2xl border bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.06]",
-                sel === t.team_id ? "border-blue-500/50 bg-blue-600/10" : "border-white/8 hover:border-white/20")}>
+              className={cn("cursor-pointer text-left rounded-2xl border bg-ab-elevated p-4 transition-colors hover:bg-ab-hover",
+                sel === t.team_id ? "border-blue-500/50 bg-blue-600/10" : "border-ab-line hover:border-ab-line")}>
               <div className="flex items-start justify-between gap-2 mb-1">
-                <p className="text-sm font-bold text-white truncate">{t.name}</p>
-                <ChevronRight className="h-4 w-4 shrink-0 text-white/25" />
+                <p className="text-sm font-bold text-ab-fg truncate">{t.name}</p>
+                <ChevronRight className="h-4 w-4 shrink-0 text-ab-fg-4" />
               </div>
-              <p className="text-[11px] text-white/40 truncate mb-3">{t.campaign?.name ?? "Ingen kampanje"}{t.sales_chief ? ` · ${t.sales_chief.name}` : ""} · {t.member_count} medl.</p>
+              <p className="text-[11px] text-ab-fg-3 truncate mb-3">{t.campaign?.name ?? "Ingen kampanje"}{t.sales_chief ? ` · ${t.sales_chief.name}` : ""} · {t.member_count} medl.</p>
               <div className="grid grid-cols-3 gap-2">
                 <TeamMiniStat label="Dører" value={nbFmt.format(t.total_doors)} color="#ffffff" />
                 <TeamMiniStat label="Ja %" value={nf1(t.ja_rate)} color="#34d399" />
@@ -609,7 +609,7 @@ function TeamTab({ startStr, endStr }: { startStr: string; endStr: string }) {
 function TeamMiniStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wide text-white/35">{label}</p>
+      <p className="text-[10px] uppercase tracking-wide text-ab-fg-4">{label}</p>
       <p className="font-mono text-sm font-bold" style={{ color }}>{value}</p>
     </div>
   )
@@ -639,31 +639,31 @@ function TeamDrawer({ name, d, loading, onClose }: { name: string; d: TeamAnalyt
         onClick={onClose} className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
       <motion.aside initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
         transition={{ type: "spring", stiffness: 320, damping: 34 }}
-        className="fixed right-0 top-0 z-50 h-screen w-full sm:w-[560px] max-w-[94vw] overflow-y-auto border-l border-white/10 bg-[#0b1220] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/8 bg-[#0b1220]/95 backdrop-blur px-5 py-4">
+        className="fixed right-0 top-0 z-50 h-screen w-full sm:w-[560px] max-w-[94vw] overflow-y-auto border-l border-ab-line bg-ab-overlay shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-ab-line bg-ab-overlay backdrop-blur px-5 py-4">
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-widest text-white/30">Team-analyse</p>
-            <h3 className="text-lg font-bold text-white truncate">{name}</h3>
+            <p className="text-[11px] uppercase tracking-widest text-ab-fg-4">Team-analyse</p>
+            <h3 className="text-lg font-bold text-ab-fg truncate">{name}</h3>
           </div>
-          <button onClick={onClose} className="cursor-pointer h-8 w-8 shrink-0 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+          <button onClick={onClose} className="cursor-pointer h-8 w-8 shrink-0 flex items-center justify-center rounded-lg text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover"><X className="h-4 w-4" /></button>
         </div>
 
         {loading || !d ? (
           <div className="p-6"><PanelLoading label="Laster team-detaljer…" /></div>
         ) : (
           <div className="p-5 space-y-5">
-            <p className="text-xs text-white/40">{d.campaign?.name ?? "Ingen kampanje"} · {d.member_count} medlemmer · {d.work.active_members} aktive</p>
+            <p className="text-xs text-ab-fg-3">{d.campaign?.name ?? "Ingen kampanje"} · {d.member_count} medlemmer · {d.work.active_members} aktive</p>
             <div className="grid grid-cols-2 gap-2">
               {kpis.map(k => (
-                <div key={k.label} className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-                  <p className="text-[10px] uppercase tracking-wide text-white/35">{k.label}</p>
+                <div key={k.label} className="rounded-xl border border-ab-line bg-ab-elevated p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-ab-fg-4">{k.label}</p>
                   <p className="font-mono text-lg font-bold" style={{ color: k.color }}>{k.value}</p>
                 </div>
               ))}
             </div>
             {chart.length > 0 && (
-              <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-                <p className="text-xs text-white/45 mb-2">Daglig aktivitet · dører (søyle) og ja-rate % (linje)</p>
+              <div className="rounded-xl border border-ab-line bg-ab-elevated p-3">
+                <p className="text-xs text-ab-fg-3 mb-2">Daglig aktivitet · dører (søyle) og ja-rate % (linje)</p>
                 <ResponsiveContainer width="100%" height={180}>
                   <ComposedChart data={chart} margin={{ top: 4, right: 8, left: -22, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -677,22 +677,22 @@ function TeamDrawer({ name, d, loading, onClose }: { name: string; d: TeamAnalyt
                 </ResponsiveContainer>
               </div>
             )}
-            <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-              <p className="text-xs font-semibold text-white/70 mb-2">Medlemmer ({d.per_member.length})</p>
+            <div className="rounded-xl border border-ab-line bg-ab-elevated p-3">
+              <p className="text-xs font-semibold text-ab-fg-2 mb-2">Medlemmer ({d.per_member.length})</p>
               <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1.5 text-xs">
-                <span className="text-white/35">Navn</span><span className="text-right text-white/35">Dører</span><span className="text-right text-white/35">Ja %</span><span className="text-right text-white/35">Tid</span>
+                <span className="text-ab-fg-4">Navn</span><span className="text-right text-ab-fg-4">Dører</span><span className="text-right text-ab-fg-4">Ja %</span><span className="text-right text-ab-fg-4">Tid</span>
                 {d.per_member.map(m => (
                   <Fragment key={m.id}>
-                    <span className="text-white/85 truncate flex items-center gap-1.5">{m.person_type === "manager" && <Target className="h-3 w-3 text-amber-400/70" />}{m.name}</span>
-                    <span className="text-right font-mono text-white/80">{nbFmt.format(m.doors)}</span>
+                    <span className="text-ab-fg-2 truncate flex items-center gap-1.5">{m.person_type === "manager" && <Target className="h-3 w-3 text-amber-400/70" />}{m.name}</span>
+                    <span className="text-right font-mono text-ab-fg-2">{nbFmt.format(m.doors)}</span>
                     <span className="text-right font-mono text-emerald-400/90">{nf1(m.ja_rate)}</span>
-                    <span className="text-right font-mono text-white/55">{Math.round(m.work_minutes / 60)}t</span>
+                    <span className="text-right font-mono text-ab-fg-3">{Math.round(m.work_minutes / 60)}t</span>
                   </Fragment>
                 ))}
               </div>
             </div>
-            <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-              <p className="text-xs font-semibold text-white/70 mb-2">Varsler ({d.alerts?.length ?? 0})</p>
+            <div className="rounded-xl border border-ab-line bg-ab-elevated p-3">
+              <p className="text-xs font-semibold text-ab-fg-2 mb-2">Varsler ({d.alerts?.length ?? 0})</p>
               {(d.alerts?.length ?? 0) === 0 ? (
                 <p className="py-3 text-center text-xs text-emerald-400/80">✓ Ingen terskelbrudd.</p>
               ) : (
@@ -787,10 +787,10 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-5">
         <Glass className="p-5">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm font-semibold text-white">Aktivitet per {gran}</h3>
-            <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+            <h3 className="text-sm font-semibold text-ab-fg">Aktivitet per {gran}</h3>
+            <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
               {(["dag", "uke"] as const).map(g => (
-                <button key={g} onClick={() => setGran(g)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold capitalize transition-all", gran === g ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{g}</button>
+                <button key={g} onClick={() => setGran(g)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold capitalize transition-all", gran === g ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>{g}</button>
               ))}
             </div>
           </div>
@@ -798,9 +798,9 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
           <div className="flex flex-wrap gap-2 mb-3">
             {STATUS.map(st => (
               <button key={st.key} onClick={() => setSeg(o => ({ ...o, [st.key]: !o[st.key] }))}
-                className={cn("flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-all", seg[st.key] ? "border-white/15 text-white/80" : "border-white/5 text-white/30")}>
+                className={cn("flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-all", seg[st.key] ? "border-ab-line text-ab-fg-2" : "border-ab-line-1 text-ab-fg-4")}>
                 <span className="h-2 w-2 rounded-sm" style={{ background: st.color, opacity: seg[st.key] ? 1 : 0.3 }} />{st.label}
-                <span className="font-mono text-white/50">{nbFmt.format((s as unknown as Record<string, number>)[st.key])}</span>
+                <span className="font-mono text-ab-fg-3">{nbFmt.format((s as unknown as Record<string, number>)[st.key])}</span>
               </button>
             ))}
           </div>
@@ -819,26 +819,26 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
             </ComposedChart>
           </ResponsiveContainer>
           {chart.length > 0 && (
-            <p className="mt-2 text-[11px] text-white/40">★ Beste {gran}: <span className="text-white/70">{chart[bestIdx]?.label}</span> · {nbFmt.format(chart[bestIdx]?.total ?? 0)} dører · stiplet linje = ja-rate-terskel 2 %</p>
+            <p className="mt-2 text-[11px] text-ab-fg-3">★ Beste {gran}: <span className="text-ab-fg-2">{chart[bestIdx]?.label}</span> · {nbFmt.format(chart[bestIdx]?.total ?? 0)} dører · stiplet linje = ja-rate-terskel 2 %</p>
           )}
         </Glass>
 
         <Glass className="p-5 flex flex-col">
-          <h3 className="text-sm font-semibold text-white mb-2">Statusfordeling</h3>
+          <h3 className="text-sm font-semibold text-ab-fg mb-2">Statusfordeling</h3>
           <div className="relative flex-1 flex items-center justify-center" style={{ minHeight: 160 }}>
             <ResponsiveContainer width="100%" height={160}>
               <PieChart><Pie data={donut} cx="50%" cy="50%" innerRadius={48} outerRadius={70} paddingAngle={3} dataKey="value">{donut.map(x => <Cell key={x.key} fill={x.color} />)}</Pie>
               <Tooltip contentStyle={chartTooltip} /></PieChart>
             </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><span className="font-mono text-xl font-bold text-white">{nbFmt.format(s.total_doors)}</span><span className="text-[10px] text-white/40">dører</span></div>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><span className="font-mono text-xl font-bold text-ab-fg">{nbFmt.format(s.total_doors)}</span><span className="text-[10px] text-ab-fg-3">dører</span></div>
           </div>
           <div className="mt-3 space-y-1.5">
             {donut.map(x => {
               const pct = s.total_doors > 0 ? (x.value / s.total_doors) * 100 : 0
               return (
                 <div key={x.key} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-white/60"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: x.color }} />{x.label}</span>
-                  <span className="flex items-baseline gap-1.5"><span className="font-mono font-semibold text-white/85">{nf1(pct)} %</span><span className="font-mono text-[10px] text-white/35">{nbFmt.format(x.value)}</span></span>
+                  <span className="flex items-center gap-2 text-ab-fg-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: x.color }} />{x.label}</span>
+                  <span className="flex items-baseline gap-1.5"><span className="font-mono font-semibold text-ab-fg-2">{nf1(pct)} %</span><span className="font-mono text-[10px] text-ab-fg-4">{nbFmt.format(x.value)}</span></span>
                 </div>
               )
             })}
@@ -849,8 +849,8 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
       {/* Beste tidspunkt + Ukedagsmønster */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5">
         <Glass className="p-5">
-          <h3 className="text-sm font-semibold text-white mb-1">Beste tidspunkt</h3>
-          <p className="text-xs text-white/45 mb-3">Dører (søyler) og ja-rate (linje) per time{bestHour ? ` · beste time kl. ${bestHour.hour}:00` : ""}</p>
+          <h3 className="text-sm font-semibold text-ab-fg mb-1">Beste tidspunkt</h3>
+          <p className="text-xs text-ab-fg-3 mb-3">Dører (søyler) og ja-rate (linje) per time{bestHour ? ` · beste time kl. ${bestHour.hour}:00` : ""}</p>
           {hourly.length === 0 ? <PanelEmpty msg="Ingen timedata" /> : (
             <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={hourly} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
@@ -868,15 +868,15 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
           )}
         </Glass>
         <Glass className="p-5">
-          <h3 className="text-sm font-semibold text-white mb-3">Ukedagsmønster</h3>
+          <h3 className="text-sm font-semibold text-ab-fg mb-3">Ukedagsmønster</h3>
           <div className="space-y-2">
             {weekday.map(w => (
               <div key={w.label} className="flex items-center gap-3">
-                <span className="w-8 shrink-0 text-xs text-white/45 capitalize">{w.label}</span>
-                <div className="relative flex-1 h-5 rounded-lg bg-white/[0.04] overflow-hidden">
+                <span className="w-8 shrink-0 text-xs text-ab-fg-3 capitalize">{w.label}</span>
+                <div className="relative flex-1 h-5 rounded-lg bg-ab-elevated overflow-hidden">
                   <div className="h-full rounded-lg bg-gradient-to-r from-blue-600/70 to-blue-400/70" style={{ width: `${(w.avg / wdMax) * 100}%` }} />
                 </div>
-                <span className="w-14 shrink-0 text-right font-mono text-xs text-white/70">{nf1(w.avg)}</span>
+                <span className="w-14 shrink-0 text-right font-mono text-xs text-ab-fg-2">{nf1(w.avg)}</span>
               </div>
             ))}
           </div>
@@ -886,9 +886,9 @@ function OversiktTab({ d }: { d: AnalyticsPreview }) {
       {/* Topp og bunn */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {topCards.map(tc => (
-          <div key={tc.label} className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-            <div className="flex items-center gap-2 mb-2"><tc.icon className="h-4 w-4" style={{ color: tc.color }} /><span className="text-xs text-white/40 font-medium">{tc.label}</span></div>
-            <p className="text-sm font-semibold text-white/90 truncate">{tc.e?.employee_name ?? "—"}</p>
+          <div key={tc.label} className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-4">
+            <div className="flex items-center gap-2 mb-2"><tc.icon className="h-4 w-4" style={{ color: tc.color }} /><span className="text-xs text-ab-fg-3 font-medium">{tc.label}</span></div>
+            <p className="text-sm font-semibold text-ab-fg truncate">{tc.e?.employee_name ?? "—"}</p>
             <p className="font-mono text-lg font-bold" style={{ color: tc.color }}>{tc.e ? (tc.suffix === "%" ? nf1(tc.e.value) : nbFmt.format(tc.e.value)) : "—"}{tc.suffix}</p>
           </div>
         ))}
@@ -918,13 +918,13 @@ function AnsatteTab({ d, startStr, endStr }: { d: AnalyticsPreview; startStr: st
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Glass className="p-5">
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <h3 className="text-sm font-semibold text-white">Ansatte ({rows.length})</h3>
+          <h3 className="text-sm font-semibold text-ab-fg">Ansatte ({rows.length})</h3>
           <div className="flex items-center gap-2">
-            <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
-              {chips.map(c => <button key={c.k} onClick={() => setFilter(c.k)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", filter === c.k ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{c.label}</button>)}
+            <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
+              {chips.map(c => <button key={c.k} onClick={() => setFilter(c.k)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", filter === c.k ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>{c.label}</button>)}
             </div>
-            <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
-              {(["tabell", "spredning"] as const).map(v => <button key={v} onClick={() => setView(v)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold capitalize transition-all", view === v ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{v}</button>)}
+            <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
+              {(["tabell", "spredning"] as const).map(v => <button key={v} onClick={() => setView(v)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold capitalize transition-all", view === v ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>{v}</button>)}
             </div>
           </div>
         </div>
@@ -934,30 +934,30 @@ function AnsatteTab({ d, startStr, endStr }: { d: AnalyticsPreview; startStr: st
         ) : (
           <div className="overflow-x-auto">
             <div className="min-w-[920px]">
-              <div className="grid grid-cols-[1.6fr_70px_70px_70px_80px_90px_130px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-white/35">
+              <div className="grid grid-cols-[1.6fr_70px_70px_70px_80px_90px_130px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-ab-fg-4">
                 <span>Ansatt</span><span className="text-right">Dører</span><span className="text-right">D/dag</span><span className="text-right">Ja %</span><span className="text-right">Kontakt %</span><span className="text-right">Konsist.</span><span className="text-right">Dager</span>
               </div>
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-ab-line">
                 {rows.map(e => {
                   const dayCells = buildDayCells(e.daily_door_counts, startStr, endStr, d.day_classification)
                   const isOpen = expanded === e.employee_id
                   return (
                     <div key={e.employee_id}>
-                      <div onClick={() => setExpanded(isOpen ? null : e.employee_id)} className="grid grid-cols-[1.6fr_70px_70px_70px_80px_90px_130px] gap-3 items-center px-3 py-2.5 cursor-pointer hover:bg-white/[0.03] rounded-lg">
+                      <div onClick={() => setExpanded(isOpen ? null : e.employee_id)} className="grid grid-cols-[1.6fr_70px_70px_70px_80px_90px_130px] gap-3 items-center px-3 py-2.5 cursor-pointer hover:bg-ab-hover rounded-lg">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <ChevronRight className={cn("h-3.5 w-3.5 text-white/30 transition-transform", isOpen && "rotate-90")} />
+                          <ChevronRight className={cn("h-3.5 w-3.5 text-ab-fg-4 transition-transform", isOpen && "rotate-90")} />
                           <RoyMascot state={empRoy(e)} size={30} />
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-white/90 truncate">{e.employee_name}</p>
-                            <p className="text-[10px] text-white/35">{e.worker_type === "manager" ? "Leder" : "Ansatt"} · konsist. {Math.round(e.consistency_score)}%</p>
+                            <p className="text-sm font-medium text-ab-fg truncate">{e.employee_name}</p>
+                            <p className="text-[10px] text-ab-fg-4">{e.worker_type === "manager" ? "Leder" : "Ansatt"} · konsist. {Math.round(e.consistency_score)}%</p>
                           </div>
                         </div>
-                        <span className="text-right font-mono text-sm text-white/80">{nbFmt.format(e.total_doors)}</span>
-                        <span className="text-right font-mono text-sm text-white/60">{nf1(e.doors_per_day)}</span>
+                        <span className="text-right font-mono text-sm text-ab-fg-2">{nbFmt.format(e.total_doors)}</span>
+                        <span className="text-right font-mono text-sm text-ab-fg-2">{nf1(e.doors_per_day)}</span>
                         <span className="text-right font-mono text-sm" style={{ color: e.yes_rate >= 3 ? "#10b981" : "#f43f5e" }}>{nf1(e.yes_rate)}</span>
-                        <span className="text-right font-mono text-sm text-white/60">{e.contact_rate.toFixed(0)}</span>
+                        <span className="text-right font-mono text-sm text-ab-fg-2">{e.contact_rate.toFixed(0)}</span>
                         <div className="flex items-center justify-end gap-1.5">
-                          <div className="w-10 h-1.5 rounded-full bg-white/8 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(100, e.consistency_score)}%`, background: e.consistency_score >= 60 ? "#10b981" : e.consistency_score >= 35 ? "#f59e0b" : "#f43f5e" }} /></div>
+                          <div className="w-10 h-1.5 rounded-full bg-ab-hover overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(100, e.consistency_score)}%`, background: e.consistency_score >= 60 ? "#10b981" : e.consistency_score >= 35 ? "#f59e0b" : "#f43f5e" }} /></div>
                         </div>
                         <div onClick={ev => ev.stopPropagation()} title="Dagsklassifisering (full / halv / under halv)"><DayStrip cells={dayCells} /></div>
                       </div>
@@ -992,10 +992,10 @@ function EmployeeScatter({ rows }: { rows: AnEmployee[] }) {
           <Scatter name="Ledere" data={mgrs} fill="#8b5cf6" fillOpacity={0.55} />
         </ScatterChart>
       </ResponsiveContainer>
-      <div className="flex items-center gap-4 pt-2 text-[11px] text-white/40">
+      <div className="flex items-center gap-4 pt-2 text-[11px] text-ab-fg-3">
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "#3b82f6" }} /> Ansatte</span>
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "#8b5cf6" }} /> Ledere</span>
-        <span className="text-white/30">· boblestørrelse = totale dører</span>
+        <span className="text-ab-fg-4">· boblestørrelse = totale dører</span>
       </div>
     </div>
   )
@@ -1050,9 +1050,9 @@ function EmployeeDetail({ e, dc, startStr, endStr }: { e: AnEmployee; dc?: DayCl
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {tempo.map(t => (
             <div key={t.label} className="rounded-xl border border-cyan-500/12 bg-cyan-500/[0.03] p-2.5">
-              <p className="text-[10px] text-white/40 flex items-center gap-1"><Zap className="h-3 w-3 text-cyan-400" />{t.label}</p>
-              <p className="font-mono text-base font-bold text-white/90 leading-tight">{t.value}</p>
-              {t.sub && <p className="text-[10px] text-white/35 mt-0.5">{t.sub}</p>}
+              <p className="text-[10px] text-ab-fg-3 flex items-center gap-1"><Zap className="h-3 w-3 text-cyan-400" />{t.label}</p>
+              <p className="font-mono text-base font-bold text-ab-fg leading-tight">{t.value}</p>
+              {t.sub && <p className="text-[10px] text-ab-fg-4 mt-0.5">{t.sub}</p>}
             </div>
           ))}
         </div>
@@ -1060,10 +1060,10 @@ function EmployeeDetail({ e, dc, startStr, endStr }: { e: AnEmployee; dc?: DayCl
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-4">
           {/* Trend: daily doors (bars) + active window minutes (line). min-w-0 keeps the
               chart from overflowing its grid cell when a person has many active days. */}
-          <div className="min-w-0 overflow-hidden rounded-xl border border-white/8 bg-white/[0.02] p-3">
-            <p className="text-xs text-white/45 mb-2">Tempo-trend · dører (søyle) og aktivt vindu i min (linje){latest ? ` · siste dag ${latestDate}` : ""}</p>
-            {series === null ? <div className="h-[130px] flex items-center justify-center text-xs text-white/35">Laster…</div>
-              : chart.length === 0 ? <div className="h-[130px] flex items-center justify-center text-xs text-white/35">Ingen tempodata i perioden</div>
+          <div className="min-w-0 overflow-hidden rounded-xl border border-ab-line bg-ab-elevated p-3">
+            <p className="text-xs text-ab-fg-3 mb-2">Tempo-trend · dører (søyle) og aktivt vindu i min (linje){latest ? ` · siste dag ${latestDate}` : ""}</p>
+            {series === null ? <div className="h-[130px] flex items-center justify-center text-xs text-ab-fg-4">Laster…</div>
+              : chart.length === 0 ? <div className="h-[130px] flex items-center justify-center text-xs text-ab-fg-4">Ingen tempodata i perioden</div>
                 : (
                   <ResponsiveContainer width="100%" height={130}>
                     <ComposedChart data={chart} margin={{ top: 2, right: 4, left: -28, bottom: 0 }}>
@@ -1079,19 +1079,19 @@ function EmployeeDetail({ e, dc, startStr, endStr }: { e: AnEmployee; dc?: DayCl
           </div>
           {/* Status tiles */}
           <div className="grid grid-cols-2 gap-2 content-start">
-            {status.map(t => <div key={t.label} className="rounded-xl border border-white/8 bg-white/[0.02] p-2.5"><p className="text-[10px] text-white/40">{t.label}</p><p className="font-mono text-base font-bold" style={{ color: t.color }}>{nbFmt.format(t.value)}</p></div>)}
+            {status.map(t => <div key={t.label} className="rounded-xl border border-ab-line bg-ab-elevated p-2.5"><p className="text-[10px] text-ab-fg-3">{t.label}</p><p className="font-mono text-base font-bold" style={{ color: t.color }}>{nbFmt.format(t.value)}</p></div>)}
           </div>
         </div>
 
         {/* Day-classification strip — full / halv / under-halv over the period */}
-        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+        <div className="rounded-xl border border-ab-line bg-ab-elevated p-3">
           <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-            <p className="text-xs text-white/45 flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5 text-white/40" />Arbeidsdager{dayCells.length > 14 ? " (ukesvis)" : ""}</p>
+            <p className="text-xs text-ab-fg-3 flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5 text-ab-fg-3" />Arbeidsdager{dayCells.length > 14 ? " (ukesvis)" : ""}</p>
             <div className="flex items-center gap-2 text-[11px]">
               <span className="font-semibold" style={{ color: DAY_CLS.full.color }}>{daySum.full} fulle</span>
-              <span className="text-white/20">·</span>
+              <span className="text-ab-fg-4">·</span>
               <span className="font-semibold" style={{ color: DAY_CLS.half.color }}>{daySum.half} halve</span>
-              <span className="text-white/20">·</span>
+              <span className="text-ab-fg-4">·</span>
               <span className="font-semibold" style={{ color: DAY_CLS.none.color }}>{daySum.none} under halv</span>
             </div>
           </div>
@@ -1123,7 +1123,7 @@ function NeiReasonsPanel({ campaignName, breakdown }: { campaignName: string; br
   return (
     <Glass className="p-5" delay={0.05}>
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div><h3 className="text-sm font-semibold text-white">Hvorfor nei? ({campaignName})</h3><p className="text-xs text-white/45">Fordeling av avslag etter årsak</p></div>
+        <div><h3 className="text-sm font-semibold text-ab-fg">Hvorfor nei? ({campaignName})</h3><p className="text-xs text-ab-fg-3">Fordeling av avslag etter årsak</p></div>
         {rows.unspecPct > 0 && <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-300">{Math.round(rows.unspecPct)} % av nei mangler årsak</span>}
       </div>
       <div className="mt-4">
@@ -1135,10 +1135,10 @@ function NeiReasonsPanel({ campaignName, breakdown }: { campaignName: string; br
               return (
                 <div key={r.key}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className={cn("text-sm", dim ? "text-white/40" : "text-white/85")}>{r.label}</span>
-                    <span className="flex items-baseline gap-2"><span className="font-mono text-sm text-white/50">{nbFmt.format(r.count)}</span><span className={cn("font-mono text-sm font-semibold w-12 text-right", dim ? "text-white/45" : "text-white/90")}>{nf1(pct)}%</span></span>
+                    <span className={cn("text-sm", dim ? "text-ab-fg-3" : "text-ab-fg-2")}>{r.label}</span>
+                    <span className="flex items-baseline gap-2"><span className="font-mono text-sm text-ab-fg-3">{nbFmt.format(r.count)}</span><span className={cn("font-mono text-sm font-semibold w-12 text-right", dim ? "text-ab-fg-3" : "text-ab-fg")}>{nf1(pct)}%</span></span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/8">
+                  <div className="h-2 overflow-hidden rounded-full bg-ab-hover">
                     <motion.div className="h-full rounded-full" style={{ background: dim ? "rgba(255,255,255,0.15)" : "#f43f5e" }} initial={reduced ? false : { width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.5, delay: i * 0.04 }} />
                   </div>
                 </div>
@@ -1159,7 +1159,7 @@ function KampanjerTab({ d }: { d: AnalyticsPreview }) {
   const talkmore = useMemo(() => d.campaigns.filter(c => c.is_talkmore && c.nei_breakdown), [d.campaigns])
   const s = d.summary
   if (rows.length === 0) return <Glass className="min-h-[200px]"><PanelEmpty msg="Ingen kampanjeaktivitet i perioden" /></Glass>
-  const Th = ({ k, label }: { k: K; label: string }) => <button onClick={() => setSort(k)} className={cn("cursor-pointer text-right text-[10px] font-bold uppercase tracking-wider", sort === k ? "text-blue-400" : "text-white/35 hover:text-white/60")}>{label}</button>
+  const Th = ({ k, label }: { k: K; label: string }) => <button onClick={() => setSort(k)} className={cn("cursor-pointer text-right text-[10px] font-bold uppercase tracking-wider", sort === k ? "text-blue-400" : "text-ab-fg-4 hover:text-ab-fg-2")}>{label}</button>
 
   // Conversion funnel from the (campaign-filtered) summary.
   const contact = Math.round(s.total_doors * (s.contact_rate / 100))
@@ -1180,35 +1180,35 @@ function KampanjerTab({ d }: { d: AnalyticsPreview }) {
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-11 w-11 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0"><Target className="h-5 w-5 text-blue-400" /></div>
             <div className="min-w-0">
-              <p className="text-lg font-bold text-white truncate">{title}</p>
-              <p className="text-xs text-white/40">{nbFmt.format(s.unique_employees)} ansatte · {nbFmt.format(s.total_doors)} dører · {d.period.days} dager</p>
+              <p className="text-lg font-bold text-ab-fg truncate">{title}</p>
+              <p className="text-xs text-ab-fg-3">{nbFmt.format(s.unique_employees)} ansatte · {nbFmt.format(s.total_doors)} dører · {d.period.days} dager</p>
             </div>
           </div>
           <div className="flex items-center gap-6">
-            <div className="text-right"><p className="text-[10px] uppercase tracking-wider text-white/35">Ja-rate</p><p className="font-mono text-xl font-bold text-emerald-400">{nf1(s.yes_rate)}%</p></div>
-            <div className="text-right"><p className="text-[10px] uppercase tracking-wider text-white/35">Kontakt</p><p className="font-mono text-xl font-bold text-white">{nf1(s.contact_rate)}%</p></div>
-            <div className="text-right"><p className="text-[10px] uppercase tracking-wider text-white/35">Nei-rate</p><p className="font-mono text-xl font-bold text-rose-400">{nf1(s.no_rate)}%</p></div>
+            <div className="text-right"><p className="text-[10px] uppercase tracking-wider text-ab-fg-4">Ja-rate</p><p className="font-mono text-xl font-bold text-emerald-400">{nf1(s.yes_rate)}%</p></div>
+            <div className="text-right"><p className="text-[10px] uppercase tracking-wider text-ab-fg-4">Kontakt</p><p className="font-mono text-xl font-bold text-ab-fg">{nf1(s.contact_rate)}%</p></div>
+            <div className="text-right"><p className="text-[10px] uppercase tracking-wider text-ab-fg-4">Nei-rate</p><p className="font-mono text-xl font-bold text-rose-400">{nf1(s.no_rate)}%</p></div>
           </div>
         </div>
       </Glass>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5">
         <Glass className="p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">Kampanjer ({rows.length})</h3>
+          <h3 className="text-sm font-semibold text-ab-fg mb-4">Kampanjer ({rows.length})</h3>
           <div className="overflow-x-auto"><div className="min-w-[560px]">
             <div className="grid grid-cols-[1.6fr_80px_70px_70px_80px_70px] gap-3 px-3 pb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/35">Kampanje</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-ab-fg-4">Kampanje</span>
               <Th k="total_doors" label="Dører" /><Th k="yes_rate" label="Ja %" /><Th k="no_rate" label="Nei %" /><Th k="contact_rate" label="Kontakt %" /><Th k="num_employees" label="Ansatte" />
             </div>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-ab-line">
               {rows.map(c => (
                 <div key={c.campaign_id} className="grid grid-cols-[1.6fr_80px_70px_70px_80px_70px] gap-3 items-center px-3 py-2.5">
-                  <span className="text-sm font-medium text-white/90 truncate flex items-center gap-2">{c.campaign_name}{c.is_talkmore && <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-300">Talkmore</span>}</span>
-                  <span className="text-right font-mono text-sm text-white/80">{nbFmt.format(c.total_doors)}</span>
+                  <span className="text-sm font-medium text-ab-fg truncate flex items-center gap-2">{c.campaign_name}{c.is_talkmore && <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-300">Talkmore</span>}</span>
+                  <span className="text-right font-mono text-sm text-ab-fg-2">{nbFmt.format(c.total_doors)}</span>
                   <span className="text-right font-mono text-sm text-emerald-400">{nf1(c.yes_rate)}</span>
-                  <span className="text-right font-mono text-sm text-white/60">{nf1(c.no_rate)}</span>
-                  <span className="text-right font-mono text-sm text-white/60">{c.contact_rate.toFixed(0)}</span>
-                  <span className="text-right font-mono text-sm text-white/70">{c.num_employees}</span>
+                  <span className="text-right font-mono text-sm text-ab-fg-2">{nf1(c.no_rate)}</span>
+                  <span className="text-right font-mono text-sm text-ab-fg-2">{c.contact_rate.toFixed(0)}</span>
+                  <span className="text-right font-mono text-sm text-ab-fg-2">{c.num_employees}</span>
                 </div>
               ))}
             </div>
@@ -1218,25 +1218,25 @@ function KampanjerTab({ d }: { d: AnalyticsPreview }) {
         <div className="space-y-5">
           {/* Funnel */}
           <Glass className="p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">Konverteringstrakt</h3>
+            <h3 className="text-sm font-semibold text-ab-fg mb-4">Konverteringstrakt</h3>
             <div className="space-y-3">
               {funnel.map((f, i) => (
                 <div key={f.label}>
-                  <div className="flex items-center justify-between mb-1 text-xs"><span className="text-white/70">{f.label}</span><span className="font-mono text-white/50">{nbFmt.format(f.value)} · {nf1(f.pct)}%</span></div>
-                  <div className="h-6 rounded-lg bg-white/[0.04] overflow-hidden"><div className="h-full rounded-lg" style={{ width: `${Math.max(3, f.pct)}%`, background: f.color }} /></div>
-                  {i < funnel.length - 1 && <p className="mt-1 text-[10px] text-white/30">↓ {nf1(f.pct - funnel[i + 1].pct)} % faller fra</p>}
+                  <div className="flex items-center justify-between mb-1 text-xs"><span className="text-ab-fg-2">{f.label}</span><span className="font-mono text-ab-fg-3">{nbFmt.format(f.value)} · {nf1(f.pct)}%</span></div>
+                  <div className="h-6 rounded-lg bg-ab-elevated overflow-hidden"><div className="h-full rounded-lg" style={{ width: `${Math.max(3, f.pct)}%`, background: f.color }} /></div>
+                  {i < funnel.length - 1 && <p className="mt-1 text-[10px] text-ab-fg-4">↓ {nf1(f.pct - funnel[i + 1].pct)} % faller fra</p>}
                 </div>
               ))}
             </div>
           </Glass>
           {/* Status bar */}
           <Glass className="p-5">
-            <h3 className="text-sm font-semibold text-white mb-3">Statusfordeling</h3>
+            <h3 className="text-sm font-semibold text-ab-fg mb-3">Statusfordeling</h3>
             <div className="flex h-4 w-full overflow-hidden rounded-full">
               {STATUS.map(st => { const v = (s as unknown as Record<string, number>)[st.key]; const pct = s.total_doors ? (v / s.total_doors) * 100 : 0; return <div key={st.key} style={{ width: `${pct}%`, background: st.color }} title={`${st.label}: ${nbFmt.format(v)}`} /> })}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-1.5">
-              {STATUS.map(st => { const v = (s as unknown as Record<string, number>)[st.key]; return <div key={st.key} className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5 text-white/60"><span className="h-2 w-2 rounded-sm" style={{ background: st.color }} />{st.label}</span><span className="font-mono text-white/70">{nbFmt.format(v)}</span></div> })}
+              {STATUS.map(st => { const v = (s as unknown as Record<string, number>)[st.key]; return <div key={st.key} className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5 text-ab-fg-2"><span className="h-2 w-2 rounded-sm" style={{ background: st.color }} />{st.label}</span><span className="font-mono text-ab-fg-2">{nbFmt.format(v)}</span></div> })}
             </div>
           </Glass>
         </div>
@@ -1245,7 +1245,7 @@ function KampanjerTab({ d }: { d: AnalyticsPreview }) {
       {/* Ja-rate per time */}
       {hourlyJa.length > 0 && (
         <Glass className="p-5">
-          <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold text-white">Ja-rate per time</h3><span className="text-xs text-white/40">Når sier folk ja?{bestJaHour ? ` · beste kl. ${bestJaHour.hour}:00` : ""}</span></div>
+          <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold text-ab-fg">Ja-rate per time</h3><span className="text-xs text-ab-fg-3">Når sier folk ja?{bestJaHour ? ` · beste kl. ${bestJaHour.hour}:00` : ""}</span></div>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={hourlyJa} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -1372,26 +1372,26 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5">
       <Glass className="p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="text-sm font-semibold text-white">Varsler ({alerts.length})</h3>
+          <h3 className="text-sm font-semibold text-ab-fg">Varsler ({alerts.length})</h3>
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+            <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
               {(["alle", "critical", "warning", "info"] as const).map(s => (
-                <button key={s} onClick={() => setSev(s)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", sev === s ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
-                  {s === "alle" ? "Alle" : SEV_LABEL[s]} <span className="text-white/40">{counts[s]}</span>
+                <button key={s} onClick={() => setSev(s)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", sev === s ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
+                  {s === "alle" ? "Alle" : SEV_LABEL[s]} <span className="text-ab-fg-3">{counts[s]}</span>
                 </button>
               ))}
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-white/35">Omfang</span>
-              <select value={person} onChange={e => setPerson(e.target.value)} title="Vis varsler for én ansatt" className="h-7 max-w-[170px] rounded-lg bg-white/5 border border-white/8 px-2 text-xs text-white outline-none focus:border-blue-500/50 [color-scheme:dark]">
-                <option value="" className="bg-[#0d1528]">Alle ansatte</option>
-                {personOptions.map(p => <option key={p.id} value={p.id} className="bg-[#0d1528]">{p.name}</option>)}
+              <span className="text-[11px] text-ab-fg-4">Omfang</span>
+              <select value={person} onChange={e => setPerson(e.target.value)} title="Vis varsler for én ansatt" className="h-7 max-w-[170px] rounded-lg bg-ab-elevated border border-ab-line px-2 text-xs text-ab-fg outline-none focus:border-blue-500/50 [color-scheme:dark]">
+                <option value="" className="bg-ab-overlay">Alle ansatte</option>
+                {personOptions.map(p => <option key={p.id} value={p.id} className="bg-ab-overlay">{p.name}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-white/35">Grupper etter</span>
-              <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
-                {(["ansatt", "type"] as const).map(g => <button key={g} onClick={() => setGroup(g)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold capitalize transition-all", group === g ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{g}</button>)}
+              <span className="text-[11px] text-ab-fg-4">Grupper etter</span>
+              <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
+                {(["ansatt", "type"] as const).map(g => <button key={g} onClick={() => setGroup(g)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold capitalize transition-all", group === g ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>{g}</button>)}
               </div>
             </div>
           </div>
@@ -1399,10 +1399,10 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
         {typeSummary.length > 0 && (
           <div className="mb-4 flex flex-wrap gap-2">
             {typeSummary.map(s => (
-              <div key={s.t} className="flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1.5">
+              <div key={s.t} className="flex items-center gap-2 rounded-lg border border-ab-line bg-ab-elevated px-2.5 py-1.5">
                 <s.Icon className="h-3.5 w-3.5 shrink-0" style={{ color: s.color }} />
-                <span className="text-[11px] text-white/60">{s.label}</span>
-                <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-white/80">{s.n}</span>
+                <span className="text-[11px] text-ab-fg-2">{s.label}</span>
+                <span className="rounded-md bg-ab-hover px-1.5 py-0.5 text-[10px] font-bold text-ab-fg-2">{s.n}</span>
               </div>
             ))}
           </div>
@@ -1416,13 +1416,13 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
               const gopen = openGroups.has(g.key)
               const sub = [crit && `${crit} kritiske`, warn && `${warn} advarsler`].filter(Boolean).join(" · ") || `${g.items.length} info`
               return (
-                <div key={g.key} className="rounded-xl border border-white/8 bg-white/[0.02] overflow-hidden">
-                  <button onClick={() => toggleGroup(g.key)} className="cursor-pointer w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] text-left">
+                <div key={g.key} className="rounded-xl border border-ab-line bg-ab-elevated overflow-hidden">
+                  <button onClick={() => toggleGroup(g.key)} className="cursor-pointer w-full flex items-center gap-3 px-4 py-3 hover:bg-ab-hover text-left">
                     <span className="h-2 w-2 rounded-full shrink-0" style={{ background: worst }} />
-                    <span className="text-sm font-semibold text-white/90 truncate">{g.name}</span>
-                    <span className="text-[11px] text-white/35 truncate">{sub}</span>
-                    <span className="ml-auto text-[11px] text-white/45 shrink-0">{g.items.length} varsler</span>
-                    <ChevronDown className={cn("h-4 w-4 text-white/30 transition-transform shrink-0", gopen && "rotate-180")} />
+                    <span className="text-sm font-semibold text-ab-fg truncate">{g.name}</span>
+                    <span className="text-[11px] text-ab-fg-4 truncate">{sub}</span>
+                    <span className="ml-auto text-[11px] text-ab-fg-3 shrink-0">{g.items.length} varsler</span>
+                    <ChevronDown className={cn("h-4 w-4 text-ab-fg-4 transition-transform shrink-0", gopen && "rotate-180")} />
                   </button>
                   <AnimatePresence>
                     {gopen && (
@@ -1433,15 +1433,15 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
                             const c = sevColor(a.severity)
                             const aopen = openAlerts.has(a.key)
                             return (
-                              <div key={a.key} className="rounded-lg border border-white/6 bg-white/[0.02]">
+                              <div key={a.key} className="rounded-lg border border-ab-line bg-ab-elevated">
                                 <div onClick={() => a.daily.length && toggleAlert(a.key)} className={cn("flex items-center gap-3 p-2.5", a.daily.length && "cursor-pointer")}>
                                   <span className="rounded-md px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ background: `${c}22`, color: c }}>{SEV_LABEL[a.severity]}</span>
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2"><meta.Icon className="h-3.5 w-3.5 shrink-0" style={{ color: meta.color }} /><span className="text-xs font-semibold text-white/80">{meta.label}</span>{group === "type" && <span className="text-[11px] text-white/40 truncate">{a.personName}</span>}</div>
-                                    <p className="text-[11px] text-white/45 truncate mt-0.5">{a.message}</p>
+                                    <div className="flex items-center gap-2"><meta.Icon className="h-3.5 w-3.5 shrink-0" style={{ color: meta.color }} /><span className="text-xs font-semibold text-ab-fg-2">{meta.label}</span>{group === "type" && <span className="text-[11px] text-ab-fg-3 truncate">{a.personName}</span>}</div>
+                                    <p className="text-[11px] text-ab-fg-3 truncate mt-0.5">{a.message}</p>
                                   </div>
-                                  <span className="font-mono text-xs font-bold shrink-0" style={{ color: c }}>{nf1(a.current)}<span className="text-white/30"> / {nf1(a.threshold)}</span></span>
-                                  {a.daily.length > 0 && <ChevronRight className={cn("h-3.5 w-3.5 text-white/25 transition-transform shrink-0", aopen && "rotate-90")} />}
+                                  <span className="font-mono text-xs font-bold shrink-0" style={{ color: c }}>{nf1(a.current)}<span className="text-ab-fg-4"> / {nf1(a.threshold)}</span></span>
+                                  {a.daily.length > 0 && <ChevronRight className={cn("h-3.5 w-3.5 text-ab-fg-4 transition-transform shrink-0", aopen && "rotate-90")} />}
                                 </div>
                                 <AnimatePresence>
                                   {aopen && a.daily.length > 0 && (
@@ -1449,13 +1449,13 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
                                       <div className="px-3 pb-3">
                                         {a.alertType === "non_full_days" ? (
                                           <>
-                                            <p className="text-[10px] text-white/40 mb-1.5">Siste {a.daily.length} dager — dagsklassifisering</p>
+                                            <p className="text-[10px] text-ab-fg-3 mb-1.5">Siste {a.daily.length} dager — dagsklassifisering</p>
                                             <DayStrip cells={a.daily.map(x => ({ cls: classifyDoors(x.value, d.day_classification), title: `${nbFmt.format(x.value)} dører` }))} />
                                             <div className="mt-2"><DayStripLegend /></div>
                                           </>
                                         ) : (
                                           <>
-                                            <p className="text-[10px] text-white/40 mb-1">{a.source === "avvik" ? `Strek (${a.daily.length} dager) — søyle = dører, stiplet = baseline` : `Siste ${a.daily.length} dager`}</p>
+                                            <p className="text-[10px] text-ab-fg-3 mb-1">{a.source === "avvik" ? `Strek (${a.daily.length} dager) — søyle = dører, stiplet = baseline` : `Siste ${a.daily.length} dager`}</p>
                                             <MiniBars values={a.daily.map(x => x.value)} below={a.daily.map(x => x.below)} threshold={a.threshold} color={a.source === "avvik" ? "#06b6d4" : "#3b82f6"} />
                                           </>
                                         )}
@@ -1480,15 +1480,15 @@ function VarslerTab({ d, deviations, proximity }: { d: AnalyticsPreview; deviati
       {/* GPS proximity violations */}
       <Glass className="p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div><h3 className="text-sm font-semibold text-white flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-amber-400" /> GPS-avvik / Nærhet{proximity ? ` (${proximity.total_violations})` : ""}</h3><p className="text-[11px] text-white/40">Avviste eller uverifiserte knock-forsøk (for langt fra døra / estimert posisjon)</p></div>
-          {proximity && <span className="text-[11px] text-white/45">{proximity.estimated_position_count} estimert posisjon</span>}
+          <div><h3 className="text-sm font-semibold text-ab-fg flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-amber-400" /> GPS-avvik / Nærhet{proximity ? ` (${proximity.total_violations})` : ""}</h3><p className="text-[11px] text-ab-fg-3">Avviste eller uverifiserte knock-forsøk (for langt fra døra / estimert posisjon)</p></div>
+          {proximity && <span className="text-[11px] text-ab-fg-3">{proximity.estimated_position_count} estimert posisjon</span>}
         </div>
         {proximity === null ? <PanelLoading label="Laster GPS-avvik…" /> : proximity.results.length === 0 ? <PanelEmpty msg="Ingen GPS-avvik i perioden" /> : (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-ab-line">
             {proximity.results.slice(0, 30).map(v => (
               <div key={v.id} className="flex items-center gap-3 px-2 py-2.5">
                 <div className="h-8 w-8 flex items-center justify-center rounded-lg shrink-0 bg-amber-500/15"><MapPin className="h-4 w-4 text-amber-400" /></div>
-                <div className="flex-1 min-w-0"><p className="text-sm text-white/80 truncate">{v.address_text ?? "Ukjent adresse"}</p><p className="text-[10px] text-white/35">{new Date(v.ts).toLocaleString("nb-NO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}{v.user.estimated && <span className="ml-1.5 rounded bg-white/10 px-1 py-0.5 text-white/50">estimert</span>}</p></div>
+                <div className="flex-1 min-w-0"><p className="text-sm text-ab-fg-2 truncate">{v.address_text ?? "Ukjent adresse"}</p><p className="text-[10px] text-ab-fg-4">{new Date(v.ts).toLocaleString("nb-NO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}{v.user.estimated && <span className="ml-1.5 rounded bg-ab-hover px-1 py-0.5 text-ab-fg-3">estimert</span>}</p></div>
                 <span className="font-mono text-sm font-bold text-amber-300 shrink-0">{v.distance_m !== null ? `${nbFmt.format(Math.round(v.distance_m))} m` : "—"}</span>
               </div>
             ))}
@@ -1543,29 +1543,29 @@ function EpostloggTab({ startStr, endStr }: { startStr: string; endStr: string }
       <Glass className="p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Mail className="h-4 w-4 text-blue-400" /> E-postlogg{rows ? ` (${rows.length})` : ""}</h3>
-            <p className="text-[11px] text-white/40">Sendte avvik-varsler og digester · filtrert på valgt datovindu</p>
+            <h3 className="text-sm font-semibold text-ab-fg flex items-center gap-2"><Mail className="h-4 w-4 text-blue-400" /> E-postlogg{rows ? ` (${rows.length})` : ""}</h3>
+            <p className="text-[11px] text-ab-fg-3">Sendte avvik-varsler og digester · filtrert på valgt datovindu</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
-              {EMAIL_KIND_CHIPS.map(c => <button key={c.k} onClick={() => setKind(c.k)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", kind === c.k ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{c.label}</button>)}
+            <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
+              {EMAIL_KIND_CHIPS.map(c => <button key={c.k} onClick={() => setKind(c.k)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", kind === c.k ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>{c.label}</button>)}
             </div>
-            <select value={chiefId} onChange={e => setChiefId(e.target.value)} className="h-8 max-w-[190px] rounded-lg bg-white/5 border border-white/8 px-2 text-xs text-white outline-none focus:border-blue-500/50 [color-scheme:dark]">
-              <option value="" className="bg-[#0d1528]">Alle salgssjefer</option>
-              {chiefs.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+            <select value={chiefId} onChange={e => setChiefId(e.target.value)} className="h-8 max-w-[190px] rounded-lg bg-ab-elevated border border-ab-line px-2 text-xs text-ab-fg outline-none focus:border-blue-500/50 [color-scheme:dark]">
+              <option value="" className="bg-ab-overlay">Alle salgssjefer</option>
+              {chiefs.map(c => <option key={c.id} value={c.id} className="bg-ab-overlay">{c.name}</option>)}
             </select>
           </div>
         </div>
         {rows === null ? <PanelLoading label="Laster e-postlogg…" /> : rows.length === 0 ? <PanelEmpty msg="Ingen e-poster i perioden" sub="Prøv et annet datovindu eller filter." /> : (
           <div className="overflow-x-auto">
-            <div className="min-w-[720px] divide-y divide-white/5">
+            <div className="min-w-[720px] divide-y divide-ab-line">
               {rows.map(r => (
-                <button key={r.id} onClick={() => openDetail(r.id)} className="cursor-pointer w-full grid grid-cols-[140px_1fr_80px_120px_120px] gap-3 items-center px-3 py-2.5 hover:bg-white/[0.03] text-left">
+                <button key={r.id} onClick={() => openDetail(r.id)} className="cursor-pointer w-full grid grid-cols-[140px_1fr_80px_120px_120px] gap-3 items-center px-3 py-2.5 hover:bg-ab-hover text-left">
                   <span className="rounded-md px-2 py-1 text-[10px] font-bold text-center" style={{ background: `${kindColor(r.kind)}22`, color: kindColor(r.kind) }}>{r.kind_label}</span>
-                  <div className="min-w-0"><p className="text-sm text-white/85 truncate">{r.recipient_name || r.recipient_email || "—"}</p><p className="text-[10px] text-white/35 truncate">{r.recipient_email}</p></div>
+                  <div className="min-w-0"><p className="text-sm text-ab-fg-2 truncate">{r.recipient_name || r.recipient_email || "—"}</p><p className="text-[10px] text-ab-fg-4 truncate">{r.recipient_email}</p></div>
                   <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-bold text-center", r.status === "sent" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300")}>{r.status === "sent" ? "Sendt" : "Feilet"}</span>
-                  <span className="text-[11px] text-white/50">{fmtDT(r.sent_at || r.created_at)}</span>
-                  <span className="text-[11px] text-white/45 text-right">{r.team_count} team · {r.flagged_count} flagget</span>
+                  <span className="text-[11px] text-ab-fg-3">{fmtDT(r.sent_at || r.created_at)}</span>
+                  <span className="text-[11px] text-ab-fg-3 text-right">{r.team_count} team · {r.flagged_count} flagget</span>
                 </button>
               ))}
             </div>
@@ -1588,39 +1588,39 @@ function EmailLogDrawer({ d, loading, onClose }: { d: EmailLogDetail | null; loa
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.aside initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", stiffness: 320, damping: 34 }}
-        className="fixed right-0 top-0 z-50 h-screen w-full sm:w-[560px] max-w-[94vw] overflow-y-auto border-l border-white/10 bg-[#0b1220] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0b1220] px-5 py-4">
-          <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-blue-400 shrink-0" /><h3 className="text-sm font-semibold text-white truncate">{d ? d.kind_label : "E-post"}</h3></div>
-          <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 hover:bg-white/10"><X className="h-4 w-4 text-white/60" /></button>
+        className="fixed right-0 top-0 z-50 h-screen w-full sm:w-[560px] max-w-[94vw] overflow-y-auto border-l border-ab-line bg-ab-overlay shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ab-line bg-ab-overlay px-5 py-4">
+          <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-blue-400 shrink-0" /><h3 className="text-sm font-semibold text-ab-fg truncate">{d ? d.kind_label : "E-post"}</h3></div>
+          <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 hover:bg-ab-hover"><X className="h-4 w-4 text-ab-fg-2" /></button>
         </div>
         {loading || !d ? <div className="p-6"><PanelLoading label="Laster detaljer…" /></div> : (
           <div className="p-5 space-y-4">
-            <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 space-y-1.5">
-              <p className="text-sm text-white/90">{d.recipient_name || "—"}</p>
-              <p className="text-[11px] text-white/45">{d.recipient_email}</p>
+            <div className="rounded-xl border border-ab-line bg-ab-elevated p-4 space-y-1.5">
+              <p className="text-sm text-ab-fg">{d.recipient_name || "—"}</p>
+              <p className="text-[11px] text-ab-fg-3">{d.recipient_email}</p>
               <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-bold", d.status === "sent" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300")}>{d.status === "sent" ? "Sendt" : "Feilet"}</span>
-                <span className="text-[11px] text-white/45">{fmtDT(d.sent_at || d.created_at)}</span>
-                {d.pdf_size_bytes ? <span className="flex items-center gap-1 text-[11px] text-white/40"><FileText className="h-3 w-3" />PDF {(d.pdf_size_bytes / 1024).toFixed(0)} kB</span> : null}
+                <span className="text-[11px] text-ab-fg-3">{fmtDT(d.sent_at || d.created_at)}</span>
+                {d.pdf_size_bytes ? <span className="flex items-center gap-1 text-[11px] text-ab-fg-3"><FileText className="h-3 w-3" />PDF {(d.pdf_size_bytes / 1024).toFixed(0)} kB</span> : null}
               </div>
               {d.error_message ? <p className="text-[11px] text-rose-300 mt-1">{d.error_message}</p> : null}
             </div>
             {d.teams.length > 0 && (
-              <div><p className="text-xs font-semibold text-white/70 mb-2">Team ({d.teams.length})</p>
-                <div className="flex flex-wrap gap-1.5">{d.teams.map(t => <span key={t.team_id} className="rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[11px] text-white/70">{t.name || t.team_id.slice(0, 8)}</span>)}</div>
+              <div><p className="text-xs font-semibold text-ab-fg-2 mb-2">Team ({d.teams.length})</p>
+                <div className="flex flex-wrap gap-1.5">{d.teams.map(t => <span key={t.team_id} className="rounded-lg border border-ab-line bg-ab-elevated px-2.5 py-1 text-[11px] text-ab-fg-2">{t.name || t.team_id.slice(0, 8)}</span>)}</div>
               </div>
             )}
             {d.flagged.length > 0 && (
-              <div><p className="text-xs font-semibold text-white/70 mb-2">Flaggede selgere ({d.flagged.length})</p>
+              <div><p className="text-xs font-semibold text-ab-fg-2 mb-2">Flaggede selgere ({d.flagged.length})</p>
                 <div className="space-y-2">
                   {d.flagged.map(f => (
-                    <div key={f.person_id} className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                    <div key={f.person_id} className="rounded-xl border border-ab-line bg-ab-elevated p-3">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-white/85">{f.name}</span>
+                        <span className="text-sm text-ab-fg-2">{f.name}</span>
                         {f.shortfall_pct != null && <span className="font-mono text-xs font-bold text-rose-300">{Math.round(f.shortfall_pct)} % under</span>}
                       </div>
                       {(f.today_doors != null || f.streak_len != null) && (
-                        <p className="text-[11px] text-white/45 mt-1">
+                        <p className="text-[11px] text-ab-fg-3 mt-1">
                           {f.today_doors != null ? `I dag ${f.today_doors} dører` : ""}
                           {f.baseline != null ? ` · snitt ${nf1(f.baseline)}` : ""}
                           {f.streak_len ? ` · ${f.streak_len} dager strek` : ""}
@@ -1669,14 +1669,14 @@ function WorkTimeHistogram({ work }: { work: WorkTimeStats }) {
   return (
     <Glass className="p-5">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-sm font-semibold text-white">Fordeling av arbeidstid</h3>
-        <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+        <h3 className="text-sm font-semibold text-ab-fg">Fordeling av arbeidstid</h3>
+        <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
           {(["employees", "managers"] as const).map(gk => (
-            <button key={gk} onClick={() => setGroup(gk)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", group === gk ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>{gk === "employees" ? "Ansatte" : "Ledere"}</button>
+            <button key={gk} onClick={() => setGroup(gk)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", group === gk ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>{gk === "employees" ? "Ansatte" : "Ledere"}</button>
           ))}
         </div>
       </div>
-      <p className="text-xs text-white/45 mb-4">Antall {group === "employees" ? "ansatte" : "ledere"} etter snitt arbeidstid per arbeidsdag · aktiv-terskel {thrLabel}m</p>
+      <p className="text-xs text-ab-fg-3 mb-4">Antall {group === "employees" ? "ansatte" : "ledere"} etter snitt arbeidstid per arbeidsdag · aktiv-terskel {thrLabel}m</p>
       {total === 0 ? <PanelEmpty msg="Ingen arbeidstid registrert i dette tidsrommet" sub="Arbeidstid beregnes fra dørtellinger. Velg et tidsrom med aktivitet." /> : (
         <div className="space-y-2.5">
           {buckets.map((b, i) => {
@@ -1684,13 +1684,13 @@ function WorkTimeHistogram({ work }: { work: WorkTimeStats }) {
             const color = b.inactive ? "#f43f5e" : "#10b981"
             return (
               <div key={b.label} className="flex items-center gap-3">
-                <span className="w-16 shrink-0 text-right font-mono text-xs text-white/45">{b.label}</span>
-                <div className="relative flex-1 h-6 rounded-lg bg-white/[0.04] overflow-hidden"><motion.div className="h-full rounded-lg" style={{ background: `${color}cc` }} initial={reduced ? false : { width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.5, delay: i * 0.04 }} /></div>
-                <span className="w-20 shrink-0 flex items-baseline justify-end gap-1.5"><span className="font-mono text-sm font-semibold text-white/90">{b.count}</span><span className="font-mono text-[11px] text-white/35">{sharePct.toFixed(0)}%</span></span>
+                <span className="w-16 shrink-0 text-right font-mono text-xs text-ab-fg-3">{b.label}</span>
+                <div className="relative flex-1 h-6 rounded-lg bg-ab-elevated overflow-hidden"><motion.div className="h-full rounded-lg" style={{ background: `${color}cc` }} initial={reduced ? false : { width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.5, delay: i * 0.04 }} /></div>
+                <span className="w-20 shrink-0 flex items-baseline justify-end gap-1.5"><span className="font-mono text-sm font-semibold text-ab-fg">{b.count}</span><span className="font-mono text-[11px] text-ab-fg-4">{sharePct.toFixed(0)}%</span></span>
               </div>
             )
           })}
-          <div className="flex items-center gap-4 pt-2 text-[11px] text-white/40 border-t border-white/8 mt-1">
+          <div className="flex items-center gap-4 pt-2 text-[11px] text-ab-fg-3 border-t border-ab-line mt-1">
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "#f43f5e" }} /> Under aktiv-terskel</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "#10b981" }} /> Aktiv</span>
           </div>
@@ -1717,8 +1717,8 @@ function TidTempoTab({ work, campaignSelected, pace, paceLoading, effDate }: { w
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-blue-400" />
-          <h2 className="text-base font-semibold text-white">Arbeidstid</h2>
-          <span className="flex items-center gap-1 text-[11px] text-white/40"><Info className="h-3 w-3" /> Basert på dørtellinger (første→siste knokk, pauser over 90 min ekskludert)</span>
+          <h2 className="text-base font-semibold text-ab-fg">Arbeidstid</h2>
+          <span className="flex items-center gap-1 text-[11px] text-ab-fg-3"><Info className="h-3 w-3" /> Basert på dørtellinger (første→siste knokk, pauser over 90 min ekskludert)</span>
         </div>
         {!work || !w ? (
           <Glass className="p-5"><PanelEmpty msg="Ingen arbeidstid registrert i dette tidsrommet" sub="Arbeidstid beregnes fra dørtellinger. Velg et tidsrom med aktivitet." /></Glass>
@@ -1726,21 +1726,21 @@ function TidTempoTab({ work, campaignSelected, pace, paceLoading, effDate }: { w
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {groups.map(({ label, g, color }) => (
-                <div key={label} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                <div key={label} className="flex items-center gap-4 rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-4">
                   <RingGauge pct={g.active_pct} color={color} center={`${Math.round(g.active_pct)}%`} sub="aktive" />
-                  <div><p className="text-xs text-white/40 font-medium">{label}</p><p className="font-mono text-2xl font-bold text-white">{g.active_count}<span className="text-sm text-white/35"> / {g.total}</span></p><p className="text-xs text-white/40 mt-0.5">snitt {fmtMin(g.avg_daily_minutes)}/arbeidsdag</p></div>
+                  <div><p className="text-xs text-ab-fg-3 font-medium">{label}</p><p className="font-mono text-2xl font-bold text-ab-fg">{g.active_count}<span className="text-sm text-ab-fg-4"> / {g.total}</span></p><p className="text-xs text-ab-fg-3 mt-0.5">snitt {fmtMin(g.avg_daily_minutes)}/arbeidsdag</p></div>
                 </div>
               ))}
             </div>
             <WorkTimeHistogram work={work} />
             <Glass className="p-5">
-              <h3 className="text-sm font-semibold text-white mb-4">Mest aktive (arbeidstid)</h3>
+              <h3 className="text-sm font-semibold text-ab-fg mb-4">Mest aktive (arbeidstid)</h3>
               {people.length === 0 ? <PanelEmpty msg="Ingen arbeidstid registrert" /> : (
-                <div className="divide-y divide-white/5">
+                <div className="divide-y divide-ab-line">
                   {people.map(p => (
                     <div key={p.id} className="flex items-center justify-between px-3 py-2.5">
-                      <div className="flex items-center gap-2.5"><span className={cn("h-2 w-2 rounded-full", p.is_active ? "bg-emerald-500" : "bg-white/20")} /><span className="text-sm text-white/85">{p.name}</span></div>
-                      <div className="flex items-center gap-4 text-right"><span className="font-mono text-sm text-white/70">{fmtMin(p.total_minutes)}</span><span className="font-mono text-xs text-white/35 w-20">{fmtMin(p.avg_daily_minutes)}/arb.dag</span></div>
+                      <div className="flex items-center gap-2.5"><span className={cn("h-2 w-2 rounded-full", p.is_active ? "bg-emerald-500" : "bg-ab-active")} /><span className="text-sm text-ab-fg-2">{p.name}</span></div>
+                      <div className="flex items-center gap-4 text-right"><span className="font-mono text-sm text-ab-fg-2">{fmtMin(p.total_minutes)}</span><span className="font-mono text-xs text-ab-fg-4 w-20">{fmtMin(p.avg_daily_minutes)}/arb.dag</span></div>
                     </div>
                   ))}
                 </div>
@@ -1754,8 +1754,8 @@ function TidTempoTab({ work, campaignSelected, pace, paceLoading, effDate }: { w
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-cyan-400" />
-          <h2 className="text-base font-semibold text-white">Tempo</h2>
-          <span className="flex items-center gap-1 text-[11px] text-white/40"><Info className="h-3 w-3" /> Dører per aktiv time · hele perioden (siste aktive dag vist separat)</span>
+          <h2 className="text-base font-semibold text-ab-fg">Tempo</h2>
+          <span className="flex items-center gap-1 text-[11px] text-ab-fg-3"><Info className="h-3 w-3" /> Dører per aktiv time · hele perioden (siste aktive dag vist separat)</span>
         </div>
         {!campaignSelected ? (
           <Glass className="p-5"><PanelEmpty msg="Velg en kampanje" sub="Tempo beregnes per kampanje eller team. Velg en kampanje øverst for å se dører/time." /></Glass>
@@ -1766,26 +1766,26 @@ function TidTempoTab({ work, campaignSelected, pace, paceLoading, effDate }: { w
         ) : (
           <Glass className="p-5">
             <div className="overflow-x-auto"><div className="min-w-[840px]">
-              <div className="grid grid-cols-[1.6fr_70px_80px_100px_140px_70px_80px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-white/35">
+              <div className="grid grid-cols-[1.6fr_70px_80px_100px_140px_70px_80px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-ab-fg-4">
                 <span>Selger</span><span className="text-right">Dører</span><span className="text-right">Dører/time</span><span className="text-right">Snitt vindu/dag</span><span className="text-right">Siste dag</span><span className="text-right">Snitt</span><span className="text-right">Status</span>
               </div>
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-ab-line">
                 {paceRows.map(p => (
                   <div key={`${p.employee_id}-${p.person_kind}`} className="grid grid-cols-[1.6fr_70px_80px_100px_140px_70px_80px] gap-3 items-center px-3 py-2.5">
                     <div className="min-w-0 flex items-center gap-2">
                       <span className="rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ background: p.person_kind === "manager" ? "#8b5cf622" : "#3b82f622", color: p.person_kind === "manager" ? "#a78bfa" : "#60a5fa" }}>{p.person_kind === "manager" ? "Leder" : "Ansatt"}</span>
-                      <div className="min-w-0"><p className="text-sm font-medium text-white/90 truncate">{p.name}</p><p className="text-[10px] text-white/35">{p.working_days ?? 0} arbeidsdager</p></div>
+                      <div className="min-w-0"><p className="text-sm font-medium text-ab-fg truncate">{p.name}</p><p className="text-[10px] text-ab-fg-4">{p.working_days ?? 0} arbeidsdager</p></div>
                     </div>
-                    <span className="text-right font-mono text-sm text-white/80">{nbFmt.format(p.doors_knocked)}</span>
+                    <span className="text-right font-mono text-sm text-ab-fg-2">{nbFmt.format(p.doors_knocked)}</span>
                     <span className="text-right font-mono text-sm" style={{ color: "#06b6d4" }}>{p.pace_doors_per_hour !== null ? nf1(p.pace_doors_per_hour) : "—"}</span>
-                    <span className="text-right font-mono text-sm text-white/60">{p.active_window_minutes > 0 ? fmtMin(p.active_window_minutes) : "—"}</span>
+                    <span className="text-right font-mono text-sm text-ab-fg-2">{p.active_window_minutes > 0 ? fmtMin(p.active_window_minutes) : "—"}</span>
                     <div className="text-right">
                       {p.last_day ? (
-                        <><p className="text-[10px] text-white/40">{new Date(p.last_day).toLocaleDateString("nb-NO", { day: "numeric", month: "short" })}</p>
-                          <p className="font-mono text-xs text-white/70">{p.last_day_doors} d · {p.last_day_pace_doors_per_hour != null ? `${nf1(p.last_day_pace_doors_per_hour)}/t` : "—"}</p></>
-                      ) : <span className="text-white/25 text-xs">—</span>}
+                        <><p className="text-[10px] text-ab-fg-3">{new Date(p.last_day).toLocaleDateString("nb-NO", { day: "numeric", month: "short" })}</p>
+                          <p className="font-mono text-xs text-ab-fg-2">{p.last_day_doors} d · {p.last_day_pace_doors_per_hour != null ? `${nf1(p.last_day_pace_doors_per_hour)}/t` : "—"}</p></>
+                      ) : <span className="text-ab-fg-4 text-xs">—</span>}
                     </div>
-                    <span className="text-right font-mono text-sm text-white/60">{p.personal_average !== null ? nf1(p.personal_average) : "—"}</span>
+                    <span className="text-right font-mono text-sm text-ab-fg-2">{p.personal_average !== null ? nf1(p.personal_average) : "—"}</span>
                     <div className="flex justify-end">
                       {p.is_alert ? <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300">avvik ×{p.streak_len}</span>
                         : p.below_company_standard_today ? <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">under std</span>
@@ -1829,19 +1829,19 @@ function EmailReportModal({ open, onClose }: { open: boolean; onClose: () => voi
     <AnimatePresence>
       {open && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4" style={{ background: "rgba(5,8,16,0.65)", backdropFilter: "blur(3px)" }} onClick={onClose}>
-          <motion.div initial={{ opacity: 0, scale: 0.97, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 10 }} transition={{ duration: 0.16 }} onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-white/12 bg-[#0d1528] shadow-2xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8"><h2 className="text-lg font-bold text-white">Send ukentlig rapport</h2><button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button></div>
+          <motion.div initial={{ opacity: 0, scale: 0.97, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 10 }} transition={{ duration: 0.16 }} onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-ab-line bg-ab-overlay shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-ab-line"><h2 className="text-lg font-bold text-ab-fg">Send ukentlig rapport</h2><button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover"><X className="h-4 w-4" /></button></div>
             <div className="p-5 space-y-4">
-              <p className="text-sm text-white/55">Genererer rapporten for <span className="text-white/80 font-medium">siste 7 dager</span> og sender den som PDF på e-post.</p>
+              <p className="text-sm text-ab-fg-3">Genererer rapporten for <span className="text-ab-fg-2 font-medium">siste 7 dager</span> og sender den som PDF på e-post.</p>
               <div>
-                <label className="block text-xs font-medium text-white/45 mb-1.5">Mottaker-e-poster</label>
-                <textarea value={raw} onChange={e => setRaw(e.target.value)} rows={3} autoFocus placeholder="navn@firma.no, leder@firma.no" className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 resize-none" />
-                <p className="mt-1.5 text-[11px] text-white/35">Skill flere adresser med komma eller mellomrom.</p>
+                <label className="block text-xs font-medium text-ab-fg-3 mb-1.5">Mottaker-e-poster</label>
+                <textarea value={raw} onChange={e => setRaw(e.target.value)} rows={3} autoFocus placeholder="navn@firma.no, leder@firma.no" className="w-full rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 resize-none" />
+                <p className="mt-1.5 text-[11px] text-ab-fg-4">Skill flere adresser med komma eller mellomrom.</p>
                 {emails.length > 0 && !allValid && <p className="mt-1 text-[11px] text-rose-400">Én eller flere e-postadresser er ugyldige.</p>}
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/8">
-              <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-ab-line">
+              <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover">Avbryt</button>
               <button onClick={submit} disabled={!allValid || sending} className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed">{sending && <Loader2 className="h-4 w-4 animate-spin" />} Send rapport</button>
             </div>
           </motion.div>
@@ -1918,24 +1918,24 @@ function TersklerTab({ campaigns, data, onChanged }: { campaigns: { id: string; 
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
       {/* Left — list / empty state */}
       <Glass className="p-5">
-        <div className="mb-4"><h3 className="text-sm font-semibold text-white">Terskler ({items?.length ?? 0})</h3><span className="text-xs text-white/35">Mest spesifikke vinner: ansatt › kampanje › leder › global</span></div>
+        <div className="mb-4"><h3 className="text-sm font-semibold text-ab-fg">Terskler ({items?.length ?? 0})</h3><span className="text-xs text-ab-fg-4">Mest spesifikke vinner: ansatt › kampanje › leder › global</span></div>
         {items === null ? <PanelLoading label="Laster terskler…" /> : errored ? <PanelError onRetry={load} /> : items.length === 0 ? (
-          <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-8 flex flex-col items-center text-center">
-            <div className="h-11 w-11 rounded-xl bg-white/5 flex items-center justify-center mb-3"><SlidersHorizontal className="h-5 w-5 text-white/40" /></div>
-            <p className="text-sm font-semibold text-white/80">Ingen egendefinerte terskler</p>
-            <p className="text-xs text-white/40 mb-4">Systemet bruker standardverdier inntil du legger til egne.</p>
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated p-8 flex flex-col items-center text-center">
+            <div className="h-11 w-11 rounded-xl bg-ab-elevated flex items-center justify-center mb-3"><SlidersHorizontal className="h-5 w-5 text-ab-fg-3" /></div>
+            <p className="text-sm font-semibold text-ab-fg-2">Ingen egendefinerte terskler</p>
+            <p className="text-xs text-ab-fg-3 mb-4">Systemet bruker standardverdier inntil du legger til egne.</p>
             <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
-              <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 text-center"><p className="text-[10px] uppercase tracking-wider text-white/35">Standard dører/dag</p><p className="font-mono text-2xl font-bold text-white">70</p></div>
-              <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 text-center"><p className="text-[10px] uppercase tracking-wider text-white/35">Standard ja-rate</p><p className="font-mono text-2xl font-bold text-white">2 %</p></div>
+              <div className="rounded-xl border border-ab-line bg-ab-elevated p-3 text-center"><p className="text-[10px] uppercase tracking-wider text-ab-fg-4">Standard dører/dag</p><p className="font-mono text-2xl font-bold text-ab-fg">70</p></div>
+              <div className="rounded-xl border border-ab-line bg-ab-elevated p-3 text-center"><p className="text-[10px] uppercase tracking-wider text-ab-fg-4">Standard ja-rate</p><p className="font-mono text-2xl font-bold text-ab-fg">2 %</p></div>
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-ab-line">
             {items.map(t => (
-              <div key={t.id} className={cn("flex items-center gap-2 px-2 py-2.5 rounded-lg", editing?.id === t.id && "bg-white/[0.05]")}>
-                <div className="min-w-0 flex-1"><p className="text-sm font-medium text-white/90 truncate">{t.target_name || (t.scope === "campaign" ? (campaigns.find(c => c.id === t.campaign_id)?.name ?? "Kampanje") : t.scope === "manager" ? "Leder" : t.scope === "employee" ? "Ansatt" : "Global (alle)")}</p><p className="text-[10px] uppercase tracking-wider text-white/35">{t.scope} · {t.min_doors_per_day} d/dag · {t.min_yes_rate_percent}% ja</p></div>
-                <button onClick={() => toggleActive(t)} disabled={busy === t.id} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors shrink-0", t.is_active ? "bg-emerald-600" : "bg-white/15")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", t.is_active ? "translate-x-4" : "translate-x-0.5")} /></button>
-                <button onClick={() => setEditing(t)} disabled={busy === t.id} className="cursor-pointer h-7 w-7 inline-flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 shrink-0"><Pencil className="h-3.5 w-3.5" /></button>
+              <div key={t.id} className={cn("flex items-center gap-2 px-2 py-2.5 rounded-lg", editing?.id === t.id && "bg-ab-elevated")}>
+                <div className="min-w-0 flex-1"><p className="text-sm font-medium text-ab-fg truncate">{t.target_name || (t.scope === "campaign" ? (campaigns.find(c => c.id === t.campaign_id)?.name ?? "Kampanje") : t.scope === "manager" ? "Leder" : t.scope === "employee" ? "Ansatt" : "Global (alle)")}</p><p className="text-[10px] uppercase tracking-wider text-ab-fg-4">{t.scope} · {t.min_doors_per_day} d/dag · {t.min_yes_rate_percent}% ja</p></div>
+                <button onClick={() => toggleActive(t)} disabled={busy === t.id} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors shrink-0", t.is_active ? "bg-emerald-600" : "bg-ab-active")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", t.is_active ? "translate-x-4" : "translate-x-0.5")} /></button>
+                <button onClick={() => setEditing(t)} disabled={busy === t.id} className="cursor-pointer h-7 w-7 inline-flex items-center justify-center rounded-lg text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover shrink-0"><Pencil className="h-3.5 w-3.5" /></button>
                 <button onClick={() => remove(t.id)} disabled={busy === t.id} className="cursor-pointer h-7 w-7 inline-flex items-center justify-center rounded-lg text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/10 shrink-0">{busy === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</button>
               </div>
             ))}
@@ -2020,46 +2020,46 @@ function TerskelForm({ editing, campaigns, employees, onCancelEdit, onSaved }: {
 
   const NumInput = ({ f }: { f: TField }) => (
     <div>
-      <label className="block text-xs font-medium text-white/45 mb-1.5">{f.label}</label>
-      <input type="number" min={0} value={nums[f.key as string] ?? ""} onChange={e => setNums(n => ({ ...n, [f.key as string]: e.target.value }))} placeholder={f.ph ?? "—"} className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+      <label className="block text-xs font-medium text-ab-fg-3 mb-1.5">{f.label}</label>
+      <input type="number" min={0} value={nums[f.key as string] ?? ""} onChange={e => setNums(n => ({ ...n, [f.key as string]: e.target.value }))} placeholder={f.ph ?? "—"} className="w-full h-10 rounded-xl border border-ab-line bg-ab-elevated px-3 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50" />
     </div>
   )
 
   return (
     <Glass className="p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-white">{editing ? "Rediger terskel" : "Ny terskel"}</h3>
-        {editing && <button onClick={onCancelEdit} className="cursor-pointer text-xs font-medium text-white/45 hover:text-white">+ Ny i stedet</button>}
+        <h3 className="text-sm font-semibold text-ab-fg">{editing ? "Rediger terskel" : "Ny terskel"}</h3>
+        {editing && <button onClick={onCancelEdit} className="cursor-pointer text-xs font-medium text-ab-fg-3 hover:text-ab-fg">+ Ny i stedet</button>}
       </div>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-white/45 mb-1.5">Omfang</label>
-            <select value={scope} onChange={e => { setScope(e.target.value as ThresholdScope); setTarget("") }} disabled={!!editing} className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-blue-500/50 disabled:opacity-50 [color-scheme:dark]">{THRESHOLD_SCOPES.map(s => <option key={s.value} value={s.value} className="bg-[#0d1528]">{s.label}</option>)}</select>
+            <label className="block text-xs font-medium text-ab-fg-3 mb-1.5">Omfang</label>
+            <select value={scope} onChange={e => { setScope(e.target.value as ThresholdScope); setTarget("") }} disabled={!!editing} className="w-full h-10 rounded-xl border border-ab-line bg-ab-elevated px-3 text-sm text-ab-fg outline-none focus:border-blue-500/50 disabled:opacity-50 [color-scheme:dark]">{THRESHOLD_SCOPES.map(s => <option key={s.value} value={s.value} className="bg-ab-overlay">{s.label}</option>)}</select>
           </div>
           {needsTarget && (
             <div>
-              <label className="block text-xs font-medium text-white/45 mb-1.5">Mål</label>
-              <select value={target} onChange={e => setTarget(e.target.value)} className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"><option value="" className="bg-[#0d1528]">Velg…</option>{targetOptions.map(o => <option key={o.id} value={o.id} className="bg-[#0d1528]">{o.name}</option>)}</select>
+              <label className="block text-xs font-medium text-ab-fg-3 mb-1.5">Mål</label>
+              <select value={target} onChange={e => setTarget(e.target.value)} className="w-full h-10 rounded-xl border border-ab-line bg-ab-elevated px-3 text-sm text-ab-fg outline-none focus:border-blue-500/50 [color-scheme:dark]"><option value="" className="bg-ab-overlay">Velg…</option>{targetOptions.map(o => <option key={o.id} value={o.id} className="bg-ab-overlay">{o.name}</option>)}</select>
             </div>
           )}
         </div>
         {TERSKEL_GROUPS.map(g => (
           <div key={g.label}>
-            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40 mb-2"><span className="h-1.5 w-1.5 rounded-full" style={{ background: g.color }} />{g.label}</p>
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ab-fg-3 mb-2"><span className="h-1.5 w-1.5 rounded-full" style={{ background: g.color }} />{g.label}</p>
             <div className="grid grid-cols-2 gap-3">{g.fields.map(f => <NumInput key={f.key as string} f={f} />)}</div>
           </div>
         ))}
-        <div className="rounded-xl border border-white/8 bg-white/[0.02] px-3.5 py-2.5 text-xs text-white/55 flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 shrink-0 text-white/30 mt-0.5" />
+        <div className="rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 text-xs text-ab-fg-3 flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0 text-ab-fg-4 mt-0.5" />
           {preview
             ? <span>Med disse verdiene ville <span className="font-semibold text-rose-300">~{preview.kritisk} kritiske</span> · <span className="font-semibold text-amber-300">~{preview.advarsel} advarsler</span> utløses (av {employees.length} ansatte i valgt periode).</span>
             : <span>Fyll inn verdier for å se estimert antall varsler.</span>}
         </div>
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2.5 cursor-pointer">
-            <button type="button" onClick={() => setIsActive(a => !a)} className={cn("relative h-5 w-9 rounded-full transition-colors", isActive ? "bg-emerald-600" : "bg-white/15")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", isActive ? "translate-x-4" : "translate-x-0.5")} /></button>
-            <span className="text-sm text-white/70">Aktiv</span>
+            <button type="button" onClick={() => setIsActive(a => !a)} className={cn("relative h-5 w-9 rounded-full transition-colors", isActive ? "bg-emerald-600" : "bg-ab-active")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", isActive ? "translate-x-4" : "translate-x-0.5")} /></button>
+            <span className="text-sm text-ab-fg-2">Aktiv</span>
           </label>
           <button onClick={submit} disabled={!valid || saving} className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed">{saving && <Loader2 className="h-4 w-4 animate-spin" />} {editing ? "Lagre terskel" : "Lagre terskel"}</button>
         </div>

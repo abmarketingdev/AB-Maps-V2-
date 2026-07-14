@@ -455,13 +455,13 @@ export function AdminDemographicsMap() {
 
       {/* WebGL/init failure fallback — keeps the page usable instead of white-screening */}
       {mapError && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[#0a0f1e] px-6 text-center">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white/25"><path d="M12 21s-7-5.686-7-11a7 7 0 0 1 14 0c0 5.314-7 11-7 11Z"/><path d="m3 3 18 18"/></svg>
-          <p className="text-sm font-medium text-white/70">Kartet kunne ikke lastes på denne enheten</p>
-          <p className="max-w-xs text-xs text-white/40">Nettleseren eller enheten støtter ikke WebGL-kart. Prøv en annen nettleser, eller åpne siden på en datamaskin.</p>
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-ab-base px-4 sm:px-6 text-center">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ab-fg-4"><path d="M12 21s-7-5.686-7-11a7 7 0 0 1 14 0c0 5.314-7 11-7 11Z"/><path d="m3 3 18 18"/></svg>
+          <p className="text-sm font-medium text-ab-fg-2">Kartet kunne ikke lastes på denne enheten</p>
+          <p className="max-w-xs text-xs text-ab-fg-3">Nettleseren eller enheten støtter ikke WebGL-kart. Prøv en annen nettleser, eller åpne siden på en datamaskin.</p>
           <button
             onClick={() => { mapInitialized.current = false; setMapError(false); initializeMap(); }}
-            className="mt-1 inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3.5 py-2 text-sm text-white/75 hover:bg-white/10 transition-colors"
+            className="mt-1 inline-flex items-center gap-2 rounded-lg border border-ab-line bg-ab-elevated px-3.5 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover transition-colors"
           >
             Prøv igjen
           </button>
@@ -495,7 +495,7 @@ export function AdminDemographicsMap() {
       <LockedAreasPanel />
       
       {/* Zoom level indicator (dev helper) */}
-      <div className="absolute bottom-4 left-4 bg-white/90 px-3 py-1 rounded-md shadow-sm text-sm font-medium">
+      <div className="absolute bottom-4 left-4 bg-ab-active text-ab-fg px-3 py-1 rounded-md shadow-sm text-sm font-medium">
         <ZoomIndicator mapRef={mapRef} />
       </div>
     </div>

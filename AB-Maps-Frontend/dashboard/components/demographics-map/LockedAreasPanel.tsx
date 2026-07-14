@@ -89,7 +89,7 @@ export function LockedAreasPanel() {
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-gray-700" />
+              <Lock className="h-5 w-5 text-ab-fg-2" />
               <SheetTitle className="text-xl">Områder</SheetTitle>
             </div>
             <Button
@@ -188,7 +188,7 @@ export function LockedAreasPanel() {
             {/* Search input */}
             {lockedCount > 5 && (
               <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ab-fg-3" />
                 <Input
                   type="text"
                   placeholder="Søk etter område..."
@@ -219,7 +219,7 @@ export function LockedAreasPanel() {
             {/* Unlock all button (optional) */}
             {lockedCount > 1 && (
               <div className="border-t pt-4 mt-4">
-                <p className="text-xs text-gray-500 text-center mb-2">
+                <p className="text-xs text-ab-fg-3 text-center mb-2">
                   Hold musepekeren over et område for å låse det opp
                 </p>
               </div>

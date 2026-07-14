@@ -21,9 +21,9 @@ export function Legend({ metric }: LegendProps) {
 
   return (
     <div className="absolute bottom-16 left-4 z-10">
-      <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 min-w-[160px]">
+      <div className="bg-ab-elevated backdrop-blur-sm rounded-lg shadow-lg p-3 min-w-[160px]">
         {/* Metric label */}
-        <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+        <h4 className="text-xs font-semibold text-ab-fg mb-2 uppercase tracking-wide">
           {metric.label}
         </h4>
         
@@ -32,10 +32,10 @@ export function Legend({ metric }: LegendProps) {
           {legendItems.map((item, index) => (
             <div key={index} className="flex items-center gap-2">
               <div
-                className="w-5 h-4 rounded-sm border border-gray-300 flex-shrink-0"
+                className="w-5 h-4 rounded-sm border border-ab-line flex-shrink-0"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-xs text-gray-600 whitespace-nowrap">
+              <span className="text-xs text-ab-fg-2 whitespace-nowrap">
                 {item.label}
               </span>
             </div>

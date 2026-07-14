@@ -139,12 +139,12 @@ function AvatarStack({ ids, size = 26 }: { ids: string[]; size?: number }) {
   return (
     <div className="flex -space-x-2">
       {ids.slice(0, 3).map(id => (
-        <div key={id} className="rounded-full ring-2 ring-[#0d1528]" title={byId(id).name}>
+        <div key={id} className="rounded-full ring-2 ring-ab-base" title={byId(id).name}>
           <Avatar id={id} size={size} />
         </div>
       ))}
       {ids.length > 3 && (
-        <div className="flex items-center justify-center rounded-full bg-white/10 ring-2 ring-[#0d1528] text-[10px] font-bold text-white/70" style={{ width: size, height: size }}>
+        <div className="flex items-center justify-center rounded-full bg-ab-hover ring-2 ring-ab-base text-[10px] font-bold text-ab-fg-2" style={{ width: size, height: size }}>
           +{ids.length - 3}
         </div>
       )}
@@ -180,7 +180,7 @@ function DueBadge({ due, status }: { due: Date; status: TaskStatus }) {
   const label = today ? "I dag" : due.toLocaleDateString("nb-NO", { day: "numeric", month: "short" })
   return (
     <span className={cn("flex items-center gap-1 text-[11px] font-medium",
-      overdue ? "text-rose-400" : today ? "text-amber-400" : "text-white/40")}>
+      overdue ? "text-rose-400" : today ? "text-amber-400" : "text-ab-fg-3")}>
       {overdue ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
       {overdue ? `Forsinket · ${label}` : label}
     </span>
@@ -199,9 +199,9 @@ function TaskCard({ task, onDragStart, onDragEnd, showAssignees = true, draggabl
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={cn(
-        "group relative rounded-lg border bg-white/[0.035] p-3 transition-[background,border-color,box-shadow] duration-150 hover:bg-white/[0.06] hover:border-white/20",
+        "group relative rounded-lg border bg-ab-elevated p-3 transition-[background,border-color,box-shadow] duration-150 hover:bg-ab-hover hover:border-ab-line",
         draggable && "cursor-grab active:cursor-grabbing",
-        overdue ? "border-rose-500/25" : "border-white/[0.08]",
+        overdue ? "border-rose-500/25" : "border-ab-line",
         dragging && "opacity-50 rotate-[1.5deg] shadow-2xl ring-1 ring-blue-500/40"
       )}
     >
@@ -213,14 +213,14 @@ function TaskCard({ task, onDragStart, onDragEnd, showAssignees = true, draggabl
       {/* Title row */}
       <div className="flex items-start gap-2.5">
         <span className="mt-0.5"><PriorityBars p={task.priority} /></span>
-        <p className="flex-1 text-[13px] font-medium text-white/90 leading-snug">{task.title}</p>
+        <p className="flex-1 text-[13px] font-medium text-ab-fg leading-snug">{task.title}</p>
       </div>
 
       {/* Footer */}
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {task.campaign && (
-            <span className="truncate rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-white/45">{task.campaign}</span>
+            <span className="truncate rounded-md bg-ab-elevated px-1.5 py-0.5 text-[10px] font-medium text-ab-fg-3">{task.campaign}</span>
           )}
           <DueBadge due={task.due} status={task.status} />
         </div>
@@ -255,20 +255,20 @@ function Board({ tasks, onMove, onQuickAdd }: {
             onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOverCol(c => c === status ? null : c) }}
             onDrop={() => { if (dragId) onMove(dragId, status); setDragId(null); setOverCol(null) }}
             className={cn(
-              "rounded-2xl border bg-white/[0.025] p-3 transition-colors min-h-[320px]",
-              isOver ? "border-blue-500/40 bg-blue-500/[0.04]" : "border-white/[0.08]"
+              "rounded-2xl border bg-ab-elevated p-3 transition-colors min-h-[320px]",
+              isOver ? "border-blue-500/40 bg-blue-500/[0.04]" : "border-ab-line"
             )}
           >
             {/* Column header */}
             <div className="flex items-center justify-between px-1.5 mb-3">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full" style={{ background: m.color }} />
-                <h3 className="text-[13px] font-semibold text-white/90">{m.label}</h3>
-                <span className="font-mono text-xs text-white/35">{colTasks.length}</span>
+                <h3 className="text-[13px] font-semibold text-ab-fg">{m.label}</h3>
+                <span className="font-mono text-xs text-ab-fg-4">{colTasks.length}</span>
               </div>
               <button
                 onClick={() => onQuickAdd(status)}
-                className="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-white/35 hover:text-white hover:bg-white/10 transition-colors"
+                className="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover transition-colors"
                 title="Legg til oppgave"
               >
                 <Plus className="h-4 w-4" />
@@ -298,7 +298,7 @@ function Board({ tasks, onMove, onQuickAdd }: {
               {colTasks.length === 0 && !isOver && (
                 <button
                   onClick={() => onQuickAdd(status)}
-                  className="cursor-pointer w-full rounded-lg border border-dashed border-white/[0.08] py-6 text-center text-xs text-white/25 hover:text-white/50 hover:border-white/15 transition-colors"
+                  className="cursor-pointer w-full rounded-lg border border-dashed border-ab-line py-6 text-center text-xs text-ab-fg-4 hover:text-ab-fg-3 hover:border-ab-line transition-colors"
                 >
                   + Legg til oppgave
                 </button>
@@ -317,18 +317,18 @@ function TaskList({ tasks }: { tasks: Task[] }) {
   const reduced = useReducedMotion()
   if (tasks.length === 0) return <EmptyState />
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl divide-y divide-white/5 overflow-hidden">
+    <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl divide-y divide-ab-line overflow-hidden">
       {tasks.map((t, i) => {
         const m = STATUS_META[t.status]
         return (
           <motion.div key={t.id}
             initial={reduced ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i, 12) * 0.02 }}
-            className="flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors">
+            className="flex items-center gap-4 px-4 py-3 hover:bg-ab-hover transition-colors">
             <m.Icon className="h-4 w-4 shrink-0" style={{ color: m.color }} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white/90 truncate">{t.title}</p>
+              <p className="text-sm font-semibold text-ab-fg truncate">{t.title}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                {t.campaign && <span className="text-[10px] text-white/35">{t.campaign}</span>}
+                {t.campaign && <span className="text-[10px] text-ab-fg-4">{t.campaign}</span>}
                 <DueBadge due={t.due} status={t.status} />
               </div>
             </div>
@@ -343,9 +343,9 @@ function TaskList({ tasks }: { tasks: Task[] }) {
 
 function EmptyState() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col items-center justify-center py-20 text-center">
-      <CheckCircle2 className="h-8 w-8 text-white/15 mb-3" />
-      <p className="text-sm text-white/35">Ingen oppgaver i denne visningen</p>
+    <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl flex flex-col items-center justify-center py-20 text-center">
+      <CheckCircle2 className="h-8 w-8 text-ab-fg-4 mb-3" />
+      <p className="text-sm text-ab-fg-4">Ingen oppgaver i denne visningen</p>
     </div>
   )
 }
@@ -355,13 +355,13 @@ function Pagination({ page, totalPages, total, from, to, onPage }: {
   page: number; totalPages: number; total: number; from: number; to: number; onPage: (p: number) => void
 }) {
   if (totalPages <= 1) return null
-  const btn = "cursor-pointer flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/60 hover:text-white hover:border-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+  const btn = "cursor-pointer flex h-8 w-8 items-center justify-center rounded-lg border border-ab-line bg-ab-elevated text-ab-fg-2 hover:text-ab-fg hover:border-ab-line transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
   return (
     <div className="mt-3 flex items-center justify-between px-1">
-      <span className="text-xs text-white/40">Viser <span className="text-white/70 font-medium">{from}–{to}</span> av {total}</span>
+      <span className="text-xs text-ab-fg-3">Viser <span className="text-ab-fg-2 font-medium">{from}–{to}</span> av {total}</span>
       <div className="flex items-center gap-1.5">
         <button className={btn} disabled={page <= 1} onClick={() => onPage(page - 1)} title="Forrige"><ChevronLeft className="h-4 w-4" /></button>
-        <span className="px-2 text-xs font-medium text-white/60 tabular-nums">{page} / {totalPages}</span>
+        <span className="px-2 text-xs font-medium text-ab-fg-2 tabular-nums">{page} / {totalPages}</span>
         <button className={btn} disabled={page >= totalPages} onClick={() => onPage(page + 1)} title="Neste"><ChevronRight className="h-4 w-4" /></button>
       </div>
     </div>
@@ -392,10 +392,10 @@ function DelegationView({ tasks, currentUserId }: { tasks: Task[]; currentUserId
   }, [tasks, currentUserId])
 
   if (groups.length === 0) return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col items-center justify-center py-20 text-center">
-      <Users className="h-8 w-8 text-white/15 mb-3" />
-      <p className="text-sm text-white/35">Du har ikke tildelt oppgaver til andre ennå</p>
-      <p className="text-xs text-white/25 mt-1">Bruk "Ny oppgave" for å delegere</p>
+    <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl flex flex-col items-center justify-center py-20 text-center">
+      <Users className="h-8 w-8 text-ab-fg-4 mb-3" />
+      <p className="text-sm text-ab-fg-4">Du har ikke tildelt oppgaver til andre ennå</p>
+      <p className="text-xs text-ab-fg-4 mt-1">Bruk "Ny oppgave" for å delegere</p>
     </div>
   )
 
@@ -407,13 +407,13 @@ function DelegationView({ tasks, currentUserId }: { tasks: Task[]; currentUserId
         return (
           <motion.div key={g.id}
             initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: gi * 0.05 }}
-            className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">
+            className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5">
             {/* Person header */}
             <div className="flex items-center gap-3 mb-4">
               <Avatar id={g.id} size={42} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white">{person.name}</p>
-                <p className="text-xs text-white/40">{ROLE_LABEL[person.role]} · {g.tasks.length} oppgaver</p>
+                <p className="text-sm font-bold text-ab-fg">{person.name}</p>
+                <p className="text-xs text-ab-fg-3">{ROLE_LABEL[person.role]} · {g.tasks.length} oppgaver</p>
               </div>
               {g.overdue > 0 && (
                 <span className="flex items-center gap-1 rounded-full bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-400">
@@ -424,10 +424,10 @@ function DelegationView({ tasks, currentUserId }: { tasks: Task[]; currentUserId
             {/* Progress */}
             <div className="mb-4">
               <div className="flex justify-between text-xs mb-1.5">
-                <span className="text-white/40">Fremdrift</span>
-                <span className="font-mono text-white/60">{g.done}/{g.tasks.length} ferdig</span>
+                <span className="text-ab-fg-3">Fremdrift</span>
+                <span className="font-mono text-ab-fg-2">{g.done}/{g.tasks.length} ferdig</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="h-2 overflow-hidden rounded-full bg-ab-hover">
                 <motion.div className="h-full rounded-full bg-emerald-500" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, delay: gi * 0.05 }} />
               </div>
             </div>
@@ -453,7 +453,7 @@ function PropPill({ active, onClick, children }: { active: boolean; onClick: () 
       onClick={onClick}
       className={cn(
         "cursor-pointer flex items-center gap-1.5 rounded-lg border h-8 px-2.5 text-[13px] font-medium transition-colors whitespace-nowrap",
-        active ? "border-white/25 bg-white/[0.1] text-white" : "border-white/10 bg-white/[0.04] text-white/55 hover:text-white/90 hover:border-white/20"
+        active ? "border-ab-line bg-ab-hover text-ab-fg" : "border-ab-line bg-ab-elevated text-ab-fg-3 hover:text-ab-fg hover:border-ab-line"
       )}
     >
       {children}
@@ -463,7 +463,7 @@ function PropPill({ active, onClick, children }: { active: boolean; onClick: () 
 
 function PopPanel({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "right" }) {
   return (
-    <div className={cn("absolute bottom-full mb-2 z-20 rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl overflow-hidden", align === "left" ? "left-0" : "right-0")}>
+    <div className={cn("absolute bottom-full mb-2 z-20 rounded-xl border border-ab-line bg-ab-overlay shadow-2xl overflow-hidden", align === "left" ? "left-0" : "right-0")}>
       {children}
     </div>
   )
@@ -540,18 +540,18 @@ function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCre
             transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
             onClick={e => e.stopPropagation()}
             onKeyDown={onKeyDown}
-            className="w-full max-w-[560px] rounded-2xl border border-white/12 bg-[#0d1528] shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)] overflow-visible"
+            className="w-full max-w-[560px] rounded-2xl border border-ab-line bg-ab-overlay shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)] overflow-visible"
           >
             {/* Top strip */}
             <div className="flex items-center justify-between px-5 pt-4 pb-1">
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1.5 rounded-md bg-white/[0.06] px-2 py-1 text-xs font-medium text-white/55">
+                <span className="flex items-center gap-1.5 rounded-md bg-ab-elevated px-2 py-1 text-xs font-medium text-ab-fg-3">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ background: STATUS_META[initialStatus].color }} />
                   {STATUS_META[initialStatus].label}
                 </span>
-                <span className="text-xs text-white/30">Ny oppgave</span>
+                <span className="text-xs text-ab-fg-4">Ny oppgave</span>
               </div>
-              <button onClick={close} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8 transition-all"><X className="h-4 w-4" /></button>
+              <button onClick={close} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover transition-all"><X className="h-4 w-4" /></button>
             </div>
 
             {/* Title + description (borderless, Linear-style) */}
@@ -560,12 +560,12 @@ function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCre
                 value={title} onChange={e => setTitle(e.target.value)} autoFocus
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); submit() } }}
                 placeholder="Oppgavetittel"
-                className="w-full bg-transparent text-lg font-semibold text-white placeholder:text-white/30 outline-none"
+                className="w-full bg-transparent text-lg font-semibold text-ab-fg placeholder:text-ab-fg-4 outline-none"
               />
               <textarea
                 value={desc} onChange={e => setDesc(e.target.value)} rows={2}
                 placeholder="Legg til beskrivelse…"
-                className="mt-2 w-full bg-transparent text-sm text-white/75 placeholder:text-white/25 outline-none resize-none leading-relaxed"
+                className="mt-2 w-full bg-transparent text-sm text-ab-fg-2 placeholder:text-ab-fg-4 outline-none resize-none leading-relaxed"
               />
             </div>
 
@@ -586,9 +586,9 @@ function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCre
                       <div className="w-44 py-1">
                         {(["high", "medium", "low"] as Priority[]).map(p => (
                           <button key={p} onClick={() => { setPriority(p); setOpenProp(null) }}
-                            className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left">
+                            className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-ab-hover transition-colors text-left">
                             <Flag className="h-3.5 w-3.5" style={{ color: PRIORITY_META[p].color }} />
-                            <span className="flex-1 text-white/85">{PRIORITY_META[p].label}</span>
+                            <span className="flex-1 text-ab-fg-2">{PRIORITY_META[p].label}</span>
                             {priority === p && <Check className="h-3.5 w-3.5 text-blue-400" />}
                           </button>
                         ))}
@@ -610,34 +610,34 @@ function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCre
                     <PopPanel>
                       <div className="w-64">
                         <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
-                          <span className="text-[11px] font-semibold text-white/40">Tildel til</span>
+                          <span className="text-[11px] font-semibold text-ab-fg-3">Tildel til</span>
                           <button onClick={() => toggle(currentUserId)} className="cursor-pointer text-[11px] font-medium text-blue-400 hover:text-blue-300">
                             {assignees.includes(currentUserId) ? "Fjern meg" : "Meg selv"}
                           </button>
                         </div>
                         {!canAssignOthers ? (
-                          <p className="px-3 py-3 text-xs text-white/40">Ansatte kan kun tildele seg selv.</p>
+                          <p className="px-3 py-3 text-xs text-ab-fg-3">Ansatte kan kun tildele seg selv.</p>
                         ) : (
                           <>
                             <div className="px-2 pb-2">
                               <div className="relative">
-                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-4" />
                                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk…"
-                                  className="w-full h-8 rounded-lg border border-white/10 bg-white/5 pl-8 pr-2 text-[13px] text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+                                  className="w-full h-8 rounded-lg border border-ab-line bg-ab-elevated pl-8 pr-2 text-[13px] text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50" />
                               </div>
                             </div>
                             <div className="max-h-56 overflow-y-auto pb-1">
                               {ROLE_ORDER.filter(r => assignableRoles(role).includes(r) && grouped[r].length > 0).map(r => (
                                 <div key={r}>
-                                  <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/25">{ROLE_LABEL[r]}</p>
+                                  <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ab-fg-4">{ROLE_LABEL[r]}</p>
                                   {grouped[r].map(p => {
                                     const on = assignees.includes(p.id)
                                     return (
                                       <button key={p.id} onClick={() => toggle(p.id)}
-                                        className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-white/5 transition-colors text-left">
+                                        className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-ab-hover transition-colors text-left">
                                         <Avatar id={p.id} size={24} />
-                                        <span className="flex-1 text-[13px] text-white/80 truncate">{p.name}</span>
-                                        <span className={cn("flex h-4 w-4 items-center justify-center rounded border transition-colors", on ? "bg-blue-600 border-blue-600" : "border-white/20")}>
+                                        <span className="flex-1 text-[13px] text-ab-fg-2 truncate">{p.name}</span>
+                                        <span className={cn("flex h-4 w-4 items-center justify-center rounded border transition-colors", on ? "bg-blue-600 border-blue-600" : "border-ab-line")}>
                                           {on && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                         </span>
                                       </button>
@@ -663,16 +663,16 @@ function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCre
                       <div className="w-52 py-1">
                         {dueOptions.map(o => (
                           <button key={o.label} onClick={() => { setDue(o.date); setOpenProp(null) }}
-                            className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left">
-                            <CalIcon className="h-3.5 w-3.5 text-white/40" />
-                            <span className="flex-1 text-white/85">{o.label}</span>
-                            <span className="text-[11px] text-white/30">{o.date.toLocaleDateString("nb-NO", { day: "numeric", month: "short" })}</span>
+                            className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-ab-hover transition-colors text-left">
+                            <CalIcon className="h-3.5 w-3.5 text-ab-fg-3" />
+                            <span className="flex-1 text-ab-fg-2">{o.label}</span>
+                            <span className="text-[11px] text-ab-fg-4">{o.date.toLocaleDateString("nb-NO", { day: "numeric", month: "short" })}</span>
                           </button>
                         ))}
-                        <div className="border-t border-white/8 mt-1 px-3 py-2">
+                        <div className="border-t border-ab-line mt-1 px-3 py-2">
                           <input type="date" value={due ? due.toISOString().slice(0, 10) : ""}
                             onChange={e => { if (e.target.value) { const d = new Date(e.target.value); d.setHours(17, 0, 0, 0); setDue(d); setOpenProp(null) } }}
-                            className="w-full h-8 rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] text-white outline-none focus:border-blue-500/50 [color-scheme:dark]" />
+                            className="w-full h-8 rounded-lg border border-ab-line bg-ab-elevated px-2 text-[13px] text-ab-fg outline-none focus:border-blue-500/50 [color-scheme:dark]" />
                         </div>
                       </div>
                     </PopPanel>
@@ -689,20 +689,20 @@ function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCre
                     <PopPanel>
                       <div className="w-60 py-1">
                         {campaigns.length === 0 ? (
-                          <p className="px-3 py-3 text-xs text-white/40">Ingen kampanjer</p>
+                          <p className="px-3 py-3 text-xs text-ab-fg-3">Ingen kampanjer</p>
                         ) : (
                           <div className="max-h-56 overflow-y-auto">
                             {campaignId && (
                               <button onClick={() => { setCampaignId(""); setOpenProp(null) }}
-                                className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left text-white/50">
+                                className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-ab-hover transition-colors text-left text-ab-fg-3">
                                 <X className="h-3.5 w-3.5" /> Fjern kampanje
                               </button>
                             )}
                             {campaigns.map(c => (
                               <button key={c.id} onClick={() => { setCampaignId(campaignId === c.id ? "" : c.id); setOpenProp(null) }}
-                                className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-white/5 transition-colors text-left">
+                                className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-[13px] hover:bg-ab-hover transition-colors text-left">
                                 <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: c.color }} />
-                                <span className="flex-1 text-white/85 truncate">{c.name}</span>
+                                <span className="flex-1 text-ab-fg-2 truncate">{c.name}</span>
                                 {campaignId === c.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
                               </button>
                             ))}
@@ -716,14 +716,14 @@ function NewTaskModal({ open, onClose, role, currentUserId, initialStatus, onCre
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-5 py-3 border-t border-white/8">
-              <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-white/30">
-                <kbd className="rounded bg-white/8 px-1.5 py-0.5 font-mono">⌘</kbd>
+            <div className="flex items-center justify-between px-5 py-3 border-t border-ab-line">
+              <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-ab-fg-4">
+                <kbd className="rounded bg-ab-hover px-1.5 py-0.5 font-mono">⌘</kbd>
                 <CornerDownLeft className="h-3 w-3" />
                 for å opprette
               </span>
               <div className="flex items-center gap-2 ml-auto">
-                <button onClick={close} className="cursor-pointer rounded-lg px-3.5 py-2 text-[13px] font-medium text-white/50 hover:text-white hover:bg-white/8 transition-all">Avbryt</button>
+                <button onClick={close} className="cursor-pointer rounded-lg px-3.5 py-2 text-[13px] font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-all">Avbryt</button>
                 <button onClick={submit} disabled={!title.trim()}
                   className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-blue-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                   Opprett oppgave
@@ -897,7 +897,7 @@ export function OppgaverView() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen bg-ab-base">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-blue-600/8 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-purple-600/8 blur-3xl" />
@@ -907,8 +907,8 @@ export function OppgaverView() {
         {/* Header */}
         <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-widest text-white/30 mb-1 truncate">Oppgaver · {ROLE_LABEL[role]}</p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Oppgaver</h1>
+            <p className="text-xs uppercase tracking-widest text-ab-fg-4 mb-1 truncate">Oppgaver · {ROLE_LABEL[role]}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-ab-fg">Oppgaver</h1>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <button onClick={() => openModal("todo")}
@@ -920,10 +920,10 @@ export function OppgaverView() {
 
         {/* Perspective switch (scrolls horizontally on narrow screens) */}
         <motion.div initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="flex gap-1 rounded-2xl bg-white/5 border border-white/8 p-1 w-full sm:w-fit overflow-x-auto no-scrollbar">
+          className="flex gap-1 rounded-2xl bg-ab-elevated border border-ab-line p-1 w-full sm:w-fit overflow-x-auto no-scrollbar">
           {perspectives.map(p => (
             <button key={p.key} onClick={() => setPerspective(p.key)}
-              className={cn("cursor-pointer whitespace-nowrap shrink-0 rounded-xl px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all", perspective === p.key ? "bg-white/15 text-white shadow-sm" : "text-white/45 hover:text-white/80")}>
+              className={cn("cursor-pointer whitespace-nowrap shrink-0 rounded-xl px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all", perspective === p.key ? "bg-ab-active text-ab-fg shadow-sm" : "text-ab-fg-3 hover:text-ab-fg-2")}>
               {p.label}
             </button>
           ))}
@@ -938,10 +938,10 @@ export function OppgaverView() {
               {TABS.map(t => (
                 <button key={t.key} onClick={() => setStatusTab(t.key)}
                   className={cn("cursor-pointer flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all",
-                    statusTab === t.key ? "bg-white/12 text-white" : "text-white/45 hover:text-white/75")}>
+                    statusTab === t.key ? "bg-ab-hover text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
                   {t.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: t.color }} />}
                   {t.label}
-                  <span className="font-mono text-xs text-white/35">{counts[t.key]}</span>
+                  <span className="font-mono text-xs text-ab-fg-4">{counts[t.key]}</span>
                 </button>
               ))}
             </div>
@@ -949,16 +949,16 @@ export function OppgaverView() {
             <div className="flex items-center gap-2">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-4" />
                 <input value={searchInput} onChange={e => setSearchInput(e.target.value)} placeholder="Søk i oppgaver…"
-                  className="h-9 w-48 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all" />
+                  className="h-9 w-48 rounded-xl border border-ab-line bg-ab-elevated pl-8 pr-3 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 transition-all" />
               </div>
               {/* Layout toggle */}
-              <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
-                <button onClick={() => setLayout("board")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", layout === "board" ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+              <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
+                <button onClick={() => setLayout("board")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", layout === "board" ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
                   <LayoutGrid className="h-4 w-4" /> Tavle
                 </button>
-                <button onClick={() => setLayout("liste")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", layout === "liste" ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+                <button onClick={() => setLayout("liste")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", layout === "liste" ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
                   <ListIcon className="h-4 w-4" /> Liste
                 </button>
               </div>
@@ -969,11 +969,11 @@ export function OppgaverView() {
         {/* Content */}
         <div>
           {loading ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelLoading label="Laster oppgaver…" /></div>
+            <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl"><PanelLoading label="Laster oppgaver…" /></div>
           ) : errored ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelError onRetry={() => void loadTasks()} /></div>
+            <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl"><PanelError onRetry={() => void loadTasks()} /></div>
           ) : totalCount === 0 && !isTildelt ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelEmpty msg="Ingen oppgaver" sub="Opprett en ny oppgave for å komme i gang." /></div>
+            <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl"><PanelEmpty msg="Ingen oppgaver" sub="Opprett en ny oppgave for å komme i gang." /></div>
           ) : isTildelt ? (
             <DelegationView tasks={pageTasks} currentUserId={currentUserId} />
           ) : (
@@ -994,10 +994,10 @@ export function OppgaverView() {
         {notice && (
           <motion.div
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 rounded-xl border border-white/12 bg-[#111a2e] px-4 py-3 shadow-2xl">
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 rounded-xl border border-ab-line bg-ab-overlay px-4 py-3 shadow-2xl">
             <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-            <span className="text-sm text-white/85">{notice}</span>
-            <button onClick={() => setNotice(null)} className="cursor-pointer text-white/35 hover:text-white"><X className="h-3.5 w-3.5" /></button>
+            <span className="text-sm text-ab-fg-2">{notice}</span>
+            <button onClick={() => setNotice(null)} className="cursor-pointer text-ab-fg-4 hover:text-ab-fg"><X className="h-3.5 w-3.5" /></button>
           </motion.div>
         )}
       </AnimatePresence>

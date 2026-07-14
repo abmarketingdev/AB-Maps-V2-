@@ -105,7 +105,7 @@ export function KPIStrip({ className, stats }: KPIStripProps) {
           initial={reduced ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.08, duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-          className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 cursor-default transition-all duration-200 hover:border-white/20"
+          className="group relative overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5 cursor-default transition-all duration-200 hover:border-ab-line"
           style={{ "--glow": kpi.glowColor } as React.CSSProperties}
           whileHover={reduced ? {} : { boxShadow: `0 0 24px ${kpi.glowColor}` }}
         >
@@ -126,12 +126,12 @@ export function KPIStrip({ className, stats }: KPIStripProps) {
           </div>
 
           {/* Value */}
-          <div className="font-mono text-2xl font-bold tracking-tight text-white">
+          <div className="font-mono text-2xl font-bold tracking-tight text-ab-fg">
             <CountUp target={kpi.value} format={kpi.format} />
           </div>
 
           {/* Label */}
-          <p className="mt-1 text-xs font-medium text-white/50">{kpi.label}</p>
+          <p className="mt-1 text-xs font-medium text-ab-fg-3">{kpi.label}</p>
 
           {/* Delta */}
           {kpi.delta !== undefined && (

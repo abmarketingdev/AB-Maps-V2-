@@ -25,8 +25,8 @@ const PERIODS: { key: Period; label: string }[] = [
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-white/15 bg-[#0d1528]/90 backdrop-blur-xl px-4 py-3 shadow-xl">
-      <p className="mb-2 text-xs font-medium text-white/50">{label}</p>
+    <div className="rounded-xl border border-ab-line bg-ab-overlay/90 backdrop-blur-xl px-4 py-3 shadow-xl">
+      <p className="mb-2 text-xs font-medium text-ab-fg-3">{label}</p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex items-center gap-2 text-sm font-semibold" style={{ color: p.color }}>
           <span className="h-2 w-2 rounded-full" style={{ background: p.color }} />
@@ -56,15 +56,15 @@ export function TrendChart({ className, points, range, onRangeChange }: TrendCha
       initial={reduced ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, duration: 0.5 }}
-      className={`rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 ${className ?? ""}`}
+      className={`rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5 ${className ?? ""}`}
     >
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-white">Aktivitetstrend</h3>
-          <p className="mt-0.5 text-xs text-white/40">Dører banket & ja-prosent</p>
+          <h3 className="text-sm font-semibold text-ab-fg">Aktivitetstrend</h3>
+          <p className="mt-0.5 text-xs text-ab-fg-3">Dører banket & ja-prosent</p>
         </div>
-        <div className="flex gap-1 rounded-xl bg-white/5 p-1">
+        <div className="flex gap-1 rounded-xl bg-ab-elevated p-1">
           {PERIODS.map(({ key, label }) => (
             <button
               key={key}
@@ -72,7 +72,7 @@ export function TrendChart({ className, points, range, onRangeChange }: TrendCha
               className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
                 period === key
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "text-white/50 hover:text-white/80"
+                  : "text-ab-fg-3 hover:text-ab-fg-2"
               }`}
             >
               {label}
@@ -139,11 +139,11 @@ export function TrendChart({ className, points, range, onRangeChange }: TrendCha
 
       {/* Legend */}
       <div className="mt-3 flex gap-4">
-        <div className="flex items-center gap-1.5 text-xs text-white/50">
+        <div className="flex items-center gap-1.5 text-xs text-ab-fg-3">
           <span className="h-2.5 w-2.5 rounded-sm bg-blue-500" />
           Dører banket
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-white/50">
+        <div className="flex items-center gap-1.5 text-xs text-ab-fg-3">
           <span className="h-2.5 w-2.5 rounded-sm bg-amber-500" />
           Ja-prosent
         </div>

@@ -33,20 +33,20 @@ export function LeaderboardPanel({ className, entries, metric = "ja_rate", onMet
       initial={reduced ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.45, duration: 0.5 }}
-      className={`rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 ${className ?? ""}`}
+      className={`rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5 ${className ?? ""}`}
     >
       {/* Header */}
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-white">Toppliste</h3>
-          <p className="mt-0.5 text-xs text-white/40">Beste selgere</p>
+          <h3 className="text-sm font-semibold text-ab-fg">Toppliste</h3>
+          <p className="mt-0.5 text-xs text-ab-fg-3">Beste selgere</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex gap-1 rounded-xl bg-white/5 p-1">
+          <div className="flex gap-1 rounded-xl bg-ab-elevated p-1">
             {METRICS.map(({ key, label }) => (
               <button key={key} onClick={() => onMetricChange?.(key)}
                 className={cn("cursor-pointer rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all",
-                  metric === key ? "bg-blue-600 text-white" : "text-white/50 hover:text-white/80")}>
+                  metric === key ? "bg-blue-600 text-white" : "text-ab-fg-3 hover:text-ab-fg-2")}>
                 {label}
               </button>
             ))}
@@ -76,7 +76,7 @@ export function LeaderboardPanel({ className, entries, metric = "ja_rate", onMet
               initial={reduced ? false : { opacity: 0, x: -12 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 + i * 0.07, duration: 0.35 }}
-              className="group flex items-center gap-3 rounded-xl border border-white/0 p-2 transition-all duration-200 hover:border-white/10 hover:bg-white/5 cursor-default"
+              className="group flex items-center gap-3 rounded-xl border border-transparent p-2 transition-all duration-200 hover:border-ab-line hover:bg-ab-hover cursor-default"
             >
               {/* Rank */}
               <span
@@ -91,14 +91,14 @@ export function LeaderboardPanel({ className, entries, metric = "ja_rate", onMet
                 <RoyMascot state={royState} size={40} accent={moodOut.colorClass.replace("text-", "#").replace("-500", "")} />
                 {/* Online dot */}
                 {entry.online && (
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0a0f1e] bg-emerald-500" />
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-ab-base bg-emerald-500" />
                 )}
               </div>
 
               {/* Name + region */}
               <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium text-white/90">{entry.name}</p>
-                <p className="truncate text-xs text-white/40">
+                <p className="truncate text-sm font-medium text-ab-fg">{entry.name}</p>
+                <p className="truncate text-xs text-ab-fg-3">
                   {entry.region || `${entry.dorerPerDag} dører/dag · ${entry.jaProsent.toFixed(1)}% ja`}
                 </p>
               </div>
@@ -112,8 +112,8 @@ export function LeaderboardPanel({ className, entries, metric = "ja_rate", onMet
 
               {/* Score */}
               <div className="shrink-0 text-right">
-                <p className="font-mono text-sm font-bold text-white/90">{entry.score}</p>
-                <p className="text-xs text-white/30">pts</p>
+                <p className="font-mono text-sm font-bold text-ab-fg">{entry.score}</p>
+                <p className="text-xs text-ab-fg-4">pts</p>
               </div>
             </motion.div>
           )

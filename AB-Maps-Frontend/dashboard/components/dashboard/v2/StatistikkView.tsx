@@ -47,18 +47,18 @@ function StatusBreakdown({ node, title, subtitle, employeeCount }: {
     <div className="flex flex-col h-full">
       <div className="mb-5 flex items-start justify-between shrink-0">
         <div>
-          <h3 className="text-sm font-bold text-white">{title}</h3>
-          <p className="mt-0.5 text-xs text-white/40">{subtitle}</p>
+          <h3 className="text-sm font-bold text-ab-fg">{title}</h3>
+          <p className="mt-0.5 text-xs text-ab-fg-3">{subtitle}</p>
         </div>
         <div className="flex gap-5 text-right">
-          <div><p className="font-mono text-lg font-bold text-white">{nbFmt.format(node.total)}</p><p className="text-[10px] text-white/30">dører</p></div>
-          <div><p className="font-mono text-lg font-bold text-emerald-400">{node.ja_rate.toFixed(1)}%</p><p className="text-[10px] text-white/30">ja-rate</p></div>
-          {employeeCount != null && <div><p className="font-mono text-lg font-bold text-white/80">{employeeCount}</p><p className="text-[10px] text-white/30">ansatte</p></div>}
+          <div><p className="font-mono text-lg font-bold text-ab-fg">{nbFmt.format(node.total)}</p><p className="text-[10px] text-ab-fg-4">dører</p></div>
+          <div><p className="font-mono text-lg font-bold text-emerald-400">{node.ja_rate.toFixed(1)}%</p><p className="text-[10px] text-ab-fg-4">ja-rate</p></div>
+          {employeeCount != null && <div><p className="font-mono text-lg font-bold text-ab-fg-2">{employeeCount}</p><p className="text-[10px] text-ab-fg-4">ansatte</p></div>}
         </div>
       </div>
 
       {/* Stacked bar */}
-      <div className="h-3 w-full overflow-hidden rounded-full bg-white/8 flex">
+      <div className="h-3 w-full overflow-hidden rounded-full bg-ab-hover flex">
         {STATUS.map(s => (
           <motion.div key={s.key} className="h-full" style={{ background: s.color }}
             initial={reduced ? false : { width: 0 }} animate={{ width: `${(node[s.key] / total) * 100}%` }}
@@ -69,13 +69,13 @@ function StatusBreakdown({ node, title, subtitle, employeeCount }: {
       {/* Status tiles */}
       <div className="mt-5 grid grid-cols-3 gap-3">
         {STATUS.map(s => (
-          <div key={s.key} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+          <div key={s.key} className="rounded-xl border border-ab-line bg-ab-elevated p-4">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
-              <span className="text-xs text-white/45 font-medium">{s.label}</span>
+              <span className="text-xs text-ab-fg-3 font-medium">{s.label}</span>
             </div>
             <p className="font-mono text-2xl font-bold" style={{ color: s.color }}>{nbFmt.format(node[s.key])}</p>
-            <p className="font-mono text-xs text-white/35 mt-0.5">{((node[s.key] / total) * 100).toFixed(0)}%</p>
+            <p className="font-mono text-xs text-ab-fg-4 mt-0.5">{((node[s.key] / total) * 100).toFixed(0)}%</p>
           </div>
         ))}
       </div>
@@ -145,18 +145,18 @@ export function StatistikkView() {
   const rightSub = postalNode ? "Statusfordeling for postnummer" : cityNode ? `${cityNode.postals.length} postnumre` : "Velg by eller postnummer i listen"
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen bg-ab-base">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-emerald-600/8 blur-3xl" />
       </div>
 
-      <div className="relative px-6 py-8 max-w-[1600px] mx-auto space-y-6">
+      <div className="relative px-4 sm:px-6 py-6 sm:py-8 max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
         <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-1">Statistikk · Geografisk visning</p>
-            <h1 className="text-2xl font-bold text-white">Aktivitet etter geografi</h1>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-ab-fg-4 mb-1">Statistikk · Geografisk visning</p>
+            <h1 className="text-2xl font-bold text-ab-fg">Aktivitet etter geografi</h1>
           </div>
         </motion.div>
 
@@ -170,12 +170,12 @@ export function StatistikkView() {
             { label: "Aktive byer", value: nbFmt.format(cities.length), accent: "#8b5cf6", Icon: MapPin },
           ].map((kpi, i) => (
             <motion.div key={kpi.label} initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.06 }}
-              className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+              className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-white/40 font-medium">{kpi.label}</span>
+                <span className="text-xs text-ab-fg-3 font-medium">{kpi.label}</span>
                 <div className="h-7 w-7 flex items-center justify-center rounded-lg" style={{ background: `${kpi.accent}22` }}><kpi.Icon className="h-3.5 w-3.5" style={{ color: kpi.accent }} /></div>
               </div>
-              <p className="font-mono text-xl font-bold text-white">{kpi.value}</p>
+              <p className="font-mono text-xl font-bold text-ab-fg">{kpi.value}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -183,28 +183,28 @@ export function StatistikkView() {
         {/* Filter strip */}
         <motion.div initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
           className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-1 rounded-xl bg-white/5 p-1 border border-white/8">
+          <div className="flex gap-1 rounded-xl bg-ab-elevated p-1 border border-ab-line">
             {PERIODS.map(({ key, label }) => (
               <button key={key} onClick={() => setPeriod(key)}
-                className={cn("cursor-pointer rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all", period === key ? "bg-white/15 text-white shadow-sm" : "text-white/40 hover:text-white/70")}>{label}</button>
+                className={cn("cursor-pointer rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all", period === key ? "bg-ab-active text-ab-fg shadow-sm" : "text-ab-fg-3 hover:text-ab-fg-2")}>{label}</button>
             ))}
           </div>
-          <div className="h-6 w-px bg-white/10" />
+          <div className="h-6 w-px bg-ab-line" />
           <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="text-xs text-white/25 font-medium mr-1">Kampanje:</span>
+            <span className="text-xs text-ab-fg-4 font-medium mr-1">Kampanje:</span>
             <button onClick={() => setCampaignId("")}
-              className={cn("cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all", campaignId === "" ? "bg-white/15 text-white" : "bg-white/5 text-white/40 hover:text-white/70")}>Alle</button>
+              className={cn("cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all", campaignId === "" ? "bg-ab-active text-ab-fg" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}>Alle</button>
             {campaigns.map(c => (
               <button key={c.id} onClick={() => setCampaignId(c.id)}
-                className={cn("cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all", campaignId === c.id ? "text-white shadow-sm" : "bg-white/5 text-white/40 hover:text-white/70")}
+                className={cn("cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all", campaignId === c.id ? "text-white shadow-sm" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}
                 style={campaignId === c.id ? { background: c.color, boxShadow: `0 0 12px ${c.color}60` } : {}}>{c.name}</button>
             ))}
           </div>
-          <div className="h-6 w-px bg-white/10" />
+          <div className="h-6 w-px bg-ab-line" />
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-4 pointer-events-none" />
             <input type="text" placeholder="Søk by eller postnr…" value={search} onChange={e => setSearch(e.target.value)}
-              className="h-9 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-xs text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all w-52" />
+              className="h-9 rounded-xl border border-ab-line bg-ab-elevated pl-8 pr-3 text-xs text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 transition-all w-52" />
           </div>
         </motion.div>
 
@@ -212,11 +212,11 @@ export function StatistikkView() {
         <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
           className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-5" style={{ minHeight: 560 }}>
           {/* Left: geo tree */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-white">Geografisk visning</h3>
-                <p className="mt-0.5 text-xs text-white/35">{cities.length} byer · {nbFmt.format(totals.total)} dører</p>
+                <h3 className="text-sm font-semibold text-ab-fg">Geografisk visning</h3>
+                <p className="mt-0.5 text-xs text-ab-fg-4">{cities.length} byer · {nbFmt.format(totals.total)} dører</p>
               </div>
               <MapPin className="h-4 w-4 text-blue-400/60" />
             </div>
@@ -230,33 +230,33 @@ export function StatistikkView() {
                   return (
                     <div key={city.city}>
                       <button onClick={() => handleSelectCity(city.city)}
-                        className={cn("cursor-pointer w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all", isOpen ? "bg-white/10 border border-white/15" : "hover:bg-white/5 border border-transparent")}>
+                        className={cn("cursor-pointer w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all", isOpen ? "bg-ab-hover border border-ab-line" : "hover:bg-ab-hover border border-transparent")}>
                         <MapPin className="h-3.5 w-3.5 shrink-0 text-blue-400" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <span className={cn("text-sm font-semibold", isOpen ? "text-white" : "text-white/75")}>{city.city}</span>
-                            <span className="font-mono text-xs font-bold text-white/50">{nbFmt.format(city.total)} · <span className="text-emerald-400/80">{city.ja_rate.toFixed(1)}%</span></span>
+                            <span className={cn("text-sm font-semibold", isOpen ? "text-ab-fg" : "text-ab-fg-2")}>{city.city}</span>
+                            <span className="font-mono text-xs font-bold text-ab-fg-3">{nbFmt.format(city.total)} · <span className="text-emerald-400/80">{city.ja_rate.toFixed(1)}%</span></span>
                           </div>
-                          <div className="h-1 overflow-hidden rounded-full bg-white/10">
+                          <div className="h-1 overflow-hidden rounded-full bg-ab-hover">
                             <motion.div className="h-full rounded-full bg-blue-500" initial={{ width: 0 }} animate={{ width: `${(city.total / maxTotal) * 100}%` }} transition={{ duration: 0.6 }} />
                           </div>
                         </div>
-                        <motion.div animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.15 }}><ChevronRight className="h-3.5 w-3.5 text-white/30" /></motion.div>
+                        <motion.div animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.15 }}><ChevronRight className="h-3.5 w-3.5 text-ab-fg-4" /></motion.div>
                       </button>
                       <AnimatePresence initial={false}>
                         {isOpen && (
                           <motion.div initial={reduced ? false : { height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-                            className="overflow-hidden ml-4 border-l border-white/10 pl-3 mt-1 space-y-0.5">
+                            className="overflow-hidden ml-4 border-l border-ab-line pl-3 mt-1 space-y-0.5">
                             {city.postals.map(pc => {
                               const active = selectedPostal === pc.postal_code
                               const max = city.postals[0]?.total || 1
                               return (
                                 <button key={pc.postal_code} onClick={() => handleSelectPostal(city.city, pc.postal_code)}
-                                  className={cn("cursor-pointer w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all", active ? "bg-blue-600/20 border border-blue-500/30" : "hover:bg-white/5 border border-transparent")}>
-                                  <span className={cn("font-mono text-xs font-bold tabular-nums w-10 shrink-0", active ? "text-blue-300" : "text-white/40")}>{pc.postal_code}</span>
-                                  <div className="flex-1 min-w-0"><div className="h-1 overflow-hidden rounded-full bg-white/10"><div className={cn("h-full rounded-full", active ? "bg-blue-400" : "bg-white/25")} style={{ width: `${(pc.total / max) * 100}%` }} /></div></div>
-                                  <span className={cn("font-mono text-xs font-semibold shrink-0", active ? "text-blue-300" : "text-white/50")}>{nbFmt.format(pc.total)}</span>
-                                  <span className="text-[10px] text-white/25 shrink-0 flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{pc.employee_count}</span>
+                                  className={cn("cursor-pointer w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all", active ? "bg-blue-600/20 border border-blue-500/30" : "hover:bg-ab-hover border border-transparent")}>
+                                  <span className={cn("font-mono text-xs font-bold tabular-nums w-10 shrink-0", active ? "text-blue-300" : "text-ab-fg-3")}>{pc.postal_code}</span>
+                                  <div className="flex-1 min-w-0"><div className="h-1 overflow-hidden rounded-full bg-ab-hover"><div className={cn("h-full rounded-full", active ? "bg-blue-400" : "bg-ab-active")} style={{ width: `${(pc.total / max) * 100}%` }} /></div></div>
+                                  <span className={cn("font-mono text-xs font-semibold shrink-0", active ? "text-blue-300" : "text-ab-fg-3")}>{nbFmt.format(pc.total)}</span>
+                                  <span className="text-[10px] text-ab-fg-4 shrink-0 flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{pc.employee_count}</span>
                                 </button>
                               )
                             })}
@@ -271,14 +271,14 @@ export function StatistikkView() {
           </div>
 
           {/* Right: status breakdown */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5">
             {rightNode ? (
               <StatusBreakdown node={rightNode} title={rightTitle} subtitle={rightSub} employeeCount={postalNode?.employee_count} />
             ) : (
               <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-                <MapPin className="h-8 w-8 text-white/15 mb-3" />
-                <p className="text-sm text-white/30">Velg by eller postnummer</p>
-                <p className="text-xs text-white/20 mt-1">for å se statusfordelingen</p>
+                <MapPin className="h-8 w-8 text-ab-fg-4 mb-3" />
+                <p className="text-sm text-ab-fg-4">Velg by eller postnummer</p>
+                <p className="text-xs text-ab-fg-4 mt-1">for å se statusfordelingen</p>
               </div>
             )}
           </div>

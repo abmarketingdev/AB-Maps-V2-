@@ -43,7 +43,7 @@ export default function AreasContent({
 
   // Desktop: Use traditional table (>= 1024px)
   return (
-    <div className="hidden lg:block bg-white rounded-lg shadow border overflow-x-auto">
+    <div className="hidden lg:block bg-ab-elevated rounded-lg shadow border overflow-x-auto">
       <table className="w-full text-sm min-w-[600px]">
         <thead>
           <tr>

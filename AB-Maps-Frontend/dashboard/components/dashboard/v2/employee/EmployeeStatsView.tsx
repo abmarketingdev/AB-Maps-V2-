@@ -32,8 +32,8 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
 function ChartTooltip({ active, payload, label, unit = "dører" }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-white/12 bg-[#0d1528] px-3 py-2 shadow-xl">
-      <p className="text-[11px] text-white/45">{label}</p>
+    <div className="rounded-xl border border-ab-line bg-ab-overlay px-3 py-2 shadow-xl">
+      <p className="text-[11px] text-ab-fg-3">{label}</p>
       {payload.map((p: any) => (
         <p key={p.dataKey} className="font-mono text-sm font-semibold" style={{ color: p.color || p.fill || "#fff" }}>{p.value} {unit}</p>
       ))}
@@ -41,7 +41,7 @@ function ChartTooltip({ active, payload, label, unit = "dører" }: any) {
   )
 }
 
-const card = "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"
+const card = "rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl"
 
 // ─── Tabs: Oversikt ─────────────────────────────────────────────────────────
 
@@ -68,8 +68,8 @@ function Oversikt({ s }: { s: EmployeeStats }) {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl mb-3" style={{ background: `${k.color}1f` }}>
               <k.icon className="h-4 w-4" style={{ color: k.color }} />
             </span>
-            <CountUp value={k.value} decimals={k.decimals} suffix={k.suffix} className="font-mono text-2xl font-bold text-white" />
-            <p className="text-[12px] text-white/45 mt-0.5">{k.label}</p>
+            <CountUp value={k.value} decimals={k.decimals} suffix={k.suffix} className="font-mono text-2xl font-bold text-ab-fg" />
+            <p className="text-[12px] text-ab-fg-3 mt-0.5">{k.label}</p>
           </div>
         ))}
       </div>
@@ -79,8 +79,8 @@ function Oversikt({ s }: { s: EmployeeStats }) {
 
         {/* threshold summary vs admin's global threshold */}
         <div className={`${card} p-5`}>
-          <h3 className="text-[13px] font-semibold text-white/70 mb-1">Mot leders terskler</h3>
-          <p className="text-xs text-white/40 mb-4">Standardterskler satt av admin.</p>
+          <h3 className="text-[13px] font-semibold text-ab-fg-2 mb-1">Mot leders terskler</h3>
+          <p className="text-xs text-ab-fg-3 mb-4">Standardterskler satt av admin.</p>
           <div className="space-y-3.5">
             {checks.map((c) => {
               const r = evalThreshold(c.value, c.target, true)
@@ -88,16 +88,16 @@ function Oversikt({ s }: { s: EmployeeStats }) {
               return (
                 <div key={c.label}>
                   <div className="flex items-center justify-between text-[13px] mb-1.5">
-                    <span className="text-white/60">{c.label}</span>
+                    <span className="text-ab-fg-2">{c.label}</span>
                     <span className="flex items-center gap-1.5">
-                      <span className="font-mono font-semibold text-white">{c.value}{c.suffix}</span>
-                      <span className="text-white/30">/ {c.target}{c.suffix}</span>
+                      <span className="font-mono font-semibold text-ab-fg">{c.value}{c.suffix}</span>
+                      <span className="text-ab-fg-4">/ {c.target}{c.suffix}</span>
                       <span className="inline-flex h-4 w-4 items-center justify-center rounded-full" style={{ background: `${color}22` }}>
                         {r.ok ? <Check className="h-2.5 w-2.5" style={{ color }} /> : <X className="h-2.5 w-2.5" style={{ color }} />}
                       </span>
                     </span>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/8">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-ab-hover">
                     <motion.div className="h-full rounded-full" style={{ background: color }}
                       initial={reduced ? false : { width: 0 }} animate={{ width: `${Math.min(100, r.pct)}%` }} transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }} />
                   </div>
@@ -110,7 +110,7 @@ function Oversikt({ s }: { s: EmployeeStats }) {
 
       {/* week activity */}
       <div className={`${card} p-6`}>
-        <h3 className="text-[13px] font-semibold text-white/70 mb-4">Uken på et blikk</h3>
+        <h3 className="text-[13px] font-semibold text-ab-fg-2 mb-4">Uken på et blikk</h3>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={s.weekActivity} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
@@ -148,7 +148,7 @@ function CampaignCard({ c }: { c: CampaignPerf }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: c.color }} />
-            <span className="text-[15px] font-semibold text-white">{c.name}</span>
+            <span className="text-[15px] font-semibold text-ab-fg">{c.name}</span>
           </div>
           <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide"
             style={{ background: c.thresholdScope === "kampanje" ? "rgba(16,185,129,0.15)" : "rgba(139,92,246,0.15)", color: c.thresholdScope === "kampanje" ? "#10b981" : "#a78bfa" }}>
@@ -165,8 +165,8 @@ function CampaignCard({ c }: { c: CampaignPerf }) {
             { v: `${c.consistency}%`, l: "konsistens" },
           ].map((x, i) => (
             <div key={i}>
-              <div className="font-mono text-lg font-bold text-white">{x.v}</div>
-              <div className="text-[11px] text-white/40">{x.l}</div>
+              <div className="font-mono text-lg font-bold text-ab-fg">{x.v}</div>
+              <div className="text-[11px] text-ab-fg-3">{x.l}</div>
             </div>
           ))}
         </div>
@@ -178,25 +178,25 @@ function CampaignCard({ c }: { c: CampaignPerf }) {
               initial={reduced ? false : { width: 0 }} animate={{ width: `${(v / c.doors) * 100}%` }} transition={{ duration: 0.7 }} />
           ))}
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/45 mb-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ab-fg-3 mb-4">
           {(["ja", "nei", "folg-opp", "ikke-hjemme"] as const).map(k => (
             <span key={k} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: OUTCOME_META[k].color }} />{OUTCOME_META[k].label}</span>
           ))}
         </div>
 
         {/* threshold checks */}
-        <div className="grid grid-cols-3 gap-2 border-t border-white/8 pt-3">
+        <div className="grid grid-cols-3 gap-2 border-t border-ab-line pt-3">
           {checks.map((ch) => {
             const r = evalThreshold(ch.value, ch.target, true)
             const color = r.ok ? "#10b981" : "#f43f5e"
             return (
-              <div key={ch.label} className="rounded-xl bg-white/[0.03] p-2.5">
+              <div key={ch.label} className="rounded-xl bg-ab-elevated p-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-white/45">{ch.label}</span>
+                  <span className="text-[11px] text-ab-fg-3">{ch.label}</span>
                   {r.ok ? <ArrowUpRight className="h-3.5 w-3.5" style={{ color }} /> : <ArrowDownRight className="h-3.5 w-3.5" style={{ color }} />}
                 </div>
                 <div className="mt-0.5 font-mono text-sm font-bold" style={{ color }}>{ch.value}{ch.suffix}</div>
-                <div className="text-[10px] text-white/30">mål {ch.target}{ch.suffix}</div>
+                <div className="text-[10px] text-ab-fg-4">mål {ch.target}{ch.suffix}</div>
               </div>
             )
           })}
@@ -233,15 +233,15 @@ function Arbeidstid({ s }: { s: EmployeeStats }) {
               <t.icon className="h-5 w-5" style={{ color: t.color }} />
             </span>
             <div>
-              <div className="font-mono text-2xl font-bold text-white">{t.value}</div>
-              <p className="text-[12px] text-white/45">{t.label}</p>
+              <div className="font-mono text-2xl font-bold text-ab-fg">{t.value}</div>
+              <p className="text-[12px] text-ab-fg-3">{t.label}</p>
             </div>
           </div>
         ))}
       </div>
       <div className={`${card} p-6`}>
-        <h3 className="text-[13px] font-semibold text-white/70 mb-1">Snitt arbeidstid per kampanje</h3>
-        <p className="text-xs text-white/40 mb-4">Minutter per aktiv dag.</p>
+        <h3 className="text-[13px] font-semibold text-ab-fg-2 mb-1">Snitt arbeidstid per kampanje</h3>
+        <p className="text-xs text-ab-fg-3 mb-4">Minutter per aktiv dag.</p>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
@@ -274,8 +274,8 @@ function Terskler({ s }: { s: EmployeeStats }) {
   return (
     <div className="space-y-6">
       <div className={`${card} p-5`}>
-        <h3 className="text-[13px] font-semibold text-white/70 mb-1">Dine terskler (global standard)</h3>
-        <p className="text-xs text-white/40 mb-4">Disse er satt av admin. Grønt = du ligger over målet.</p>
+        <h3 className="text-[13px] font-semibold text-ab-fg-2 mb-1">Dine terskler (global standard)</h3>
+        <p className="text-xs text-ab-fg-3 mb-4">Disse er satt av admin. Grønt = du ligger over målet.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {THRESHOLD_FIELDS.map((f) => {
             const target = t[f.key]
@@ -284,20 +284,20 @@ function Terskler({ s }: { s: EmployeeStats }) {
             const r = has ? evalThreshold(value!, target, f.higherIsBetter) : { ok: true, pct: 100 }
             const color = !has ? "#64748b" : r.ok ? "#10b981" : "#f43f5e"
             return (
-              <div key={f.key} className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+              <div key={f.key} className="rounded-xl border border-ab-line bg-ab-elevated p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-white/60">{f.label}</span>
-                  <span className="font-mono text-sm font-semibold text-white">{target}{f.suffix || ""}</span>
+                  <span className="text-[13px] text-ab-fg-2">{f.label}</span>
+                  <span className="font-mono text-sm font-semibold text-ab-fg">{target}{f.suffix || ""}</span>
                 </div>
                 {has ? (
                   <div className="mt-2.5 flex items-center gap-2">
-                    <div className="flex-1 h-2 overflow-hidden rounded-full bg-white/8">
+                    <div className="flex-1 h-2 overflow-hidden rounded-full bg-ab-hover">
                       <div className="h-full rounded-full" style={{ background: color, width: `${Math.min(100, r.pct)}%` }} />
                     </div>
                     <span className="font-mono text-[12px] font-semibold" style={{ color }}>{value}{f.suffix || ""}</span>
                   </div>
                 ) : (
-                  <p className="mt-2 text-[11px] text-white/30">Ingen direkte måling tilgjengelig</p>
+                  <p className="mt-2 text-[11px] text-ab-fg-4">Ingen direkte måling tilgjengelig</p>
                 )}
               </div>
             )
@@ -307,16 +307,16 @@ function Terskler({ s }: { s: EmployeeStats }) {
 
       {/* campaign overrides */}
       <div className={`${card} p-5`}>
-        <h3 className="text-[13px] font-semibold text-white/70 mb-3">Kampanjespesifikke terskler</h3>
+        <h3 className="text-[13px] font-semibold text-ab-fg-2 mb-3">Kampanjespesifikke terskler</h3>
         <div className="space-y-2.5">
           {s.campaigns.map(c => (
-            <div key={c.id} className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3">
-              <span className="flex items-center gap-2.5 text-[13px] text-white/70">
+            <div key={c.id} className="flex items-center justify-between rounded-xl bg-ab-elevated px-4 py-3">
+              <span className="flex items-center gap-2.5 text-[13px] text-ab-fg-2">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: c.color }} />{c.name}
               </span>
               <div className="flex items-center gap-4 text-[12px]">
-                <span className="text-white/45">Dører/dag <span className="font-mono font-semibold text-white">{c.threshold.doorsDay}</span></span>
-                <span className="text-white/45">Ja% <span className="font-mono font-semibold text-white">{c.threshold.minJa}</span></span>
+                <span className="text-ab-fg-3">Dører/dag <span className="font-mono font-semibold text-ab-fg">{c.threshold.doorsDay}</span></span>
+                <span className="text-ab-fg-3">Ja% <span className="font-mono font-semibold text-ab-fg">{c.threshold.minJa}</span></span>
                 <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                   style={{ background: c.thresholdScope === "kampanje" ? "rgba(16,185,129,0.15)" : "rgba(139,92,246,0.15)", color: c.thresholdScope === "kampanje" ? "#10b981" : "#a78bfa" }}>
                   {c.thresholdScope === "kampanje" ? "Egen" : "Global"}
@@ -353,26 +353,26 @@ export function EmployeeStatsView() {
 
   if (status !== "ok") {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center gap-3 text-center" style={{ background: "linear-gradient(180deg, #0a0f1e 0%, #0b1120 100%)" }}>
+      <div className="min-h-full flex flex-col items-center justify-center gap-3 text-center bg-ab-base">
         {status === "loading"
-          ? <><Loader2 className="h-7 w-7 animate-spin text-white/40" /><p className="text-sm text-white/40">Laster statistikk…</p></>
-          : <><p className="text-sm text-white/50">Kunne ikke laste statistikken din.</p><button onClick={() => window.location.reload()} className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white">Prøv igjen</button></>}
+          ? <><Loader2 className="h-7 w-7 animate-spin text-ab-fg-3" /><p className="text-sm text-ab-fg-3">Laster statistikk…</p></>
+          : <><p className="text-sm text-ab-fg-3">Kunne ikke laste statistikken din.</p><button onClick={() => window.location.reload()} className="cursor-pointer rounded-lg border border-ab-line bg-ab-elevated px-3 py-1.5 text-xs font-medium text-ab-fg-2 hover:text-ab-fg">Prøv igjen</button></>}
       </div>
     )
   }
 
   return (
-    <div className="min-h-full" style={{ background: "linear-gradient(180deg, #0a0f1e 0%, #0b1120 100%)" }}>
+    <div className="min-h-full bg-ab-base">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-white">Min statistikk</h1>
-            <p className="text-sm text-white/40 mt-0.5">Din egen ytelse, målt mot leders terskler · {s.periodLabel}</p>
+            <h1 className="text-2xl font-bold text-ab-fg">Min statistikk</h1>
+            <p className="text-sm text-ab-fg-3 mt-0.5">Din egen ytelse, målt mot leders terskler · {s.periodLabel}</p>
           </div>
         </div>
 
         {/* tabs */}
-        <div className="flex flex-wrap gap-1.5 rounded-2xl border border-white/10 bg-white/[0.03] p-1.5 w-fit">
+        <div className="flex flex-wrap gap-1.5 rounded-2xl border border-ab-line bg-ab-elevated p-1.5 w-fit">
           {TABS.map(({ id, label, icon: Icon }) => {
             const active = tab === id
             return (

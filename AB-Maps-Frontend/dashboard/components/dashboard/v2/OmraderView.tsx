@@ -74,7 +74,7 @@ function Modal({ open, onClose, children, width = "max-w-md" }: { open: boolean;
           style={{ background: "rgba(5,8,16,0.65)", backdropFilter: "blur(3px)" }} onClick={onClose}>
           <motion.div initial={{ opacity: 0, scale: 0.97, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }} onClick={e => e.stopPropagation()}
-            className={cn("w-full rounded-2xl border border-white/12 bg-[#0d1528] shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)]", width)}>
+            className={cn("w-full rounded-2xl border border-ab-line bg-ab-overlay shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)]", width)}>
             {children}
           </motion.div>
         </motion.div>
@@ -86,13 +86,13 @@ function Modal({ open, onClose, children, width = "max-w-md" }: { open: boolean;
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-white/40 mb-1.5">{label}</label>
+      <label className="block text-xs font-medium text-ab-fg-3 mb-1.5">{label}</label>
       {children}
     </div>
   )
 }
 
-const inputCls = "w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all"
+const inputCls = "w-full h-10 rounded-xl border border-ab-line bg-ab-elevated px-3.5 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 transition-all"
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -199,26 +199,26 @@ export function OmraderView() {
   const campaignName = campaignFilter ? (campaigns.find(c => c.id === campaignFilter)?.name ?? "Kampanje") : "Velg kampanje"
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen bg-ab-base">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-blue-600/8 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-emerald-600/8 blur-3xl" />
       </div>
 
-      <div className="relative px-6 py-6 max-w-[1600px] mx-auto space-y-5">
+      <div className="relative px-4 sm:px-6 py-5 sm:py-6 max-w-[1600px] mx-auto space-y-5">
         {/* Header */}
         <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Geografisk fordeling · Kapasitet</p>
-            <h1 className="text-3xl font-bold text-white">Områder</h1>
+            <p className="text-xs uppercase tracking-widest text-ab-fg-4 mb-1">Geografisk fordeling · Kapasitet</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-ab-fg">Områder</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {/* Stats period (drives the area-detail panel window) */}
-            <div className="hidden sm:flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+            <div className="hidden sm:flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
               {PERIODS.map(p => (
                 <button key={p.key} onClick={() => setPeriod(p.key)}
                   className={cn("cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all",
-                    period === p.key ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+                    period === p.key ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
                   {p.label}
                 </button>
               ))}
@@ -226,22 +226,22 @@ export function OmraderView() {
             {/* Campaign filter */}
             <div className="relative">
               <button onClick={() => setCampOpen(o => !o)}
-                className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:border-white/20 transition-all">
+                className="cursor-pointer flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 text-sm font-medium text-ab-fg-2 hover:text-ab-fg hover:border-ab-line transition-all">
                 <MapPin className="h-3.5 w-3.5" /> {campaignName}
-                <ChevronDown className="h-3.5 w-3.5 text-white/40" />
+                <ChevronDown className="h-3.5 w-3.5 text-ab-fg-3" />
               </button>
               <AnimatePresence>
                 {campOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setCampOpen(false)} />
                     <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.14 }}
-                      className="absolute right-0 top-full mt-2 z-20 w-56 max-h-80 overflow-y-auto rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl py-1">
+                      className="absolute right-0 top-full mt-2 z-20 w-56 max-h-80 overflow-y-auto rounded-xl border border-ab-line bg-ab-overlay shadow-2xl py-1">
                       {campaigns.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-white/40">Ingen kampanjer</div>
+                        <div className="px-3 py-2 text-sm text-ab-fg-3">Ingen kampanjer</div>
                       ) : campaigns.map(c => (
                         <button key={c.id} onClick={() => { setCampaignFilter(c.id); setAreasPage(1); setSelectedAreaId(null); setCampOpen(false) }}
-                          className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-white/5 text-left">
-                          <span className="h-2 w-2 rounded-full" style={{ background: c.color }} /><span className="flex-1 text-white/85 truncate">{c.name}</span>
+                          className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-ab-hover text-left">
+                          <span className="h-2 w-2 rounded-full" style={{ background: c.color }} /><span className="flex-1 text-ab-fg-2 truncate">{c.name}</span>
                           {campaignFilter === c.id && <Check className="h-3.5 w-3.5 text-blue-400" />}
                         </button>
                       ))}
@@ -272,35 +272,35 @@ export function OmraderView() {
             />
           ) : (
           <motion.div initial={reduced ? false : { opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}
-            className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden flex flex-col">
+            className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl overflow-hidden flex flex-col">
             {/* Search */}
             {campaignFilter && (
               <div className="px-3 pt-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-4" />
                   <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk område…"
-                    className="w-full h-9 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+                    className="w-full h-9 rounded-xl border border-ab-line bg-ab-elevated pl-8 pr-3 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50" />
                 </div>
               </div>
             )}
-            <div className="px-4 py-3 border-b border-white/8 grid grid-cols-[1fr_auto_auto] gap-3 items-center text-[10px] font-bold uppercase tracking-wider text-white/35">
+            <div className="px-4 py-3 border-b border-ab-line grid grid-cols-[1fr_auto_auto] gap-3 items-center text-[10px] font-bold uppercase tracking-wider text-ab-fg-3">
               <span>Område</span><span className="text-right pr-2">Dører · Last</span><span className="text-right">Tildelt</span>
             </div>
-            <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+            <div className="flex-1 overflow-y-auto divide-y divide-ab-line">
               {filteredAreas.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <MapPin className="h-7 w-7 text-white/15 mb-3" />
+                  <MapPin className="h-7 w-7 text-ab-fg-4 mb-3" />
                   {!campaignFilter ? (
                     <>
-                      <p className="text-sm text-white/35">Velg en kampanje</p>
-                      <p className="text-xs text-white/20 mt-1">Områdene lastes når du velger en kampanje</p>
+                      <p className="text-sm text-ab-fg-3">Velg en kampanje</p>
+                      <p className="text-xs text-ab-fg-4 mt-1">Områdene lastes når du velger en kampanje</p>
                     </>
                   ) : areasLoading ? (
-                    <p className="text-sm text-white/35">Laster områder…</p>
+                    <p className="text-sm text-ab-fg-3">Laster områder…</p>
                   ) : (
                     <>
-                      <p className="text-sm text-white/35">Ingen områder i denne kampanjen</p>
-                      <p className="text-xs text-white/20 mt-1">Prøv en annen kampanje</p>
+                      <p className="text-sm text-ab-fg-3">Ingen områder i denne kampanjen</p>
+                      <p className="text-xs text-ab-fg-4 mt-1">Prøv en annen kampanje</p>
                     </>
                   )}
                 </div>
@@ -312,18 +312,18 @@ export function OmraderView() {
                     onMouseEnter={() => setHoveredAreaId(area.id)} onMouseLeave={() => setHoveredAreaId(null)}
                     onClick={() => setSelectedAreaId(selected ? null : area.id)}
                     className={cn("group relative cursor-pointer px-4 py-3 grid grid-cols-[1fr_auto_auto] gap-3 items-center transition-colors",
-                      selected ? "bg-white/[0.07]" : "hover:bg-white/[0.04]")}>
+                      selected ? "bg-ab-hover" : "hover:bg-ab-hover")}>
                     {selected && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full" style={{ background: area.color }} />}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="h-2.5 w-2.5 rounded-sm shrink-0" style={{ background: area.color }} />
-                        <span className="text-sm font-semibold text-white/90 truncate">{area.name}</span>
+                        <span className="text-sm font-semibold text-ab-fg truncate">{area.name}</span>
                       </div>
-                      <span className="text-xs text-white/35 ml-4.5">{area.campaign?.name ?? "Uten kampanje"}</span>
+                      <span className="text-xs text-ab-fg-3 ml-4.5">{area.campaign?.name ?? "Uten kampanje"}</span>
                     </div>
                     <div className="text-right">
-                      <span className="font-mono text-sm font-semibold text-white/80">{nbFmt.format(area.doors ?? area.house_count ?? 0)}</span>
-                      <div className="mt-1 h-1 w-16 ml-auto overflow-hidden rounded-full bg-white/10">
+                      <span className="font-mono text-sm font-semibold text-ab-fg-2">{nbFmt.format(area.doors ?? area.house_count ?? 0)}</span>
+                      <div className="mt-1 h-1 w-16 ml-auto overflow-hidden rounded-full bg-ab-hover">
                         <div className="h-full rounded-full" style={{ width: `${(area.load) * 100}%`, background: loadColor(area.load) }} />
                       </div>
                     </div>
@@ -331,14 +331,14 @@ export function OmraderView() {
                       {area.__assignees && area.__assignees.length > 0 ? (
                         <div className="flex -space-x-2">
                           {area.__assignees.slice(0, 3).map(as => (
-                            <div key={as.id} className="rounded-full ring-2 ring-[#0d1528]" title={as.name}><RoyMascot state={personRoy(as.id)} size={24} /></div>
+                            <div key={as.id} className="rounded-full ring-2 ring-ab-base" title={as.name}><RoyMascot state={personRoy(as.id)} size={24} /></div>
                           ))}
                         </div>
-                      ) : <span className="text-xs text-white/25">—</span>}
+                      ) : <span className="text-xs text-ab-fg-4">—</span>}
                       {/* row menu */}
                       <div className="relative">
                         <button onClick={(e) => { e.stopPropagation(); setMenuFor(menuFor === area.id ? null : area.id) }}
-                          className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all">
+                          className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover opacity-0 group-hover:opacity-100 transition-all">
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
                         <AnimatePresence>
@@ -346,10 +346,10 @@ export function OmraderView() {
                             <>
                               <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setMenuFor(null) }} />
                               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.12 }}
-                                className="absolute right-0 top-full mt-1 z-20 w-40 rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl py-1"
+                                className="absolute right-0 top-full mt-1 z-20 w-40 rounded-xl border border-ab-line bg-ab-overlay shadow-2xl py-1"
                                 onClick={e => e.stopPropagation()}>
-                                <button onClick={() => { setModal({ kind: "edit", area }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/80 hover:bg-white/5 text-left"><Pencil className="h-3.5 w-3.5" /> Rediger</button>
-                                <button onClick={() => { setModal({ kind: "assign", area }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/80 hover:bg-white/5 text-left"><Users className="h-3.5 w-3.5" /> Tildel ansatte</button>
+                                <button onClick={() => { setModal({ kind: "edit", area }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><Pencil className="h-3.5 w-3.5" /> Rediger</button>
+                                <button onClick={() => { setModal({ kind: "assign", area }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><Users className="h-3.5 w-3.5" /> Tildel ansatte</button>
                                 <button onClick={() => { setModal({ kind: "delete", area }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10 text-left"><Trash2 className="h-3.5 w-3.5" /> Slett</button>
                               </motion.div>
                             </>
@@ -363,17 +363,17 @@ export function OmraderView() {
             </div>
             {/* Pagination footer (client-side over the filtered set) */}
             {campaignFilter && filteredAreas.length > 0 && (
-              <div className="px-4 py-3 border-t border-white/8 flex items-center justify-between gap-3">
-                <span className="text-[11px] text-white/35">
+              <div className="px-4 py-3 border-t border-ab-line flex items-center justify-between gap-3">
+                <span className="text-[11px] text-ab-fg-3">
                   Side {areasPage} av {totalPages} · {nbFmt.format(filteredAreas.length)} områder
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => setAreasPage(p => Math.max(1, p - 1))} disabled={areasLoading || areasPage <= 1}
-                    className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white hover:border-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                    className="cursor-pointer rounded-lg border border-ab-line bg-ab-elevated px-3 py-1.5 text-xs font-medium text-ab-fg-2 hover:text-ab-fg hover:border-ab-line transition-all disabled:opacity-30 disabled:cursor-not-allowed">
                     Forrige
                   </button>
                   <button onClick={() => setAreasPage(p => Math.min(totalPages, p + 1))} disabled={areasLoading || areasPage >= totalPages}
-                    className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white hover:border-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                    className="cursor-pointer rounded-lg border border-ab-line bg-ab-elevated px-3 py-1.5 text-xs font-medium text-ab-fg-2 hover:text-ab-fg hover:border-ab-line transition-all disabled:opacity-30 disabled:cursor-not-allowed">
                     {areasLoading ? "Laster…" : "Neste"}
                   </button>
                 </div>
@@ -384,21 +384,21 @@ export function OmraderView() {
 
           {/* Map (kept as-is) */}
           <motion.div initial={reduced ? false : { opacity: 0, scale: 0.99 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}
-            className="rounded-2xl border border-white/10 overflow-hidden relative min-h-[60vh] xl:min-h-0">
+            className="rounded-2xl border border-ab-line overflow-hidden relative min-h-[60vh] xl:min-h-0">
             {/* Heatmap metric toggle */}
             {campaignFilter && (
-              <div className="absolute top-3 left-3 z-[2] flex gap-1 rounded-xl border border-white/10 bg-[#0d1528]/85 backdrop-blur-md p-1 shadow-lg">
+              <div className="absolute top-3 left-3 z-[2] flex gap-1 rounded-xl border border-ab-line bg-ab-overlay backdrop-blur-md p-1 shadow-lg">
                 {([["", "Ingen"], ["doors", "Dører"], ["ja_rate", "Ja-rate"]] as const).map(([key, label]) => {
                   const active = (heatMetric ?? "") === key
                   return (
                     <button key={label} onClick={() => setHeatMetric(key === "" ? null : key)}
-                      className={cn("cursor-pointer rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all", active ? "bg-blue-600 text-white" : "text-white/55 hover:text-white")}>
+                      className={cn("cursor-pointer rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all", active ? "bg-blue-600 text-white" : "text-ab-fg-3 hover:text-ab-fg")}>
                       {label}
                     </button>
                   )
                 })}
                 {heat && heat.max > 0 && (
-                  <span className="flex items-center gap-1 px-2 text-[10px] text-white/40">
+                  <span className="flex items-center gap-1 px-2 text-[10px] text-ab-fg-3">
                     <span className="h-2 w-10 rounded-full" style={{ background: "linear-gradient(90deg, rgb(37,99,235), rgb(14,165,165), rgb(16,185,129))" }} />
                     {heatMetric === "ja_rate" ? `0–${heat.max.toFixed(0)}%` : `0–${nbFmt.format(heat.max)}`}
                   </span>
@@ -423,7 +423,7 @@ export function OmraderView() {
 
       {/* Mobile: area stats slide up over the map instead of pushing it off-screen */}
       <Sheet open={isMobile && !!selectedAreaId} onOpenChange={(o) => { if (!o) setSelectedAreaId(null) }}>
-        <SheetContent side="bottom" className="h-[86vh] p-0 border-white/10 bg-transparent">
+        <SheetContent side="bottom" className="h-[86vh] p-0 border-ab-line bg-transparent">
           {isMobile && selectedAreaId && (
             <div className="h-full p-2">
               <AreaStatsPanel
@@ -486,10 +486,10 @@ function AreaModals({ modal, campaigns, onClose, onSave, onDelete }: {
       <Modal open onClose={onClose} width="max-w-sm">
         <div className="p-6">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/15 mb-4"><Trash2 className="h-5 w-5 text-rose-400" /></div>
-          <h2 className="text-lg font-bold text-white mb-1">Slett område</h2>
-          <p className="text-sm text-white/50 mb-5">Er du sikker på at du vil slette <span className="text-white/80 font-medium">{modal.area.name}</span>? Dette kan ikke angres.</p>
+          <h2 className="text-lg font-bold text-ab-fg mb-1">Slett område</h2>
+          <p className="text-sm text-ab-fg-3 mb-5">Er du sikker på at du vil slette <span className="text-ab-fg-2 font-medium">{modal.area.name}</span>? Dette kan ikke angres.</p>
           <div className="flex justify-end gap-2">
-            <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8 transition-all">Avbryt</button>
+            <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-all">Avbryt</button>
             <button onClick={() => { onDelete(modal.area.id); onClose() }} className="cursor-pointer rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition-all">Slett</button>
           </div>
         </div>
@@ -501,27 +501,27 @@ function AreaModals({ modal, campaigns, onClose, onSave, onDelete }: {
     const area = modal.area
     return (
       <Modal open onClose={onClose}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
-          <div><h2 className="text-lg font-bold text-white">Tildel ansatte</h2><p className="text-xs text-white/40">{area.name}</p></div>
-          <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-ab-line">
+          <div><h2 className="text-lg font-bold text-ab-fg">Tildel ansatte</h2><p className="text-xs text-ab-fg-3">{area.name}</p></div>
+          <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover"><X className="h-4 w-4" /></button>
         </div>
         <div className="p-3 max-h-80 overflow-y-auto">
           {people.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-white/35">Laster ansatte…</p>
+            <p className="px-3 py-6 text-center text-sm text-ab-fg-3">Laster ansatte…</p>
           ) : people.map(p => {
             const on = assignSel.includes(p.id)
             return (
               <button key={p.id} onClick={() => setAssignSel(s => s.includes(p.id) ? s.filter(x => x !== p.id) : [...s, p.id])}
-                className="cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
+                className="cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-ab-hover text-left transition-colors">
                 <RoyMascot state={personRoy(p.id)} size={30} />
-                <span className="flex-1 text-sm text-white/85">{p.name}</span>
-                <span className={cn("flex h-5 w-5 items-center justify-center rounded-md border transition-colors", on ? "bg-blue-600 border-blue-600" : "border-white/20")}>{on && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}</span>
+                <span className="flex-1 text-sm text-ab-fg-2">{p.name}</span>
+                <span className={cn("flex h-5 w-5 items-center justify-center rounded-md border transition-colors", on ? "bg-blue-600 border-blue-600" : "border-ab-line")}>{on && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}</span>
               </button>
             )
           })}
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/8">
-          <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-ab-line">
+          <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover">Avbryt</button>
           <button onClick={() => saveAssign(area.id)} disabled={assignSaving}
             className="cursor-pointer rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-40">{assignSaving ? "Lagrer…" : `Lagre (${assignSel.length})`}</button>
         </div>
@@ -547,16 +547,16 @@ function AreaModals({ modal, campaigns, onClose, onSave, onDelete }: {
 
   return (
     <Modal open onClose={onClose}>
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
-        <h2 className="text-lg font-bold text-white">{isCreate ? "Nytt område" : "Rediger område"}</h2>
-        <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-ab-line">
+        <h2 className="text-lg font-bold text-ab-fg">{isCreate ? "Nytt område" : "Rediger område"}</h2>
+        <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover"><X className="h-4 w-4" /></button>
       </div>
       <div className="p-5 space-y-4">
         <Field label="Navn"><input value={name} onChange={e => setName(e.target.value)} autoFocus placeholder="Områdenavn" className={inputCls} onKeyDown={e => e.key === "Enter" && submit()} /></Field>
         <Field label="Farge">
           <div className="flex gap-2">
             {AREA_COLORS.map(c => (
-              <button key={c} onClick={() => setColor(c)} className={cn("cursor-pointer h-8 w-8 rounded-lg transition-transform hover:scale-110", color === c && "ring-2 ring-white/60 ring-offset-2 ring-offset-[#0d1528]")} style={{ background: c }} />
+              <button key={c} onClick={() => setColor(c)} className={cn("cursor-pointer h-8 w-8 rounded-lg transition-transform hover:scale-110", color === c && "ring-2 ring-ab-line ring-offset-2 ring-offset-ab-base")} style={{ background: c }} />
             ))}
           </div>
         </Field>
@@ -565,7 +565,7 @@ function AreaModals({ modal, campaigns, onClose, onSave, onDelete }: {
             <div className="flex flex-wrap gap-1.5">
               {campaigns.map(c => (
                 <button key={c.id} onClick={() => setCampaignId(c.id)}
-                  className={cn("cursor-pointer flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all", campaignId === c.id ? "bg-white/15 text-white" : "bg-white/5 text-white/45 hover:text-white/75")}>
+                  className={cn("cursor-pointer flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all", campaignId === c.id ? "bg-ab-active text-ab-fg" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}>
                   <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />{c.name}
                 </button>
               ))}
@@ -573,8 +573,8 @@ function AreaModals({ modal, campaigns, onClose, onSave, onDelete }: {
           </Field>
         )}
       </div>
-      <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/8">
-        <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
+      <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-ab-line">
+        <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover">Avbryt</button>
         <button onClick={submit} disabled={!name.trim()} className="cursor-pointer rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed">{isCreate ? "Opprett" : "Lagre"}</button>
       </div>
     </Modal>

@@ -125,13 +125,13 @@ function DateControl({ state, setState }: { state: DateState; setState: (s: Date
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* Mode toggle */}
-      <div className="flex gap-1 rounded-2xl bg-white/5 border border-white/8 p-1">
+      <div className="flex gap-1 rounded-2xl bg-ab-elevated border border-ab-line p-1">
         {(["dag", "periode"] as DateMode[]).map(m => (
           <button
             key={m}
             onClick={() => setState({ ...state, mode: m })}
             className={cn("cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold transition-all capitalize",
-              state.mode === m ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}
+              state.mode === m ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}
           >
             {m === "dag" ? "Dag" : "Periode"}
           </button>
@@ -141,49 +141,49 @@ function DateControl({ state, setState }: { state: DateState; setState: (s: Date
       {state.mode === "dag" ? (
         <>
           {/* Day nav */}
-          <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1.5">
-            <button onClick={() => shift(-1)} className="cursor-pointer flex h-9 w-9 items-center justify-center rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-all" aria-label="Forrige dag">
+          <div className="flex items-center gap-1 rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-1.5">
+            <button onClick={() => shift(-1)} className="cursor-pointer flex h-9 w-9 items-center justify-center rounded-xl text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-all" aria-label="Forrige dag">
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button onClick={() => dayInputRef.current?.showPicker?.()} className="cursor-pointer relative flex flex-col items-center px-4 min-w-[180px]">
-              <span className="text-base font-bold capitalize text-white leading-tight">{weekday}</span>
-              <span className="text-xs text-white/45">{dateStr}</span>
+              <span className="text-base font-bold capitalize text-ab-fg leading-tight">{weekday}</span>
+              <span className="text-xs text-ab-fg-3">{dateStr}</span>
               <input ref={dayInputRef} type="date" value={state.day.toISOString().slice(0, 10)} max={today.toISOString().slice(0, 10)}
                 onChange={e => { if (e.target.value) setState({ ...state, day: startOfDay(new Date(e.target.value)) }) }}
                 className="absolute inset-0 opacity-0 cursor-pointer" tabIndex={-1} />
             </button>
-            <button onClick={() => canForward && shift(1)} disabled={!canForward} className="cursor-pointer flex h-9 w-9 items-center justify-center rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:cursor-not-allowed" aria-label="Neste dag">
+            <button onClick={() => canForward && shift(1)} disabled={!canForward} className="cursor-pointer flex h-9 w-9 items-center justify-center rounded-xl text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-all disabled:opacity-20 disabled:cursor-not-allowed" aria-label="Neste dag">
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
-          <div className="flex gap-1 rounded-2xl bg-white/5 border border-white/8 p-1">
-            <button onClick={() => setState({ ...state, day: today })} className={cn("cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold transition-all", isToday ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>I dag</button>
-            <button onClick={() => setState({ ...state, day: yest })} className={cn("cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold transition-all", isYesterday ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>I går</button>
+          <div className="flex gap-1 rounded-2xl bg-ab-elevated border border-ab-line p-1">
+            <button onClick={() => setState({ ...state, day: today })} className={cn("cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold transition-all", isToday ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>I dag</button>
+            <button onClick={() => setState({ ...state, day: yest })} className={cn("cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold transition-all", isYesterday ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>I går</button>
           </div>
         </>
       ) : (
         <>
           {/* Predefined ranges */}
-          <div className="flex flex-wrap gap-1 rounded-2xl bg-white/5 border border-white/8 p-1">
+          <div className="flex flex-wrap gap-1 rounded-2xl bg-ab-elevated border border-ab-line p-1">
             {RANGE_PRESETS.map(p => (
               <button
                 key={p.key}
                 onClick={() => { const [s, e] = p.resolve(); setActivePreset(p.key); setState({ ...state, rangeStart: s, rangeEnd: e }) }}
                 className={cn("cursor-pointer rounded-xl px-3.5 py-2 text-sm font-semibold transition-all",
-                  activePreset === p.key ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}
+                  activePreset === p.key ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}
               >{p.label}</button>
             ))}
           </div>
           {/* Custom from–to */}
-          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl px-3 py-2">
-            <CalendarDays className="h-4 w-4 text-white/40" />
+          <div className="flex items-center gap-2 rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl px-3 py-2">
+            <CalendarDays className="h-4 w-4 text-ab-fg-3" />
             <input type="date" value={state.rangeStart.toISOString().slice(0, 10)} max={state.rangeEnd.toISOString().slice(0, 10)}
               onChange={e => { if (e.target.value) { setActivePreset(""); setState({ ...state, rangeStart: startOfDay(new Date(e.target.value)) }) } }}
-              className="bg-transparent text-sm text-white outline-none [color-scheme:dark]" />
-            <span className="text-white/30 text-sm">→</span>
+              className="bg-transparent text-sm text-ab-fg outline-none [color-scheme:dark]" />
+            <span className="text-ab-fg-4 text-sm">→</span>
             <input type="date" value={state.rangeEnd.toISOString().slice(0, 10)} min={state.rangeStart.toISOString().slice(0, 10)} max={startOfDay(new Date()).toISOString().slice(0, 10)}
               onChange={e => { if (e.target.value) { setActivePreset(""); setState({ ...state, rangeEnd: startOfDay(new Date(e.target.value)) }) } }}
-              className="bg-transparent text-sm text-white outline-none [color-scheme:dark]" />
+              className="bg-transparent text-sm text-ab-fg outline-none [color-scheme:dark]" />
           </div>
         </>
       )}
@@ -204,12 +204,12 @@ function HeroBand({ counts, prevTotal, peakLabel, peakIcon }: {
 
   return (
     <motion.div initial={reduced ? false : { opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl px-7 py-6">
+      className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl px-7 py-6">
       <div className="flex flex-wrap items-center gap-x-9 gap-y-5">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-white/35 mb-1">Registreringer</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-ab-fg-4 mb-1">Registreringer</p>
           <div className="flex items-baseline gap-2.5">
-            <span className="font-mono text-5xl font-bold text-white">{nbFmt.format(total)}</span>
+            <span className="font-mono text-5xl font-bold text-ab-fg">{nbFmt.format(total)}</span>
             {prevTotal > 0 && (
               <span className={cn("flex items-center gap-0.5 text-sm font-semibold", up ? "text-emerald-400" : "text-rose-400")}>
                 {up ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
@@ -219,32 +219,32 @@ function HeroBand({ counts, prevTotal, peakLabel, peakIcon }: {
           </div>
         </div>
 
-        <div className="h-14 w-px bg-white/10" />
+        <div className="h-14 w-px bg-ab-hover" />
 
         {STATUS_ORDER.map(s => (
           <div key={s}>
-            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-white/35 mb-1">
+            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-ab-fg-4 mb-1">
               <span className="h-2 w-2 rounded-full" style={{ background: STATUS_META[s].color }} />
               {STATUS_META[s].label}
             </p>
             <div className="flex items-baseline gap-2">
               <span className="font-mono text-3xl font-bold" style={{ color: STATUS_META[s].color }}>{nbFmt.format(counts[s])}</span>
-              <span className="font-mono text-sm text-white/40">{total ? (counts[s] / total * 100).toFixed(0) : 0}%</span>
+              <span className="font-mono text-sm text-ab-fg-3">{total ? (counts[s] / total * 100).toFixed(0) : 0}%</span>
             </div>
           </div>
         ))}
 
-        <div className="h-14 w-px bg-white/10" />
+        <div className="h-14 w-px bg-ab-hover" />
 
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-white/35 mb-1">Ja-rate</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-ab-fg-4 mb-1">Ja-rate</p>
           <span className="font-mono text-3xl font-bold text-emerald-400">{jaRate.toFixed(1)}%</span>
         </div>
 
-        <div className="h-14 w-px bg-white/10" />
+        <div className="h-14 w-px bg-ab-hover" />
 
         <div>
-          <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-white/35 mb-1">
+          <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-ab-fg-4 mb-1">
             <Zap className="h-3.5 w-3.5 text-amber-400" /> {peakIcon}
           </p>
           <span className="font-mono text-3xl font-bold text-amber-400">{peakLabel}</span>
@@ -270,15 +270,15 @@ function ResponsePulse({ data, mode }: {
   const reduced = useReducedMotion()
   return (
     <motion.div initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
+      className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-6">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold text-white">Aktivitetspuls</h3>
-          <p className="mt-0.5 text-sm text-white/45">{mode === "dag" ? "Registreringer per time, fordelt på status" : "Registreringer per dag, fordelt på status"}</p>
+          <h3 className="text-base font-semibold text-ab-fg">Aktivitetspuls</h3>
+          <p className="mt-0.5 text-sm text-ab-fg-3">{mode === "dag" ? "Registreringer per time, fordelt på status" : "Registreringer per dag, fordelt på status"}</p>
         </div>
         <div className="flex gap-4">
           {STATUS_ORDER.map(s => (
-            <span key={s} className="flex items-center gap-1.5 text-xs text-white/50">
+            <span key={s} className="flex items-center gap-1.5 text-xs text-ab-fg-3">
               <span className="h-2.5 w-2.5 rounded-sm" style={{ background: STATUS_META[s].color }} /> {STATUS_META[s].label}
             </span>
           ))}
@@ -295,12 +295,12 @@ function ResponsePulse({ data, mode }: {
               </linearGradient>
             ))}
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-          <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 12 }} tickLine={false} axisLine={false} interval={mode === "dag" ? 0 : "preserveStartEnd"} minTickGap={20} />
-          <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} width={36} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--ab-border-default)" vertical={false} />
+          <XAxis dataKey="label" tick={{ fill: "var(--ab-text-tertiary)", fontSize: 12 }} tickLine={false} axisLine={false} interval={mode === "dag" ? 0 : "preserveStartEnd"} minTickGap={20} />
+          <YAxis tick={{ fill: "var(--ab-text-quaternary)", fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} width={36} />
           <Tooltip
-            cursor={{ stroke: "rgba(255,255,255,0.15)" }}
-            contentStyle={{ background: "#0d1528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, fontSize: 13 }}
+            cursor={{ stroke: "var(--ab-border-strong)" }}
+            contentStyle={{ background: "var(--ab-bg-overlay)", border: "1px solid var(--ab-border-default)", borderRadius: 12, fontSize: 13 }}
             labelFormatter={(l) => mode === "dag" ? `Kl. ${l}:00` : `${l}`}
             formatter={(v: number, name: string) => [`${v}`, STATUS_META[name as Status]?.label ?? name]}
           />
@@ -326,7 +326,7 @@ function StatusFilter({ active, setActive }: { active: Set<Status>; setActive: (
     <div className="flex items-center gap-1.5">
       <button
         onClick={() => setActive(new Set())}
-        className={cn("cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition-all", allOn ? "bg-white/15 text-white" : "bg-white/5 text-white/40 hover:text-white/70")}
+        className={cn("cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition-all", allOn ? "bg-ab-active text-ab-fg" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}
       >Alle</button>
       {STATUS_ORDER.map(s => {
         const on = active.has(s)
@@ -338,7 +338,7 @@ function StatusFilter({ active, setActive }: { active: Set<Status>; setActive: (
             style={on ? { background: `${STATUS_META[s].color}25`, color: STATUS_META[s].color } : undefined}
           >
             <span className={cn("h-2 w-2 rounded-full", !on && "opacity-40")} style={{ background: STATUS_META[s].color }} />
-            <span className={cn(!on && "text-white/40")}>{STATUS_META[s].label}</span>
+            <span className={cn(!on && "text-ab-fg-3")}>{STATUS_META[s].label}</span>
           </button>
         )
       })}
@@ -510,12 +510,12 @@ function ActivityPanel({
 
   return (
     <motion.div initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
+      className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-6">
       {/* Header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-white">{view === "tidslinje" ? "Lagaktivitet" : "Salgsliste"}</h3>
-          <p className="mt-0.5 text-sm text-white/45">
+          <h3 className="text-base font-semibold text-ab-fg">{view === "tidslinje" ? "Lagaktivitet" : "Salgsliste"}</h3>
+          <p className="mt-0.5 text-sm text-ab-fg-3">
             {view === "tidslinje"
               ? "Hver registrering på sitt tidspunkt — farge = status"
               : "Alle registreringer kronologisk"}
@@ -523,11 +523,11 @@ function ActivityPanel({
         </div>
         <div className="flex items-center gap-3">
           <StatusFilter active={statusFilter} setActive={setStatusFilter} />
-          <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
-            <button onClick={() => setView("tidslinje")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", view === "tidslinje" ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+          <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1">
+            <button onClick={() => setView("tidslinje")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", view === "tidslinje" ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
               <GanttChartSquare className="h-4 w-4" /> Tidslinje
             </button>
-            <button onClick={() => setView("liste")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", view === "liste" ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80")}>
+            <button onClick={() => setView("liste")} className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all", view === "liste" ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
               <LayoutList className="h-4 w-4" /> Liste
             </button>
           </div>
@@ -537,8 +537,8 @@ function ActivityPanel({
       {view === "tidslinje" ? (
         shownLanes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <ActivityIcon className="h-8 w-8 text-white/15 mb-3" />
-            <p className="text-sm text-white/35">Ingen registreringer i dette utvalget</p>
+            <ActivityIcon className="h-8 w-8 text-ab-fg-4 mb-3" />
+            <p className="text-sm text-ab-fg-4">Ingen registreringer i dette utvalget</p>
           </div>
         ) : (
           // ── Canvas swim lanes ──
@@ -546,7 +546,7 @@ function ActivityPanel({
             {/* tick gridlines */}
             <div className="absolute inset-0 left-[150px] pointer-events-none">
               {ticks.map((t, i) => t.label && (
-                <div key={i} className="absolute top-0 bottom-7 w-px bg-white/[0.04]" style={{ left: `${t.pct}%` }} />
+                <div key={i} className="absolute top-0 bottom-7 w-px bg-ab-elevated" style={{ left: `${t.pct}%` }} />
               ))}
             </div>
 
@@ -560,8 +560,8 @@ function ActivityPanel({
                       <div key={lane.id} className="flex items-center gap-2.5 pr-2" style={{ height: ROW_H }}>
                         <RoyMascot state={state} size={30} />
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-white/90 truncate leading-tight">{lane.name}</p>
-                          <p className="text-xs text-white/40">{lane.capped ? `${lane.count}+` : lane.count} reg · {lane.ja} ja</p>
+                          <p className="text-sm font-semibold text-ab-fg truncate leading-tight">{lane.name}</p>
+                          <p className="text-xs text-ab-fg-3">{lane.capped ? `${lane.count}+` : lane.count} reg · {lane.ja} ja</p>
                         </div>
                       </div>
                     )
@@ -577,7 +577,7 @@ function ActivityPanel({
             {/* Axis */}
             <div className="relative mt-2 ml-[150px] h-5">
               {ticks.map((t, i) => t.label && (
-                <span key={i} className="absolute font-mono text-xs text-white/35 -translate-x-1/2 whitespace-nowrap" style={{ left: `${t.pct}%` }}>{t.label}</span>
+                <span key={i} className="absolute font-mono text-xs text-ab-fg-4 -translate-x-1/2 whitespace-nowrap" style={{ left: `${t.pct}%` }}>{t.label}</span>
               ))}
             </div>
 
@@ -586,10 +586,10 @@ function ActivityPanel({
               {hover && (
                 <motion.div initial={{ opacity: 0, y: 4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.96 }} transition={{ duration: 0.12 }}
                   className="absolute z-30 pointer-events-none -translate-x-1/2 -translate-y-full" style={{ left: 150 + hover.x, top: hover.y - 8 }}>
-                  <div className="rounded-xl border border-white/15 bg-[#0d1528]/95 backdrop-blur-xl px-3.5 py-2.5 shadow-2xl whitespace-nowrap">
+                  <div className="rounded-xl border border-ab-line bg-ab-overlay backdrop-blur-xl px-3.5 py-2.5 shadow-2xl whitespace-nowrap">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-sm font-bold text-white">{new Date(hover.tsMs).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
-                      <span className="text-sm font-semibold text-white/90">{hover.laneName}</span>
+                      <span className="font-mono text-sm font-bold text-ab-fg">{new Date(hover.tsMs).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                      <span className="text-sm font-semibold text-ab-fg">{hover.laneName}</span>
                     </div>
                     <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_META[hover.status].color}22`, color: STATUS_META[hover.status].color }}>{STATUS_META[hover.status].label}</span>
                   </div>
@@ -598,7 +598,7 @@ function ActivityPanel({
             </AnimatePresence>
 
             {/* Legend */}
-            <div className="mt-5 flex items-center justify-between gap-5 text-xs text-white/40 border-t border-white/8 pt-4">
+            <div className="mt-5 flex items-center justify-between gap-5 text-xs text-ab-fg-3 border-t border-ab-line pt-4">
               <div className="flex items-center gap-5">
                 {STATUS_ORDER.map(s => (
                   <span key={s} className="flex items-center gap-1.5">
@@ -606,7 +606,7 @@ function ActivityPanel({
                   </span>
                 ))}
               </div>
-              <span className="text-white/30">{nbFmt.format(totalBeads)} beads vist{shownLanes.some(l => l.capped) ? ` · maks ${LANE_BEAD_CAP}/ansatt` : ""}</span>
+              <span className="text-ab-fg-4">{nbFmt.format(totalBeads)} beads vist{shownLanes.some(l => l.capped) ? ` · maks ${LANE_BEAD_CAP}/ansatt` : ""}</span>
             </div>
           </div>
         )
@@ -614,11 +614,11 @@ function ActivityPanel({
         // ── Liste view: lazy-loaded raw registrations ──
         <div>
           {listLoading && listRegs.length === 0 ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-sm text-white/40"><Loader2 className="h-4 w-4 animate-spin" /> Laster registreringer…</div>
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-ab-fg-3"><Loader2 className="h-4 w-4 animate-spin" /> Laster registreringer…</div>
           ) : filteredList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <ActivityIcon className="h-8 w-8 text-white/15 mb-3" />
-              <p className="text-sm text-white/35">Ingen registreringer i dette utvalget</p>
+              <ActivityIcon className="h-8 w-8 text-ab-fg-4 mb-3" />
+              <p className="text-sm text-ab-fg-4">Ingen registreringer i dette utvalget</p>
             </div>
           ) : (
             <>
@@ -631,17 +631,17 @@ function ActivityPanel({
                     <div key={group.key} className="mb-3">
                       <button
                         onClick={() => toggleDay(group.key)}
-                        className="cursor-pointer sticky top-0 z-10 -mx-2 w-[calc(100%+1rem)] px-4 py-2.5 mb-1 flex items-center justify-between backdrop-blur-xl bg-[#0d1528]/85 border-y border-white/8 hover:bg-[#0d1528]/95 transition-colors text-left"
+                        className="cursor-pointer sticky top-0 z-10 -mx-2 w-[calc(100%+1rem)] px-4 py-2.5 mb-1 flex items-center justify-between backdrop-blur-xl bg-ab-overlay border-y border-ab-line hover:bg-ab-hover transition-colors text-left"
                       >
                         <div className="flex items-center gap-2.5">
                           <motion.div animate={{ rotate: collapsed ? -90 : 0 }} transition={{ duration: 0.15 }}>
-                            <ChevronDown className="h-4 w-4 text-white/40" />
+                            <ChevronDown className="h-4 w-4 text-ab-fg-3" />
                           </motion.div>
-                          <span className="text-sm font-bold capitalize text-white">{weekday}</span>
-                          <span className="text-xs text-white/40">{dateStr}</span>
+                          <span className="text-sm font-bold capitalize text-ab-fg">{weekday}</span>
+                          <span className="text-xs text-ab-fg-3">{dateStr}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-white/40 font-mono">{group.total} reg</span>
+                          <span className="text-ab-fg-3 font-mono">{group.total} reg</span>
                           {STATUS_ORDER.map(s => (
                             <span key={s} className="flex items-center gap-1 font-mono" style={{ color: STATUS_META[s].color }}>
                               <span className="h-1.5 w-1.5 rounded-full" style={{ background: STATUS_META[s].color }} />
@@ -659,20 +659,20 @@ function ActivityPanel({
                               return (
                                 <div key={time} className="flex gap-3 py-0.5">
                                   <div className="w-[64px] shrink-0 pt-2.5 text-right">
-                                    <span className="font-mono text-sm font-semibold text-white/55">{time}</span>
-                                    {multi && <span className="block text-[10px] text-white/30">{regs.length} samtidig</span>}
+                                    <span className="font-mono text-sm font-semibold text-ab-fg-3">{time}</span>
+                                    {multi && <span className="block text-[10px] text-ab-fg-4">{regs.length} samtidig</span>}
                                   </div>
-                                  <div className={cn("flex-1 min-w-0", multi && "border-l-2 border-white/10 pl-3")}>
+                                  <div className={cn("flex-1 min-w-0", multi && "border-l-2 border-ab-line pl-3")}>
                                     {regs.map((reg, i) => {
                                       const state = reg.status === "ja" ? "win-small" : "ready"
                                       const m = STATUS_META[reg.status]
                                       return (
                                         <motion.div key={reg.id}
                                           initial={reduced ? false : { opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i, 8) * 0.02 }}
-                                          className="group flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-white/5 transition-colors">
+                                          className="group flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-ab-hover transition-colors">
                                           <RoyMascot state={state} size={30} />
-                                          <span className="flex-1 min-w-0 text-sm font-medium text-white/85 truncate">{reg.employee}</span>
-                                          <span className="hidden sm:flex items-center gap-1 text-xs text-white/40 w-[150px]">
+                                          <span className="flex-1 min-w-0 text-sm font-medium text-ab-fg-2 truncate">{reg.employee}</span>
+                                          <span className="hidden sm:flex items-center gap-1 text-xs text-ab-fg-3 w-[150px]">
                                             <MapPin className="h-3 w-3 shrink-0" /> {reg.city} {reg.postalCode}
                                           </span>
                                           <span className={cn("shrink-0 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold", m.bg)} style={{ color: m.color }}>
@@ -692,10 +692,10 @@ function ActivityPanel({
                   )
                 })}
               </div>
-              <div className="mt-4 flex items-center justify-center gap-3 border-t border-white/8 pt-4">
-                <span className="text-xs text-white/35">Viser {nbFmt.format(listRegs.length)} av {nbFmt.format(listTotal)}</span>
+              <div className="mt-4 flex items-center justify-center gap-3 border-t border-ab-line pt-4">
+                <span className="text-xs text-ab-fg-4">Viser {nbFmt.format(listRegs.length)} av {nbFmt.format(listTotal)}</span>
                 {listHasMore && (
-                  <button onClick={onLoadMore} disabled={listLoading} className="cursor-pointer flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 hover:bg-white/10 transition-all disabled:opacity-50">
+                  <button onClick={onLoadMore} disabled={listLoading} className="cursor-pointer flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-4 py-2 text-sm font-semibold text-ab-fg-2 hover:bg-ab-hover transition-all disabled:opacity-50">
                     {listLoading && <Loader2 className="h-4 w-4 animate-spin" />} Last inn flere
                   </button>
                 )}
@@ -722,11 +722,11 @@ function TopSellers({ lanes }: { lanes: Lane[] }) {
 
   return (
     <motion.div initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
+      className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-6">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold text-white">Topp selgere</h3>
-          <p className="mt-0.5 text-sm text-white/45">{anyCapped ? "Etter Ja (siste registreringer)" : "Etter antall Ja"}</p>
+          <h3 className="text-base font-semibold text-ab-fg">Topp selgere</h3>
+          <p className="mt-0.5 text-sm text-ab-fg-3">{anyCapped ? "Etter Ja (siste registreringer)" : "Etter antall Ja"}</p>
         </div>
         <Trophy className="h-5 w-5 text-amber-400" />
       </div>
@@ -739,14 +739,14 @@ function TopSellers({ lanes }: { lanes: Lane[] }) {
               <span className="w-5 text-center font-mono text-sm font-bold" style={{ color: RANK_COLORS[i] ?? "rgba(255,255,255,0.3)" }}>{i + 1}</span>
               <RoyMascot state={state} size={38} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white/90 truncate">{r.name}</p>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <p className="text-sm font-semibold text-ab-fg truncate">{r.name}</p>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ab-hover">
                   <motion.div className="h-full rounded-full bg-emerald-500" initial={{ width: 0 }} animate={{ width: `${(r.ja / max) * 100}%` }} transition={{ duration: 0.6, delay: i * 0.05 }} />
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="font-mono text-lg font-bold text-emerald-400">{r.ja}</p>
-                <p className="font-mono text-xs text-white/40">{rate}% av {r.capped ? `${r.count}+` : r.count}</p>
+                <p className="font-mono text-xs text-ab-fg-3">{rate}% av {r.capped ? `${r.count}+` : r.count}</p>
               </div>
             </div>
           )
@@ -786,21 +786,21 @@ function Heatmap({ regs, anchorDate, loading }: { regs: Reg[]; anchorDate: Date;
 
   return (
     <motion.div initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
+      className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-6">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold text-white">Aktivitetsmønster</h3>
-          <p className="mt-0.5 text-sm text-white/45">Registreringer per time, 7 dager opp til valgt dag</p>
+          <h3 className="text-base font-semibold text-ab-fg">Aktivitetsmønster</h3>
+          <p className="mt-0.5 text-sm text-ab-fg-3">Registreringer per time, 7 dager opp til valgt dag</p>
         </div>
-        {loading && <Loader2 className="h-4 w-4 animate-spin text-white/40" />}
+        {loading && <Loader2 className="h-4 w-4 animate-spin text-ab-fg-3" />}
       </div>
       <div className="space-y-1">
         <div className="flex gap-1 mb-1.5 ml-12">
-          {HOURS.map(h => <div key={h} className="flex-1 text-center font-mono text-[10px] text-white/30">{h % 3 === 0 ? h : ""}</div>)}
+          {HOURS.map(h => <div key={h} className="flex-1 text-center font-mono text-[10px] text-ab-fg-4">{h % 3 === 0 ? h : ""}</div>)}
         </div>
         {grid.map((row, d) => (
           <div key={d} className="flex items-center gap-1">
-            <span className="w-11 shrink-0 text-right pr-1.5 font-mono text-xs text-white/40 capitalize">{labels[d]}</span>
+            <span className="w-11 shrink-0 text-right pr-1.5 font-mono text-xs text-ab-fg-3 capitalize">{labels[d]}</span>
             {row.map((v, h) => (
               <div key={h} className="group relative flex-1 aspect-square rounded-md transition-transform hover:scale-110 cursor-default min-w-[14px]"
                 style={{ background: cellColor(v) }} title={`${labels[d]} kl. ${HOURS[h]}:00 — ${v} registreringer`} />
@@ -809,9 +809,9 @@ function Heatmap({ regs, anchorDate, loading }: { regs: Reg[]; anchorDate: Date;
         ))}
       </div>
       <div className="mt-4 flex items-center justify-end gap-2">
-        <span className="text-xs text-white/35">Mindre</span>
+        <span className="text-xs text-ab-fg-4">Mindre</span>
         {[0.1, 0.35, 0.6, 0.85, 1].map((t, i) => <div key={i} className="h-3 w-3 rounded-[3px]" style={{ background: cellColor(Math.round(t * globalMax)) }} />)}
-        <span className="text-xs text-white/35">Mer</span>
+        <span className="text-xs text-ab-fg-4">Mer</span>
       </div>
     </motion.div>
   )
@@ -983,24 +983,24 @@ export function SalesActivityView() {
   }, [summary])
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen bg-ab-base">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/3 h-96 w-96 rounded-full blur-3xl" style={{ background: `${campaign.color}14` }} />
         <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-emerald-600/8 blur-3xl" />
       </div>
 
-      <div className="relative px-6 py-6 max-w-[1600px] mx-auto space-y-5">
+      <div className="relative px-4 sm:px-6 py-5 sm:py-6 max-w-[1600px] mx-auto space-y-5">
         {/* Header */}
         <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Salgsaktivitet · Direkte</p>
-            <h1 className="text-3xl font-bold text-white">Salg</h1>
+            <p className="text-xs uppercase tracking-widest text-ab-fg-4 mb-1">Salgsaktivitet · Direkte</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-ab-fg">Salg</h1>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-sm text-white/30 font-medium mr-1">Kampanje:</span>
+            <span className="text-sm text-ab-fg-4 font-medium mr-1">Kampanje:</span>
             {campaigns.map(c => (
               <button key={c.id} onClick={() => setCampaignId(c.id)}
-                className={cn("cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150", campaignId === c.id ? "text-white shadow-sm" : "bg-white/5 text-white/45 hover:text-white/80")}
+                className={cn("cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150", campaignId === c.id ? "text-white shadow-sm" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}
                 style={campaignId === c.id ? { background: c.color, boxShadow: `0 0 14px ${c.color}60` } : {}}>
                 {c.name}
               </button>
@@ -1014,11 +1014,11 @@ export function SalesActivityView() {
         </motion.div>
 
         {loading ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelLoading label="Laster salgssammendrag…" /></div>
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl"><PanelLoading label="Laster salgssammendrag…" /></div>
         ) : errored ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelError onRetry={() => void load()} /></div>
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl"><PanelError onRetry={() => void load()} /></div>
         ) : total === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"><PanelEmpty msg="Ingen registreringer i dette utvalget" sub="Prøv en annen kampanje eller dato." /></div>
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl"><PanelEmpty msg="Ingen registreringer i dette utvalget" sub="Prøv en annen kampanje eller dato." /></div>
         ) : (
           <>
             <HeroBand counts={counts} prevTotal={prevTotal} peakLabel={peakLabel} peakIcon={peakIcon} />

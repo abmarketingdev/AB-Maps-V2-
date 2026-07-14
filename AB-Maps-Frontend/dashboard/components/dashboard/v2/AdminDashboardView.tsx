@@ -90,7 +90,7 @@ function Modal({ open, onClose, children, width = "max-w-md" }: { open: boolean;
           style={{ background: "rgba(5,8,16,0.65)", backdropFilter: "blur(3px)" }} onClick={onClose}>
           <motion.div initial={{ opacity: 0, scale: 0.97, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }} onClick={e => e.stopPropagation()}
-            className={cn("w-full rounded-2xl border border-white/12 bg-[#0d1528] shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)] mb-10", width)}>
+            className={cn("w-full rounded-2xl border border-ab-line bg-ab-overlay shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)] mb-10", width)}>
             {children}
           </motion.div>
         </motion.div>
@@ -99,8 +99,8 @@ function Modal({ open, onClose, children, width = "max-w-md" }: { open: boolean;
   )
 }
 
-const inputCls = "w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all"
-function Lbl({ children }: { children: React.ReactNode }) { return <label className="block text-xs font-medium text-white/45 mb-1.5">{children}</label> }
+const inputCls = "w-full h-10 rounded-xl border border-ab-line bg-ab-elevated px-3.5 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 transition-all"
+function Lbl({ children }: { children: React.ReactNode }) { return <label className="block text-xs font-medium text-ab-fg-3 mb-1.5">{children}</label> }
 
 // QC/HR are the segregated platforms worth flagging; MAPS is the default (no suffix noise).
 const DEPT_STYLE: Record<Dept, { label: string; color: string; bg: string }> = {
@@ -218,18 +218,18 @@ export function AdminDashboardView() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 60%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen bg-ab-base">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-purple-600/8 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-blue-600/8 blur-3xl" />
       </div>
 
-      <div className="relative px-6 py-6 max-w-[1500px] mx-auto space-y-5">
+      <div className="relative px-4 sm:px-6 py-5 sm:py-6 max-w-[1500px] mx-auto space-y-5">
         {/* Header */}
         <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Admin · Brukeradministrasjon</p>
-            <h1 className="text-3xl font-bold text-white">Brukere</h1>
+            <p className="text-xs uppercase tracking-widest text-ab-fg-4 mb-1">Admin · Brukeradministrasjon</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-ab-fg">Brukere</h1>
           </div>
           <button onClick={() => setModal({ kind: "register" })}
             className="cursor-pointer flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.35)] hover:bg-blue-500 transition-all">
@@ -249,37 +249,37 @@ export function AdminDashboardView() {
             { label: "HR", value: counts.hr, color: DEPT_STYLE.hr.color, Icon: Users },
           ].map((k, i) => (
             <motion.div key={k.label} initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + i * 0.05 }}
-              className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+              className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-white/40 font-medium">{k.label}</span>
+                <span className="text-xs text-ab-fg-3 font-medium">{k.label}</span>
                 <div className="h-7 w-7 flex items-center justify-center rounded-lg" style={{ background: `${k.color}22` }}><k.Icon className="h-3.5 w-3.5" style={{ color: k.color }} /></div>
               </div>
-              <p className="font-mono text-2xl font-bold text-white">{k.value}</p>
+              <p className="font-mono text-2xl font-bold text-ab-fg">{k.value}</p>
             </motion.div>
           ))}
         </motion.div>
 
         {/* Filter tabs + search */}
         <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.12 }} className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex gap-1 rounded-xl bg-white/5 border border-white/8 p-1">
+          <div className="flex gap-1 rounded-xl bg-ab-elevated border border-ab-line p-1 overflow-x-auto">
             {TABS.map(t => (
               <button key={t.key} onClick={() => setFilter(t.key)}
-                className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all", filter === t.key ? "bg-white/12 text-white" : "text-white/45 hover:text-white/75")}>
+                className={cn("cursor-pointer flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all whitespace-nowrap shrink-0", filter === t.key ? "bg-ab-hover text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>
                 {t.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: t.color }} />}
-                {t.label}<span className="font-mono text-xs text-white/35">{t.count}</span>
+                {t.label}<span className="font-mono text-xs text-ab-fg-4">{t.count}</span>
               </button>
             ))}
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-4" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk navn, e-post, brukernavn…"
-              className="h-9 w-64 rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+              className="h-9 w-64 rounded-xl border border-ab-line bg-ab-elevated pl-8 pr-3 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50" />
           </div>
         </motion.div>
 
         {/* User list */}
         <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-          className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+          className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl overflow-hidden">
           {loading ? (
             <PanelLoading label="Laster brukere…" />
           ) : errored ? (
@@ -287,20 +287,20 @@ export function AdminDashboardView() {
           ) : filtered.length === 0 ? (
             <PanelEmpty msg="Ingen brukere funnet" />
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-ab-line">
               {filtered.map((u, i) => (
                 <motion.div key={u.id} initial={reduced ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i, 12) * 0.025 }}
-                  className="group flex items-center gap-4 px-4 py-3 hover:bg-white/[0.04] transition-colors">
+                  className="group flex items-center gap-4 px-4 py-3 hover:bg-ab-hover transition-colors">
                   <div className="relative shrink-0">
                     <RoyMascot state={userRoy(u.id)} size={38} />
-                    <span className={cn("absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0d1528]", u.online ? "bg-emerald-500" : "bg-white/25")} />
+                    <span className={cn("absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-ab-base", u.online ? "bg-emerald-500" : "bg-ab-active")} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white/90 truncate">{fullName(u)}</span>
-                      {u.abId && <span className="font-mono text-[10px] text-white/30">#{u.abId}</span>}
+                      <span className="text-sm font-semibold text-ab-fg truncate">{fullName(u)}</span>
+                      {u.abId && <span className="font-mono text-[10px] text-ab-fg-4">#{u.abId}</span>}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-white/40 mt-0.5">
+                    <div className="flex items-center gap-3 text-xs text-ab-fg-3 mt-0.5">
                       <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3 shrink-0" /> {u.email}</span>
                       <span className="hidden md:flex items-center gap-1"><Phone className="h-3 w-3" /> {u.phone}</span>
                     </div>
@@ -309,7 +309,7 @@ export function AdminDashboardView() {
                   {/* Row menu */}
                   <div className="relative">
                     <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)}
-                      className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all">
+                      className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover opacity-0 group-hover:opacity-100 transition-all">
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
                     <AnimatePresence>
@@ -317,11 +317,11 @@ export function AdminDashboardView() {
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
                           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.12 }}
-                            className="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl border border-white/12 bg-[#111a2e] shadow-2xl py-1">
-                            <button onClick={() => { setModal({ kind: "edit", user: u }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/80 hover:bg-white/5 text-left"><Pencil className="h-3.5 w-3.5" /> Rediger</button>
-                            {u.role === "employee" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "manager" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/80 hover:bg-white/5 text-left"><ChevronUp className="h-3.5 w-3.5 text-blue-400" /> Forfrem til Manager</button>}
-                            {u.role === "manager" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "admin" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/80 hover:bg-white/5 text-left"><Crown className="h-3.5 w-3.5 text-purple-400" /> Forfrem til Admin</button>}
-                            {u.role === "admin" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "manager" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/80 hover:bg-white/5 text-left"><ChevronDown className="h-3.5 w-3.5 text-amber-400" /> Degrader til Manager</button>}
+                            className="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl border border-ab-line bg-ab-overlay shadow-2xl py-1">
+                            <button onClick={() => { setModal({ kind: "edit", user: u }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><Pencil className="h-3.5 w-3.5" /> Rediger</button>
+                            {u.role === "employee" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "manager" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><ChevronUp className="h-3.5 w-3.5 text-blue-400" /> Forfrem til Manager</button>}
+                            {u.role === "manager" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "admin" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><Crown className="h-3.5 w-3.5 text-purple-400" /> Forfrem til Admin</button>}
+                            {u.role === "admin" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "manager" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><ChevronDown className="h-3.5 w-3.5 text-amber-400" /> Degrader til Manager</button>}
                             <button onClick={() => { setModal({ kind: "delete", user: u }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10 text-left"><Trash2 className="h-3.5 w-3.5" /> Slett</button>
                           </motion.div>
                         </>
@@ -333,13 +333,13 @@ export function AdminDashboardView() {
             </div>
           )}
           {!loading && !errored && total > 0 && (
-            <div className="px-4 py-3 border-t border-white/8 flex items-center justify-between gap-3">
-              <span className="text-[11px] text-white/35">Side {page} av {totalPages} · {total} brukere</span>
+            <div className="px-4 py-3 border-t border-ab-line flex items-center justify-between gap-3">
+              <span className="text-[11px] text-ab-fg-4">Side {page} av {totalPages} · {total} brukere</span>
               <div className="flex items-center gap-1.5">
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-                  className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white hover:border-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed">Forrige</button>
+                  className="cursor-pointer rounded-lg border border-ab-line bg-ab-elevated px-3 py-1.5 text-xs font-medium text-ab-fg-2 hover:text-ab-fg hover:border-ab-line transition-all disabled:opacity-30 disabled:cursor-not-allowed">Forrige</button>
                 <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                  className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white hover:border-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed">Neste</button>
+                  className="cursor-pointer rounded-lg border border-ab-line bg-ab-elevated px-3 py-1.5 text-xs font-medium text-ab-fg-2 hover:text-ab-fg hover:border-ab-line transition-all disabled:opacity-30 disabled:cursor-not-allowed">Neste</button>
               </div>
             </div>
           )}
@@ -406,10 +406,10 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
       <Modal open onClose={onClose} width="max-w-sm">
         <div className="p-6">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/15 mb-4"><Trash2 className="h-5 w-5 text-rose-400" /></div>
-          <h2 className="text-lg font-bold text-white mb-1">Slett bruker</h2>
-          <p className="text-sm text-white/50 mb-5">Slette <span className="text-white/80 font-medium">{fullName(modal.user)}</span>? Dette kan ikke angres.</p>
+          <h2 className="text-lg font-bold text-ab-fg mb-1">Slett bruker</h2>
+          <p className="text-sm text-ab-fg-3 mb-5">Slette <span className="text-ab-fg-2 font-medium">{fullName(modal.user)}</span>? Dette kan ikke angres.</p>
           <div className="flex justify-end gap-2">
-            <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
+            <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover">Avbryt</button>
             <button onClick={() => { onDelete(modal.user); onClose() }} className="cursor-pointer rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500">Slett</button>
           </div>
         </div>
@@ -424,12 +424,12 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
       <Modal open onClose={onClose} width="max-w-md">
         <div className="p-6">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl mb-4" style={{ background: `${m.color}22` }}>{demote ? <ChevronDown className="h-5 w-5" style={{ color: m.color }} /> : <ChevronUp className="h-5 w-5" style={{ color: m.color }} />}</div>
-          <h2 className="text-lg font-bold text-white mb-1">{demote ? "Degrader" : "Forfrem"} bruker</h2>
-          <p className="text-sm text-white/50 mb-4">{fullName(modal.user)} → <span className="font-semibold" style={{ color: m.color }}>{m.label}</span></p>
+          <h2 className="text-lg font-bold text-ab-fg mb-1">{demote ? "Degrader" : "Forfrem"} bruker</h2>
+          <p className="text-sm text-ab-fg-3 mb-4">{fullName(modal.user)} → <span className="font-semibold" style={{ color: m.color }}>{m.label}</span></p>
           <Lbl>Begrunnelse</Lbl>
-          <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2} placeholder="Hvorfor?" className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 resize-none mb-5" />
+          <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2} placeholder="Hvorfor?" className="w-full rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 resize-none mb-5" />
           <div className="flex justify-end gap-2">
-            <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
+            <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover">Avbryt</button>
             <button onClick={() => { onChangeRole(modal.user, modal.to); onClose() }} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all" style={{ background: m.color }}>{demote ? "Degrader" : "Forfrem"}</button>
           </div>
         </div>
@@ -497,9 +497,9 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
   return (
     <>
     <Modal open onClose={onClose} width="max-w-lg">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/8 sticky top-0 bg-[#0d1528] z-10 rounded-t-2xl">
-        <h2 className="text-lg font-bold text-white">{isReg ? "Registrer ny bruker" : "Rediger bruker"}</h2>
-        <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-ab-line sticky top-0 bg-ab-overlay z-10 rounded-t-2xl">
+        <h2 className="text-lg font-bold text-ab-fg">{isReg ? "Registrer ny bruker" : "Rediger bruker"}</h2>
+        <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover"><X className="h-4 w-4" /></button>
       </div>
       <div className="p-5 space-y-4">
         {/* Name */}
@@ -515,7 +515,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
         {isReg && (
           <div className="grid grid-cols-2 gap-3">
             <div><Lbl>Brukernavn</Lbl><input value={username} onChange={e => setUsername(e.target.value)} className={inputCls} placeholder="bruker.navn" /></div>
-            <div><Lbl>AB Person-ID <span className="text-white/20">(valgfritt)</span></Lbl><input value={abId} onChange={e => setAbId(e.target.value.replace(/\D/g, "").slice(0, 16))} className={inputCls} placeholder="AB Person-ID" /></div>
+            <div><Lbl>AB Person-ID <span className="text-ab-fg-4">(valgfritt)</span></Lbl><input value={abId} onChange={e => setAbId(e.target.value.replace(/\D/g, "").slice(0, 16))} className={inputCls} placeholder="AB Person-ID" /></div>
           </div>
         )}
         {!isReg && (
@@ -528,7 +528,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
             <Lbl>Passord</Lbl>
             <div className="relative">
               <input type={showPw ? "text" : "password"} value={pw} onChange={e => setPw(e.target.value)} className={inputCls + " pr-10"} placeholder="Min. 8 tegn, stor bokstav, tall, symbol" />
-              <button onClick={() => setShowPw(s => !s)} className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-white/35 hover:text-white">{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+              <button onClick={() => setShowPw(s => !s)} className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-ab-fg-4 hover:text-ab-fg">{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
             </div>
             <div className="mt-2 flex gap-1">
               {[0, 1, 2, 3].map(i => <div key={i} className="h-1 flex-1 rounded-full transition-colors" style={{ background: i < score ? (score <= 2 ? "#f43f5e" : score === 3 ? "#f59e0b" : "#10b981") : "rgba(255,255,255,0.1)" }} />)}
@@ -545,14 +545,14 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
               const disabled = !isReg // role change only via promote in edit
               return (
                 <button key={r} disabled={disabled} onClick={() => { setRole(r); if (r === "admin" && dept === "hr") setDept("maps") }}
-                  className={cn("flex-1 flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-sm font-semibold transition-all", on ? m.bg : "bg-white/5 text-white/40", !disabled && "cursor-pointer hover:text-white/70", disabled && "opacity-50 cursor-not-allowed")}
+                  className={cn("flex-1 flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-sm font-semibold transition-all", on ? m.bg : "bg-ab-elevated text-ab-fg-3", !disabled && "cursor-pointer hover:text-ab-fg-2", disabled && "opacity-50 cursor-not-allowed")}
                   style={on ? { color: m.color } : undefined}>
                   <m.Icon className="h-3.5 w-3.5" />{m.label}
                 </button>
               )
             })}
           </div>
-          {!isReg && <p className="mt-1.5 text-[11px] text-white/30">Endre rolle via "Forfrem / Degrader" i radmenyen.</p>}
+          {!isReg && <p className="mt-1.5 text-[11px] text-ab-fg-4">Endre rolle via "Forfrem / Degrader" i radmenyen.</p>}
         </div>
 
         {/* Dept — employees: maps/qc/hr; admins: maps/qc (no HR admin tier). Managers have no platform. */}
@@ -561,7 +561,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
             <Lbl>Avdeling</Lbl>
             <div className="flex gap-1.5">
               {((role === "employee" ? ["maps", "qc", "hr"] : ["maps", "qc"]) as Dept[]).map(d => (
-                <button key={d} onClick={() => setDept(d)} className={cn("cursor-pointer flex-1 rounded-xl px-2 py-2 text-sm font-semibold transition-all", dept === d ? "bg-white/15 text-white" : "bg-white/5 text-white/40 hover:text-white/70")}>{d.toUpperCase()}</button>
+                <button key={d} onClick={() => setDept(d)} className={cn("cursor-pointer flex-1 rounded-xl px-2 py-2 text-sm font-semibold transition-all", dept === d ? "bg-ab-active text-ab-fg" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}>{d.toUpperCase()}</button>
               ))}
             </div>
           </div>
@@ -570,38 +570,38 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
         {/* Team appointment (register, non-admin) */}
         {isReg && role !== "admin" && (
           <div>
-            <Lbl>Team <span className="text-white/20">(valgfritt)</span></Lbl>
+            <Lbl>Team <span className="text-ab-fg-4">(valgfritt)</span></Lbl>
             <div className={inputCls + " flex items-center justify-between gap-2 !py-0 !pr-1"}>
               <button type="button" onClick={() => setTeamPickerOpen(true)} className="cursor-pointer flex-1 text-left py-2.5">
-                <span className={teamName ? "text-white" : "text-white/25"}>{teamName || "Velg team…"}</span>
+                <span className={teamName ? "text-ab-fg" : "text-ab-fg-4"}>{teamName || "Velg team…"}</span>
               </button>
               {teamName
-                ? <button type="button" onClick={() => { setTeamId(""); setTeamName("") }} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/8"><X className="h-3.5 w-3.5" /></button>
-                : <ChevronDown className="h-4 w-4 text-white/40 mr-2" />}
+                ? <button type="button" onClick={() => { setTeamId(""); setTeamName("") }} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover"><X className="h-3.5 w-3.5" /></button>
+                : <ChevronDown className="h-4 w-4 text-ab-fg-3 mr-2" />}
             </div>
-            <p className="mt-1.5 text-[11px] text-white/30">Legges automatisk til i teamet og teamets kampanje.</p>
+            <p className="mt-1.5 text-[11px] text-ab-fg-4">Legges automatisk til i teamet og teamets kampanje.</p>
           </div>
         )}
 
         {/* Toggles */}
         <div className="space-y-2.5">
           {role === "manager" && (
-            <label className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 cursor-pointer">
-              <span className="flex items-center gap-2 text-sm text-white/75"><Star className="h-3.5 w-3.5 text-amber-400" /> Salgssjef</span>
-              <button onClick={() => setSalesChief(s => !s)} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors", salesChief ? "bg-blue-600" : "bg-white/15")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", salesChief ? "translate-x-4" : "translate-x-0.5")} /></button>
+            <label className="flex items-center justify-between rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 cursor-pointer">
+              <span className="flex items-center gap-2 text-sm text-ab-fg-2"><Star className="h-3.5 w-3.5 text-amber-400" /> Salgssjef</span>
+              <button onClick={() => setSalesChief(s => !s)} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors", salesChief ? "bg-blue-600" : "bg-ab-active")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", salesChief ? "translate-x-4" : "translate-x-0.5")} /></button>
             </label>
           )}
           {isReg && (
-            <label className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 cursor-pointer">
-              <span className="flex items-center gap-2 text-sm text-white/75"><Mail className="h-3.5 w-3.5 text-blue-400" /> Send velkomst-e-post</span>
-              <button onClick={() => setWelcome(s => !s)} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors", welcome ? "bg-blue-600" : "bg-white/15")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", welcome ? "translate-x-4" : "translate-x-0.5")} /></button>
+            <label className="flex items-center justify-between rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 cursor-pointer">
+              <span className="flex items-center gap-2 text-sm text-ab-fg-2"><Mail className="h-3.5 w-3.5 text-blue-400" /> Send velkomst-e-post</span>
+              <button onClick={() => setWelcome(s => !s)} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors", welcome ? "bg-blue-600" : "bg-ab-active")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", welcome ? "translate-x-4" : "translate-x-0.5")} /></button>
             </label>
           )}
         </div>
       </div>
-      <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/8 sticky bottom-0 bg-[#0d1528] rounded-b-2xl">
+      <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-ab-line sticky bottom-0 bg-ab-overlay rounded-b-2xl">
         {err && <span className="mr-auto text-xs text-rose-400">{err}</span>}
-        <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-white/50 hover:text-white hover:bg-white/8">Avbryt</button>
+        <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover">Avbryt</button>
         <button onClick={submit} disabled={!valid || saving} className="cursor-pointer rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Lagrer…" : isReg ? "Registrer bruker" : "Lagre endringer"}</button>
       </div>
     </Modal>
@@ -644,34 +644,34 @@ function TeamPickerModal({ onClose, onSelect }: { onClose: () => void; onSelect:
     return () => clearTimeout(t)
   }, [campaignFilter, chiefFilter, search])
 
-  const selCls = "h-9 rounded-lg border border-white/10 bg-white/5 px-2 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
+  const selCls = "h-9 rounded-lg border border-ab-line bg-ab-elevated px-2 text-sm text-ab-fg outline-none focus:border-blue-500/50 [color-scheme:dark]"
   return (
     <Modal open onClose={onClose} width="max-w-md">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
-        <h2 className="text-base font-bold text-white">Velg team</h2>
-        <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-white/35 hover:text-white hover:bg-white/8"><X className="h-4 w-4" /></button>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-ab-line">
+        <h2 className="text-base font-bold text-ab-fg">Velg team</h2>
+        <button onClick={onClose} className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover"><X className="h-4 w-4" /></button>
       </div>
       <div className="p-4 space-y-3">
         <div className="grid grid-cols-2 gap-2">
           <select value={campaignFilter} onChange={e => setCampaignFilter(e.target.value)} className={selCls}>
-            <option value="" className="bg-[#0d1528]">Alle kampanjer</option>
-            {campaigns.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+            <option value="" className="bg-ab-overlay">Alle kampanjer</option>
+            {campaigns.map(c => <option key={c.id} value={c.id} className="bg-ab-overlay">{c.name}</option>)}
           </select>
           <select value={chiefFilter} onChange={e => setChiefFilter(e.target.value)} className={selCls}>
-            <option value="" className="bg-[#0d1528]">Alle salgssjefer</option>
-            {chiefs.map(c => <option key={c.id} value={c.id} className="bg-[#0d1528]">{c.name}</option>)}
+            <option value="" className="bg-ab-overlay">Alle salgssjefer</option>
+            {chiefs.map(c => <option key={c.id} value={c.id} className="bg-ab-overlay">{c.name}</option>)}
           </select>
         </div>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk team…" className="w-full h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Søk team…" className="w-full h-9 rounded-lg border border-ab-line bg-ab-elevated px-3 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50" />
         <div className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-1.5">
-          {loading ? <p className="py-6 text-center text-sm text-white/35">Laster team…</p>
-            : teams.length === 0 ? <p className="py-6 text-center text-sm text-white/35">Ingen team funnet.</p>
+          {loading ? <p className="py-6 text-center text-sm text-ab-fg-4">Laster team…</p>
+            : teams.length === 0 ? <p className="py-6 text-center text-sm text-ab-fg-4">Ingen team funnet.</p>
               : teams.map(t => (
-                <button key={t.id} onClick={() => onSelect({ id: t.id, name: t.name })} className="cursor-pointer w-full flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2.5 text-left hover:border-white/20 hover:bg-white/[0.06] transition-all">
+                <button key={t.id} onClick={() => onSelect({ id: t.id, name: t.name })} className="cursor-pointer w-full flex items-center gap-3 rounded-xl border border-ab-line bg-ab-elevated px-3 py-2.5 text-left hover:border-ab-line hover:bg-ab-hover transition-all">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base" style={{ background: `${t.color || "#3b82f6"}22`, border: `1px solid ${t.color || "#3b82f6"}55` }}>{t.icon || "👥"}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-white truncate">{t.name}</span>
-                    <span className="block text-[11px] text-white/40 truncate">{t.campaign?.name ?? "Ingen kampanje"}{t.sales_chief ? ` · ${t.sales_chief.name}` : ""}</span>
+                    <span className="block text-sm font-semibold text-ab-fg truncate">{t.name}</span>
+                    <span className="block text-[11px] text-ab-fg-3 truncate">{t.campaign?.name ?? "Ingen kampanje"}{t.sales_chief ? ` · ${t.sales_chief.name}` : ""}</span>
                   </span>
                 </button>
               ))}

@@ -69,18 +69,18 @@ export function Celebration({ milestone, onDone }: { milestone: Milestone; onDon
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 220, damping: 18 }}
-            className="relative flex flex-col items-center text-center px-10 py-8 rounded-3xl border border-white/12 bg-[#0d1528]/90 shadow-[0_32px_90px_-12px_rgba(0,0,0,0.7)]"
+            className="relative flex flex-col items-center text-center px-10 py-8 rounded-3xl border border-ab-line bg-ab-overlay shadow-[0_32px_90px_-12px_rgba(0,0,0,0.7)]"
           >
             <RoyMascot state="win-big" size={120} accent="#fbbf24" powerUp />
             <motion.h2
               initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="mt-4 text-xl font-bold text-white"
+              className="mt-4 text-xl font-bold text-ab-fg"
             >
               {milestone.title}
             </motion.h2>
             <motion.p
               initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-              className="mt-1 text-sm text-white/55"
+              className="mt-1 text-sm text-ab-fg-3"
             >
               {milestone.sub}
             </motion.p>

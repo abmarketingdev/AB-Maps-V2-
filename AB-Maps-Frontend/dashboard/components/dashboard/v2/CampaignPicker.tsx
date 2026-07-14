@@ -124,33 +124,33 @@ export function CampaignPicker({ className }: { className?: string }) {
                 exit={{ opacity: 0, scale: 0.96, y: 14 }}
                 transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                 onClick={e => e.stopPropagation()}
-                className="w-full max-w-lg rounded-2xl border border-white/12 bg-[#0d1528] shadow-[0_32px_90px_-12px_rgba(0,0,0,0.7)] overflow-hidden"
+                className="w-full max-w-lg rounded-2xl border border-ab-line bg-ab-overlay shadow-[0_32px_90px_-12px_rgba(0,0,0,0.7)] overflow-hidden"
               >
                 {/* Header */}
-                <div className="relative px-6 pt-5 pb-4 border-b border-white/8">
+                <div className="relative px-6 pt-5 pb-4 border-b border-ab-line">
                   <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-20 opacity-30"
                     style={{ background: `linear-gradient(90deg, ${(selected?.color ?? "#3b82f6")}33, transparent 70%)` }} />
                   <div className="relative flex items-start justify-between">
                     <div>
-                      <h2 className="text-lg font-bold text-white">Velg kampanje</h2>
-                      <p className="text-sm text-white/45 mt-0.5">Fargen følger deg gjennom hele dashbordet.</p>
+                      <h2 className="text-lg font-bold text-ab-fg">Velg kampanje</h2>
+                      <p className="text-sm text-ab-fg-3 mt-0.5">Fargen følger deg gjennom hele dashbordet.</p>
                     </div>
-                    <button onClick={() => setOpen(false)} className="cursor-pointer h-8 w-8 flex items-center justify-center rounded-xl text-white/40 hover:text-white hover:bg-white/8 transition-all"><X className="h-4 w-4" /></button>
+                    <button onClick={() => setOpen(false)} className="cursor-pointer h-8 w-8 flex items-center justify-center rounded-xl text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover transition-all"><X className="h-4 w-4" /></button>
                   </div>
                   {/* Search */}
                   <div className="relative mt-4">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ab-fg-4" />
                     <input value={search} onChange={e => setSearch(e.target.value)} autoFocus placeholder="Søk kampanje…"
-                      className="w-full h-11 rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-500/50 transition-all" />
+                      className="w-full h-11 rounded-xl border border-ab-line bg-ab-elevated pl-10 pr-3 text-sm text-ab-fg placeholder:text-ab-fg-4 outline-none focus:border-blue-500/50 transition-all" />
                   </div>
                 </div>
 
                 {/* List */}
                 <div className="max-h-[52vh] overflow-y-auto p-3 space-y-2">
                   {loading ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center"><Loader2 className="h-6 w-6 text-white/30 mb-2 animate-spin" /><p className="text-sm text-white/35">Laster kampanjer…</p></div>
+                    <div className="flex flex-col items-center justify-center py-12 text-center"><Loader2 className="h-6 w-6 text-ab-fg-4 mb-2 animate-spin" /><p className="text-sm text-ab-fg-4">Laster kampanjer…</p></div>
                   ) : filtered.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center"><Hash className="h-7 w-7 text-white/15 mb-2" /><p className="text-sm text-white/35">Ingen kampanjer funnet</p></div>
+                    <div className="flex flex-col items-center justify-center py-12 text-center"><Hash className="h-7 w-7 text-ab-fg-4 mb-2" /><p className="text-sm text-ab-fg-4">Ingen kampanjer funnet</p></div>
                   ) : filtered.map((c, i) => {
                     const isSel = selected?.id === c.id
                     return (
@@ -159,7 +159,7 @@ export function CampaignPicker({ className }: { className?: string }) {
                         initial={reduced ? false : { opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
                         whileHover={reduced ? {} : { x: 2 }}
                         className={cn("group/card relative w-full text-left rounded-xl border p-3.5 transition-all cursor-pointer overflow-hidden",
-                          isSel ? "bg-white/[0.07]" : "border-white/8 bg-white/[0.03] hover:bg-white/[0.06]")}
+                          isSel ? "bg-ab-hover" : "border-ab-line bg-ab-elevated hover:bg-ab-hover")}
                         style={isSel ? { borderColor: `${c.color}66` } : undefined}
                       >
                         {/* left color rail */}
@@ -170,21 +170,21 @@ export function CampaignPicker({ className }: { className?: string }) {
                           </span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-white/90 truncate">{c.name}</span>
+                              <span className="text-sm font-semibold text-ab-fg truncate">{c.name}</span>
                               <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0"
                                 style={{ background: c.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", color: c.status === "active" ? "#10b981" : "#f59e0b" }}>
                                 {STATUS_LABEL[c.status]}
                               </span>
                             </div>
-                            <p className="text-xs text-white/40 truncate mt-0.5">{c.description}</p>
+                            <p className="text-xs text-ab-fg-3 truncate mt-0.5">{c.description}</p>
                             {/* progress + meta */}
                             <div className="mt-2 flex items-center gap-3">
-                              <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-white/10">
+                              <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-ab-hover">
                                 <motion.div className="h-full rounded-full" style={{ background: c.color }}
                                   initial={reduced ? false : { width: 0 }} animate={{ width: `${c.pctComplete}%` }} transition={{ delay: 0.1 + i * 0.04, duration: 0.6 }} />
                               </div>
-                              <span className="text-[10px] font-mono text-white/40 shrink-0">{c.pctComplete}%</span>
-                              <span className="flex items-center gap-1 text-[10px] text-white/35 shrink-0"><Users className="h-3 w-3" />{c.employees}</span>
+                              <span className="text-[10px] font-mono text-ab-fg-3 shrink-0">{c.pctComplete}%</span>
+                              <span className="flex items-center gap-1 text-[10px] text-ab-fg-4 shrink-0"><Users className="h-3 w-3" />{c.employees}</span>
                             </div>
                           </div>
                           {isSel && (
@@ -199,8 +199,8 @@ export function CampaignPicker({ className }: { className?: string }) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-3.5 border-t border-white/8">
-                  <p className="text-xs text-white/35 text-center">Du kan når som helst bytte kampanje fra menyen.</p>
+                <div className="px-6 py-3.5 border-t border-ab-line">
+                  <p className="text-xs text-ab-fg-4 text-center">Du kan når som helst bytte kampanje fra menyen.</p>
                 </div>
               </motion.div>
             </motion.div>

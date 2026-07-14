@@ -59,10 +59,10 @@ export function EmployeeBriefingView() {
 
   if (status !== "ok") {
     return (
-      <main className="relative flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 55%, #0a0f1e 100%)" }}>
+      <main className="relative flex min-h-screen flex-col items-center justify-center gap-4 px-4 sm:px-6 text-center bg-ab-base">
         {status === "loading"
-          ? <><Loader2 className="h-7 w-7 animate-spin text-white/40" /><p className="text-sm text-white/40">Henter dagen din…</p></>
-          : <><p className="text-lg font-semibold text-white">God {data.timeOfDay}, {firstName}</p><p className="text-sm text-white/45">Kunne ikke hente dagsoversikten.</p><button onClick={go} className="mt-1 cursor-pointer rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500">Gå til dashbord</button></>}
+          ? <><Loader2 className="h-7 w-7 animate-spin text-ab-fg-3" /><p className="text-sm text-ab-fg-3">Henter dagen din…</p></>
+          : <><p className="text-lg font-semibold text-ab-fg">God {data.timeOfDay}, {firstName}</p><p className="text-sm text-ab-fg-3">Kunne ikke hente dagsoversikten.</p><button onClick={go} className="mt-1 cursor-pointer rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500">Gå til dashbord</button></>}
       </main>
     )
   }
@@ -71,7 +71,7 @@ export function EmployeeBriefingView() {
   const yPct = Math.round(goal.yesterdayPct * 100)
 
   return (
-    <main className="relative min-h-screen overflow-hidden" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1528 55%, #0a0f1e 100%)" }}>
+    <main className="relative min-h-screen overflow-hidden bg-ab-base">
       {/* ambient blobs (tinted by yesterday's outcome) */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <motion.div className="absolute -top-32 left-1/4 h-[28rem] w-[28rem] rounded-full blur-3xl" style={{ background: `${glow}1a` }}
@@ -80,7 +80,7 @@ export function EmployeeBriefingView() {
           animate={reduced ? {} : { x: [0, -24, 0], y: [0, -16, 0] }} transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }} />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-16 text-center">
+      <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-4 sm:px-6 py-16 text-center">
         {/* Roy */}
         <motion.div
           initial={reduced ? false : { opacity: 0, scale: 0.7, rotate: -8 }}
@@ -98,23 +98,23 @@ export function EmployeeBriefingView() {
         </motion.div>
 
         {/* greeting */}
-        <motion.p {...fade(0.25)} className="mt-8 text-sm capitalize text-white/45">
+        <motion.p {...fade(0.25)} className="mt-8 text-sm capitalize text-ab-fg-3">
           {data.weekday} {data.dateStr} · god {data.timeOfDay}
         </motion.p>
-        <motion.h1 {...fade(0.35)} className="mt-2 text-2xl sm:text-3xl font-bold leading-snug text-white max-w-xl">
+        <motion.h1 {...fade(0.35)} className="mt-2 text-2xl sm:text-3xl font-bold leading-snug text-ab-fg max-w-xl">
           {headline}
         </motion.h1>
-        <motion.p {...fade(0.5)} className="mt-3 text-base leading-relaxed text-white/55 max-w-lg">
+        <motion.p {...fade(0.5)} className="mt-3 text-base leading-relaxed text-ab-fg-2 max-w-lg">
           {supporting}
         </motion.p>
 
         {/* I går / I dag */}
         <div className="mt-10 grid w-full grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Yesterday */}
-          <motion.div {...fade(0.65)} className="rounded-2xl border bg-white/[0.03] p-5 text-left"
+          <motion.div {...fade(0.65)} className="rounded-2xl border bg-ab-elevated p-5 text-left"
             style={{ borderColor: goal.yesterdayAchieved ? "rgba(16,185,129,0.3)" : "rgba(244,63,94,0.3)" }}>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-white/40">I går</span>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-ab-fg-3">I går</span>
               <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                 style={{ background: goal.yesterdayAchieved ? "rgba(16,185,129,0.15)" : "rgba(244,63,94,0.15)", color: glow }}>
                 {goal.yesterdayAchieved ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
@@ -122,30 +122,30 @@ export function EmployeeBriefingView() {
               </span>
             </div>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="font-mono text-3xl font-bold text-white">{goal.yesterdayDoors}</span>
-              <span className="text-sm text-white/40">/ {goal.yesterdayGoal} dører</span>
+              <span className="font-mono text-3xl font-bold text-ab-fg">{goal.yesterdayDoors}</span>
+              <span className="text-sm text-ab-fg-3">/ {goal.yesterdayGoal} dører</span>
             </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/8">
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ab-hover">
               <motion.div className="h-full rounded-full" style={{ background: glow }}
                 initial={reduced ? false : { width: 0 }} animate={{ width: `${Math.min(100, yPct)}%` }}
                 transition={{ delay: 0.9, duration: 0.8, ease: [0.23, 1, 0.32, 1] }} />
             </div>
-            <p className="mt-2 text-[12px] text-white/40">{yPct}% av målet · satt av din leder</p>
+            <p className="mt-2 text-[12px] text-ab-fg-3">{yPct}% av målet · satt av din leder</p>
           </motion.div>
 
           {/* Today */}
           <motion.div {...fade(0.78)} className="rounded-2xl border border-blue-400/25 bg-blue-500/[0.05] p-5 text-left">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-white/40">I dag</span>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-ab-fg-3">I dag</span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/15 px-2.5 py-1 text-[11px] font-semibold text-blue-300">
                 <Target className="h-3 w-3" /> Dagens mål
               </span>
             </div>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="font-mono text-3xl font-bold text-white">{goal.todayGoal}</span>
-              <span className="text-sm text-white/40">dører å banke</span>
+              <span className="font-mono text-3xl font-bold text-ab-fg">{goal.todayGoal}</span>
+              <span className="text-sm text-ab-fg-3">dører å banke</span>
             </div>
-            <p className="mt-3 text-[12px] leading-relaxed text-white/50">
+            <p className="mt-3 text-[12px] leading-relaxed text-ab-fg-3">
               {goal.hasTodayGoal
                 ? <>Målet er satt av din leder for i dag. Du er inne i en <span className="text-orange-300 font-medium">{data.streakDays}-dagers streak</span> 🔥</>
                 : <>Ingen eget mål satt i dag — vi bruker standardmålet på {goal.globalDefault} dører.</>}
@@ -156,7 +156,7 @@ export function EmployeeBriefingView() {
         {/* live ring preview */}
         <motion.div {...fade(0.95)} className="mt-10 flex flex-col items-center">
           <GoalRing value={data.doorsToday} goal={goal.todayGoal} size={180} />
-          <span className="mt-3 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/[0.07] px-4 py-2 text-sm text-white/70">
+          <span className="mt-3 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/[0.07] px-4 py-2 text-sm text-ab-fg-2">
             <Flame className="h-4 w-4 text-orange-400" fill="#fb923c" /> {data.streakDays} dager på rad
           </span>
         </motion.div>
@@ -167,7 +167,7 @@ export function EmployeeBriefingView() {
         initial={false}
         animate={showCta ? { opacity: 1, y: 0, pointerEvents: "auto" } : { opacity: 0, y: 24, pointerEvents: "none" }}
         transition={{ type: "spring", stiffness: 200, damping: 18 }}
-        className="fixed bottom-8 left-0 right-0 z-20 flex justify-center px-6"
+        className="fixed bottom-8 left-0 right-0 z-20 flex justify-center px-4 sm:px-6"
       >
         <motion.button
           onClick={go}

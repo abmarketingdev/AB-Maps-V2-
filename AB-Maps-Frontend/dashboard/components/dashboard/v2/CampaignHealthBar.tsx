@@ -31,13 +31,13 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
       initial={reduced ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.35, duration: 0.5 }}
-      className={`rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 ${className ?? ""}`}
+      className={`rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5 ${className ?? ""}`}
     >
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-white">Kampanjestatus</h3>
-          <p className="mt-0.5 text-xs text-white/40">Fremdrift mot mål</p>
+          <h3 className="text-sm font-semibold text-ab-fg">Kampanjestatus</h3>
+          <p className="mt-0.5 text-xs text-ab-fg-3">Fremdrift mot mål</p>
         </div>
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/15">
           <Megaphone className="h-4 w-4 text-cyan-400" />
@@ -60,22 +60,22 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
               <div className="mb-1.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full shrink-0" style={{ background: c.color }} />
-                  <span className="text-sm font-medium text-white/85">{c.name}</span>
+                  <span className="text-sm font-medium text-ab-fg-2">{c.name}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1 text-white/40">
+                  <span className="flex items-center gap-1 text-ab-fg-3">
                     <Users className="h-3 w-3" />
                     {c.employees}
                   </span>
                   <span className="font-medium" style={{ color: status.color }}>{status.text}</span>
-                  <span className="font-mono font-semibold text-white/70">
+                  <span className="font-mono font-semibold text-ab-fg-2">
                     {c.current}/{c.target}
                   </span>
                 </div>
               </div>
 
               {/* Bar */}
-              <div className="h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="h-2 overflow-hidden rounded-full bg-ab-hover">
                 <motion.div
                   className="h-full rounded-full"
                   style={{ background: `linear-gradient(90deg, ${c.color}99, ${c.color})` }}
@@ -86,7 +86,7 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
               </div>
 
               {/* Bottom row */}
-              <div className="mt-1 flex justify-between text-xs text-white/30">
+              <div className="mt-1 flex justify-between text-xs text-ab-fg-4">
                 <span>{Math.round(p)}% fullført</span>
                 <span>mål: {c.target.toLocaleString("nb-NO")} dører</span>
               </div>

@@ -67,7 +67,7 @@ const AssignAreasModal: React.FC<AssignAreasModalProps> = ({ open, campaign, are
           <DialogHeader>
             <DialogTitle>Loading campaign...</DialogTitle>
           </DialogHeader>
-          <div className="text-gray-400 text-center py-8">Loading...</div>
+          <div className="text-ab-fg-3 text-center py-8">Loading...</div>
         </DialogContent>
       </Dialog>
     );
@@ -122,15 +122,15 @@ const AssignAreasModal: React.FC<AssignAreasModalProps> = ({ open, campaign, are
         <DialogHeader>
           <DialogTitle>Assign Areas to {campaign?.name}</DialogTitle>
         </DialogHeader>
-        <div className="flex gap-8">
+        <div className="flex flex-col sm:flex-row gap-8">
           {/* Available Areas */}
-          <div className="flex-1 border-r pr-4">
+          <div className="flex-1 sm:border-r sm:border-ab-line sm:pr-4">
             <h3 className="font-semibold mb-2">Available Areas</h3>
-            <div className="min-h-[200px] max-h-80 overflow-y-auto scrollbar-hide bg-gray-50 rounded p-2">
+            <div className="min-h-[200px] max-h-80 overflow-y-auto scrollbar-hide bg-ab-inset rounded p-2">
               {loading ? (
-                <div className="text-gray-400 text-sm">Loading...</div>
+                <div className="text-ab-fg-3 text-sm">Loading...</div>
               ) : availableAreas.length === 0 ? (
-                <div className="text-gray-400 text-sm">No available areas</div>
+                <div className="text-ab-fg-3 text-sm">No available areas</div>
               ) : (
                 <ul className="space-y-2">
                   {availableAreas.map((area) => (
@@ -138,7 +138,7 @@ const AssignAreasModal: React.FC<AssignAreasModalProps> = ({ open, campaign, are
                       <div className="flex items-center justify-between bg-white rounded shadow p-3 hover:bg-gray-100 transition">
                         <div>
                           <div className="font-medium">{area.name}</div>
-                          <div className="text-xs text-gray-500">{area.color}</div>
+                          <div className="text-xs text-ab-fg-3">{area.color}</div>
                         </div>
                         <button
                           className="w-8 h-8 flex items-center justify-center text-green-600 hover:bg-green-100 rounded-full transition border border-green-200"
@@ -155,13 +155,13 @@ const AssignAreasModal: React.FC<AssignAreasModalProps> = ({ open, campaign, are
             </div>
           </div>
           {/* Assigned Areas */}
-          <div className="flex-1 pl-4">
+          <div className="flex-1 sm:pl-4">
             <h3 className="font-semibold mb-2">Assigned Areas</h3>
-            <div className="min-h-[200px] max-h-80 overflow-y-auto scrollbar-hide bg-gray-50 rounded p-2">
+            <div className="min-h-[200px] max-h-80 overflow-y-auto scrollbar-hide bg-ab-inset rounded p-2">
               {loading ? (
-                <div className="text-gray-400 text-sm">Loading...</div>
+                <div className="text-ab-fg-3 text-sm">Loading...</div>
               ) : assignedAreas.length === 0 ? (
-                <div className="text-gray-400 text-sm">No assigned areas</div>
+                <div className="text-ab-fg-3 text-sm">No assigned areas</div>
               ) : (
                 <ul className="space-y-2">
                   {assignedAreas.map((a) => {
@@ -170,10 +170,10 @@ const AssignAreasModal: React.FC<AssignAreasModalProps> = ({ open, campaign, are
                     const key = isTemp && a.area && a.area.id ? `temp-${a.area.id}` : a.id;
                     return (
                       <li key={key}>
-                        <div className="flex items-center justify-between bg-white rounded shadow p-3 hover:bg-gray-100 transition">
+                        <div className="flex items-center justify-between bg-ab-elevated rounded shadow p-3 hover:bg-ab-hover transition">
                           <div>
                             <div className="font-medium">{a.area.name}</div>
-                            <div className="text-xs text-gray-500">{a.area.color}</div>
+                            <div className="text-xs text-ab-fg-3">{a.area.color}</div>
                           </div>
                           <button
                             className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-100 rounded-full transition border border-red-200"
