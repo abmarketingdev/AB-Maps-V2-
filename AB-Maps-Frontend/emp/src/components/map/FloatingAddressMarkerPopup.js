@@ -697,23 +697,31 @@ Eksempler:
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleDelete();
+                    if (!isDeleting && !fetchingPermissions && canDeleteAddress) {
+                      handleDelete();
+                    }
                   }}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                   }}
-                  disabled={isDeleting}
+                  disabled={isDeleting || fetchingPermissions || !canDeleteAddress}
+                  title={fetchingPermissions ? 'Sjekker tillatelser...' : !canDeleteAddress ? 'Du kan kun slette dine egne punkter' : 'Slett punkt'}
                 >
                   {isDeleting ? (
                     <>
                       <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '8px' }} />
                       Sletter...
                     </>
+                  ) : fetchingPermissions ? (
+                    <>
+                      <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '8px' }} />
+                      Sjekker tillatelser...
+                    </>
                   ) : (
                     <>
                       <FontAwesomeIcon icon={faTrash} style={{ marginRight: '8px' }} />
-                      Slett punkt
+                      {canDeleteAddress ? 'Slett punkt' : 'Kan ikke slette'}
                     </>
                   )}
                 </button>
