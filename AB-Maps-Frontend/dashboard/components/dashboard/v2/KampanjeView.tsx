@@ -188,11 +188,11 @@ export function KampanjeView() {
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl"><PanelEmpty msg="Ingen kampanjer funnet" /></div>
         ) : view === "list" ? (
-          <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl overflow-hidden">
-            <div className="px-5 py-3 border-b border-ab-line grid grid-cols-[1fr_90px_120px_120px_110px] gap-4 items-center text-[10px] font-bold uppercase tracking-wider text-ab-fg-4">
+          <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl overflow-x-auto">
+            <div className="min-w-[760px] px-5 py-3 border-b border-ab-line grid grid-cols-[1fr_90px_120px_120px_110px] gap-4 items-center text-[10px] font-bold uppercase tracking-wider text-ab-fg-4">
               <span>Kampanje</span><span className="text-center">Områder</span><span>Ansatte</span><span className="text-right">Salg · uken</span><span className="text-right">Opprettet</span>
             </div>
-            <div className="divide-y divide-ab-line">
+            <div className="min-w-[760px] divide-y divide-ab-line">
               {filtered.map((c, i) => (
                 <motion.button key={c.id} initial={reduced ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
                   onClick={() => setDetail(c)} className="cursor-pointer w-full px-5 py-4 grid grid-cols-[1fr_90px_120px_120px_110px] gap-4 items-center hover:bg-ab-hover transition-colors text-left">

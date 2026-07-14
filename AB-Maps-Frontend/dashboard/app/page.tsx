@@ -17,6 +17,12 @@ export default function Page() {
     }
   }, [user, isAuthenticated, isLoading, router]);
 
+  // While auth resolves, or for an employee mid-redirect, don't mount the manager BriefingView
+  // (it would call the manager-only /api/dashboard/briefing/ → 403 and flash a manager screen).
+  if (isLoading || user?.user_type === "employee") {
+    return <div className="min-h-screen bg-ab-base" />;
+  }
+
   return (
     <ProtectedRoute requiredUserType="manager">
       <BriefingView />

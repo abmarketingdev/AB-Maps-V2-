@@ -32,7 +32,7 @@ export function TodayJourney({ events }: { events: JourneyEvent[] }) {
         <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-ab-hover" />
         <div className="relative flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
           {events.map((e, i) => {
-            const meta = OUTCOME_META[e.outcome]
+            const meta = OUTCOME_META[e.outcome] ?? OUTCOME_META["nei"]
             const big = e.outcome === "ja"
             return (
               <motion.div

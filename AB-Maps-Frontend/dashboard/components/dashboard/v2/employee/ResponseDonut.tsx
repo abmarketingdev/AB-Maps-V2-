@@ -31,7 +31,7 @@ export function ResponseDonut({ ja, nei, ikkeHjemme, folgOpp, jaProsent }: {
       <div className="flex items-center gap-6">
         <div className="relative shrink-0" style={{ width: size, height: size }}>
           <svg width={size} height={size} className="-rotate-90">
-            <circle cx={cx} cy={cx} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
+            <circle cx={cx} cy={cx} r={r} fill="none" className="stroke-ab-line" strokeWidth={stroke} />
             {segments.map((seg, i) => {
               const frac = seg.value / total
               const dash = c * frac

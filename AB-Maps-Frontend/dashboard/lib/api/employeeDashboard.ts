@@ -11,6 +11,19 @@ import {
 } from '@/components/dashboard/v2/employee/employeeLogic';
 import type { Threshold } from '@/services/analyticsService';
 
+// The backend emits knock outcomes with underscores (ja / nei / ikke_hjemme / folg_opp);
+// the UI's OUTCOME_META is keyed with hyphens (ikke-hjemme / folg-opp). Without this
+// normalisation, OUTCOME_META[outcome] is undefined and `.color` throws — white-screening the
+// employee dashboard the moment a "ikke hjemme"/"følg opp" knock exists in today's journey.
+const OUTCOME_NORMALISE: Record<string, Outcome> = {
+  ja: 'ja', nei: 'nei',
+  'ikke-hjemme': 'ikke-hjemme', ikke_hjemme: 'ikke-hjemme',
+  'folg-opp': 'folg-opp', folg_opp: 'folg-opp',
+};
+function normaliseOutcome(v: unknown): Outcome | null {
+  return (typeof v === 'string' && OUTCOME_NORMALISE[v]) || null;
+}
+
 // ─── §7.2 Gamified dashboard ───────────────────────────────────────────────
 interface EmployeeDayResponse {
   first_name: string;
@@ -70,7 +83,12 @@ function mapToday(r: EmployeeDayResponse): EmployeeDayData {
     weekLabels: Array.isArray(r?.week_labels) ? r.week_labels : base.weekLabels,
     todayGoal: num(r?.door_goal, base.todayGoal),
     yesterdayGoal: num(r?.door_goal, base.yesterdayGoal),
-    journey: (Array.isArray(r?.journey) ? r.journey : []) as JourneyEvent[],
+    journey: (Array.isArray(r?.journey) ? r.journey : [])
+      .map((e: { time?: string; outcome?: unknown }) => {
+        const outcome = normaliseOutcome(e?.outcome);
+        return outcome ? { time: String(e?.time ?? ''), outcome } : null;
+      })
+      .filter((e): e is JourneyEvent => e !== null),
     followUps: (Array.isArray(r?.follow_ups) ? r.follow_ups : []) as FollowUp[],
   };
 }
