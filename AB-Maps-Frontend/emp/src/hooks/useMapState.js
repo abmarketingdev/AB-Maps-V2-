@@ -871,7 +871,7 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
         markerPayload.nei_subcategory = neiSubcategory;
       }
       // GPS proximity guard: send the knocker's live location so the backend can verify the
-      // door is within 75 m (else it rejects with 400 too_far, handled below).
+      // door is within 150 m (else it rejects with 400 too_far, handled below).
       if (userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lon === 'number') {
         markerPayload.user_location = {
           lat: userLocation.lat, lng: userLocation.lon, accuracy: userLocation.accuracy,

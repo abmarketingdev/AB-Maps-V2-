@@ -251,7 +251,7 @@ const FloatingAddressPopup = ({
       }
 
       // GPS proximity guard: attach the tracked device position (via locationService, which
-      // runs a watchPosition) so the backend's 75 m check actually fires. Prefer the last tracked
+      // runs a watchPosition) so the backend's 150 m check actually fires. Prefer the last tracked
       // fix; else request one with the service's own timeout+retry. A confident far fix is
       // rejected (400 too_far, shown as a toast). Only if GPS is truly unavailable do we send
       // nothing — and we warn the user that the knock will be unverified.

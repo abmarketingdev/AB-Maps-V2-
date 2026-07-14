@@ -237,7 +237,7 @@ const ApartmentListDrawer = ({
       ) {
         aptOptions.neiSubcategory = neiSubcategory;
       }
-      // Attach the knocker's live GPS fix so the backend 75 m proximity guard can
+      // Attach the knocker's live GPS fix so the backend 150 m proximity guard can
       // validate this knock (parity with the standalone-house path in useMapState).
       const fix = locationService.getStatus().lastLocation;
       if (fix && typeof fix.latitude === 'number' && typeof fix.longitude === 'number') {

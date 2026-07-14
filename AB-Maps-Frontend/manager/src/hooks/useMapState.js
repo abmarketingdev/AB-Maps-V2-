@@ -25,11 +25,11 @@ import buildingService from '../services/buildingService';
 // Phase 3: Import date utility functions
 import { formatDateToISO, formatISOToLocal, validateDateRange } from '../utils/dateUtils';
 
-// GPS proximity guard (Feature 11): matches the backend's 75 m door rule so a knock
+// GPS proximity guard (Feature 11): matches the backend's 150 m door rule so a knock
 // placed too far away never reaches local-lookup / bulk-create. Returns the rounded
-// distance when the tapped point is clearly beyond 75 m + accuracy of the tracked
+// distance when the tapped point is clearly beyond 150 m + accuracy of the tracked
 // device fix, else null (no fix → don't block; the backend still validates the knock).
-const PROXIMITY_LIMIT_M = 75;
+const PROXIMITY_LIMIT_M = 150;
 function _distMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000, toRad = (d) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
@@ -680,13 +680,13 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
               setToast({ visible: true, message: 'Velg en kampanje først (øverst i verktøylinjen)', type: 'error' });
               return;
             }
-            // GPS proximity guard: if we're clearly >75 m from the tapped door, don't
+            // GPS proximity guard: if we're clearly >150 m from the tapped door, don't
             // look up or create anything (the backend would reject the knock anyway).
             const proxM = proximityViolationMeters(latlng.lat, latlng.lng);
             if (proxM != null) {
               setIsGeonorgeLoading(false);
               setClickedInfo(null);
-              showToast(`Du er ${proxM} m unna – du må være nær døra (maks 75 m) for å registrere adressen.`, 'error');
+              showToast(`Du er ${proxM} m unna – du må være nær døra (maks 150 m) for å registrere adressen.`, 'error');
               return;
             }
             const createdById = currentUser?.id || null;
@@ -828,11 +828,11 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
       }
     }
 
-    // GPS proximity guard: same 75 m rule as the primary flow.
+    // GPS proximity guard: same 150 m rule as the primary flow.
     const proxM = proximityViolationMeters(normalizedPosition.lat, normalizedPosition.lng);
     if (proxM != null) {
       setClickedInfo(null);
-      showToast(`Du er ${proxM} m unna – du må være nær døra (maks 75 m) for å registrere adressen.`, 'error');
+      showToast(`Du er ${proxM} m unna – du må være nær døra (maks 150 m) for å registrere adressen.`, 'error');
       return;
     }
 
