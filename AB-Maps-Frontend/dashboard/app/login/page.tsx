@@ -15,8 +15,8 @@ type Phase = "login" | "auth" | "loading";
 
 const LoginPage: React.FC = () => {
   const [userType, setUserType] = useState<"manager" | "employee">("manager");
-  const [username, setUsername] = useState("anna.berg");
-  const [password, setPassword] = useState("demo");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [phase, setPhase] = useState<Phase>("login");
   const [progress, setProgress] = useState(0);
@@ -244,7 +244,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between">
-          <StatusPill tone="live">DEMO · INGEN BACKEND</StatusPill>
+          <StatusPill tone="live">LIVE</StatusPill>
           <div className="text-[11px] text-ab-fg-4 mono">build · {new Date().getFullYear()}.05</div>
         </div>
 
@@ -322,7 +322,7 @@ const LoginPage: React.FC = () => {
               Velkommen tilbake
             </h1>
             <p className="text-[13px] text-ab-fg-2 mt-1.5">
-              Demo-modus · enhver brukernavn/passord-kombinasjon fungerer.
+              Logg inn med brukernavnet og passordet ditt.
             </p>
           </div>
 
@@ -408,7 +408,7 @@ const LoginPage: React.FC = () => {
           </button>
 
           <p className="text-[11px] text-ab-fg-3 text-center">
-            Demo-modus · ingen API-er er koblet til.
+            AB Marketing · AB Maps
           </p>
         </form>
         )}

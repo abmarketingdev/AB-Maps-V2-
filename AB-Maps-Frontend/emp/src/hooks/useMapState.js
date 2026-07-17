@@ -605,10 +605,15 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
               base_address: primaryAddress,
               apartment_numbers: lookupResult.units,
               campaign_id: campaignId,
-              position: { 
+              position: {
                 lat: validLatLng.lat,  // Use user's click position
                 lon: validLatLng.lng  // Use user's click position
-              }
+              },
+              // Send the knocker's live GPS so the backend's 150 m guard can reject a building
+              // placed from far away (the address popup still shows on rejection).
+              ...(userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lon === 'number'
+                ? { user_location: { lat: userLocation.lat, lng: userLocation.lon, accuracy: userLocation.accuracy } }
+                : {})
             };
             
             try {
@@ -729,10 +734,15 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
           base_address: address,
           apartment_numbers: geonorgeResult.units,
           campaign_id: campaignId,
-          position: { 
-            lat: normalizedPosition.lat, 
-            lon: normalizedPosition.lng 
-          }
+          position: {
+            lat: normalizedPosition.lat,
+            lon: normalizedPosition.lng
+          },
+          // Send the knocker's live GPS so the backend's 150 m guard can reject a building
+          // placed from far away (the address popup still shows on rejection).
+          ...(userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lon === 'number'
+            ? { user_location: { lat: userLocation.lat, lng: userLocation.lon, accuracy: userLocation.accuracy } }
+            : {})
         };
         
         try {

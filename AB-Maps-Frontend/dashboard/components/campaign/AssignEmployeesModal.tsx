@@ -410,6 +410,18 @@ export default function EnhancedAssignEmployeesModal({
     );
   }, [assignedEmployees, searchQuery]);
 
+  // Pagination for the (potentially large) available list — keeps the modal snappy by
+  // rendering ~20 draggable rows at a time instead of the full 300+.
+  const AVAILABLE_PAGE_SIZE = 20;
+  const [availablePage, setAvailablePage] = useState(1);
+  useEffect(() => { setAvailablePage(1); }, [searchQuery, availableEmployees.length]);
+  const availableTotalPages = Math.max(1, Math.ceil(filteredAvailableEmployees.length / AVAILABLE_PAGE_SIZE));
+  const pagedAvailableEmployees = useMemo(
+    () => filteredAvailableEmployees.slice(
+      (availablePage - 1) * AVAILABLE_PAGE_SIZE, availablePage * AVAILABLE_PAGE_SIZE),
+    [filteredAvailableEmployees, availablePage]
+  );
+
 
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
@@ -635,11 +647,38 @@ export default function EnhancedAssignEmployeesModal({
                 <DropZone
                   id="available"
                   title="Tilgjengelige Ansatte"
-                  employees={filteredAvailableEmployees}
+                  employees={pagedAvailableEmployees}
                   onAssign={handleAssign}
                   onUnassign={handleUnassign}
                   isLoading={isLoading}
                 />
+                {availableTotalPages > 1 && (
+                  <div className="flex items-center justify-between gap-2 mt-3 text-sm text-ab-fg-2">
+                    <span className="tabular-nums">
+                      Viser {(availablePage - 1) * AVAILABLE_PAGE_SIZE + 1}–
+                      {Math.min(availablePage * AVAILABLE_PAGE_SIZE, filteredAvailableEmployees.length)} av {filteredAvailableEmployees.length}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={availablePage <= 1}
+                        onClick={() => setAvailablePage(p => Math.max(1, p - 1))}
+                      >
+                        Forrige
+                      </Button>
+                      <span className="tabular-nums">{availablePage} / {availableTotalPages}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={availablePage >= availableTotalPages}
+                        onClick={() => setAvailablePage(p => Math.min(availableTotalPages, p + 1))}
+                      >
+                        Neste
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Row 2: Assigned Employees */}

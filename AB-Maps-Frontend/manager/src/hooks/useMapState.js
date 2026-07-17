@@ -680,13 +680,15 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
               setToast({ visible: true, message: 'Velg en kampanje først (øverst i verktøylinjen)', type: 'error' });
               return;
             }
-            // GPS proximity guard: if we're clearly >150 m from the tapped door, don't
-            // look up or create anything (the backend would reject the knock anyway).
+            // GPS proximity guard: if we're clearly >150 m from the tapped door, still SHOW the
+            // address popup so the knocker can see the address — but skip apartment discovery /
+            // placement. The backend also enforces 150 m on every save (address create AND
+            // apartment bulk-create), so nothing is actually placed from far away.
             const proxM = proximityViolationMeters(latlng.lat, latlng.lng);
             if (proxM != null) {
               setIsGeonorgeLoading(false);
-              setClickedInfo(null);
-              showToast(`Du er ${proxM} m unna – du må være nær døra (maks 150 m) for å registrere adressen.`, 'error');
+              setClickedInfo({ position: latlng, addresses: finalAddresses, source: 'mapClick' });
+              showToast(`Du er ${proxM} m unna – adressen vises, men du må være nær døra (maks 150 m) for å registrere.`, 'error');
               return;
             }
             const createdById = currentUser?.id || null;
@@ -828,11 +830,11 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
       }
     }
 
-    // GPS proximity guard: same 150 m rule as the primary flow.
+    // GPS proximity guard: same 150 m rule as the primary flow — but keep the address popup
+    // visible so the knocker can still see the address; just don't create from far away.
     const proxM = proximityViolationMeters(normalizedPosition.lat, normalizedPosition.lng);
     if (proxM != null) {
-      setClickedInfo(null);
-      showToast(`Du er ${proxM} m unna – du må være nær døra (maks 150 m) for å registrere adressen.`, 'error');
+      showToast(`Du er ${proxM} m unna – adressen vises, men du må være nær døra (maks 150 m) for å registrere.`, 'error');
       return;
     }
 

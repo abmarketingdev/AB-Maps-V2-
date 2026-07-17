@@ -1,18 +1,27 @@
 "use client";
 
 /**
- * /employee — standalone post-login Briefing for salespeople (no sidebar).
- * Mirrors the manager's `/` Briefing. The dense gamified dashboard lives at
- * /employee/dashbord (reached via the "Gå til dashbord" button). MOCK DATA.
+ * /employee — briefing is disabled for now; forward straight to the employee dashboard.
+ * To re-enable the briefing, restore the commented render below.
  */
 
-import { ProtectedRoute } from "@/lib/auth/ProtectedRoute";
-import { EmployeeBriefingView } from "@/components/dashboard/v2/employee/EmployeeBriefingView";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+// import { ProtectedRoute } from "@/lib/auth/ProtectedRoute";
+// import { EmployeeBriefingView } from "@/components/dashboard/v2/employee/EmployeeBriefingView";
 
 export default function EmployeePage() {
-  return (
-    <ProtectedRoute requiredUserType="employee">
-      <EmployeeBriefingView />
-    </ProtectedRoute>
-  );
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/employee/dashbord");
+  }, [router]);
+
+  return <div className="min-h-screen bg-ab-base" />;
+
+  // ── Employee briefing (commented out for now) ─────────────────────────────
+  // return (
+  //   <ProtectedRoute requiredUserType="employee">
+  //     <EmployeeBriefingView />
+  //   </ProtectedRoute>
+  // );
 }
