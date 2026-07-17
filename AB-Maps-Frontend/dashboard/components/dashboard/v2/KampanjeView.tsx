@@ -79,10 +79,10 @@ export function KampanjeView() {
   const [assignFor, setAssignFor] = useState<Campaign | null>(null)
 
   const filtered = useMemo(() => {
-    let out = campaigns.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.description.toLowerCase().includes(search.toLowerCase()))
+    let out = campaigns.filter(c => (c.name ?? "").toLowerCase().includes(search.toLowerCase()) || (c.description ?? "").toLowerCase().includes(search.toLowerCase()))
     out = [...out].sort((a, b) => {
       switch (sort) {
-        case "name": return a.name.localeCompare(b.name)
+        case "name": return (a.name ?? "").localeCompare(b.name ?? "")
         case "newest": return b.created.getTime() - a.created.getTime()
         case "sales": return b.salesLifetime - a.salesLifetime
         case "employees": return b.employeeIds.length - a.employeeIds.length

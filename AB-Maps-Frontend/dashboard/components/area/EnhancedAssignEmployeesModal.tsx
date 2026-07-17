@@ -321,8 +321,8 @@ export default function EnhancedAssignEmployeesModal({
     
     const query = searchQuery.toLowerCase();
     return availableEmployees.filter(emp => 
-      emp.name.toLowerCase().includes(query) ||
-      emp.email.toLowerCase().includes(query)
+      (emp.name ?? "").toLowerCase().includes(query) ||
+      (emp.email ?? "").toLowerCase().includes(query)
     );
   }, [availableEmployees, searchQuery]);
 
@@ -331,8 +331,8 @@ export default function EnhancedAssignEmployeesModal({
     
     const query = searchQuery.toLowerCase();
     return assignedEmployees.filter(emp => 
-      emp.name.toLowerCase().includes(query) ||
-      emp.email.toLowerCase().includes(query)
+      (emp.name ?? "").toLowerCase().includes(query) ||
+      (emp.email ?? "").toLowerCase().includes(query)
     );
   }, [assignedEmployees, searchQuery]);
 
