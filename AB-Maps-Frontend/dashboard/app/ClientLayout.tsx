@@ -185,13 +185,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           }
           setSelectedCampaign(campaign)
 
-          const userIsSuperuser = isSuperuser || authIsSuperuser
-          if (!userIsSuperuser && user && campaign?.id) {
-            const userType = user.user_type === "manager" ? "manager" : "employee"
-            const userId =
-              user.user_type === "manager"
-                ? user.user_info?.id || user.user_id
-                : user.user_info?.id || user.user_id
+          // The course-completion gate applies only to door-knocking employees.
+          // Managers, sales-chiefs, admins and superusers skip it entirely.
+          if (user?.user_type === "employee" && campaign?.id) {
+            const userType = "employee"
+            const userId = user.user_info?.id || user.user_id
             if (userId) {
               setIsCheckingCompletion(true)
               try {
@@ -226,7 +224,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 variant: "destructive",
               })
             }
-          } else if (userIsSuperuser) {
+          } else {
             setCompletionStatus(null)
             clearCompletionCache()
           }
@@ -247,15 +245,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // Check completion status when user returns from learning dashboard
   useEffect(() => {
     const checkCompletionOnReturn = async () => {
-      const userIsSuperuser = isSuperuser || authIsSuperuser
-      if (!isAuthenticated || userIsSuperuser || !user || isCheckingSuperuser) return
+      // Employee-only gate (see above): never run for managers/admins/superusers.
+      if (!isAuthenticated || !user || user.user_type !== "employee" || isCheckingSuperuser) return
       const storedCampaign = localStorage.getItem("currentCampaign")
       if (!storedCampaign) return
       try {
         const campaign = JSON.parse(storedCampaign)
         if (!campaign?.id) return
-        const userType = user.user_type === "manager" ? "manager" : "employee"
-        const userId = user.user_type === "manager" ? user.user_info?.id || user.user_id : user.user_info?.id || user.user_id
+        const userType = "employee"
+        const userId = user.user_info?.id || user.user_id
         if (!userId) return
         clearCompletionCache(campaign.id, userId, userType)
         setIsCheckingCompletion(true)
@@ -329,10 +327,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     setSelectedCampaign(campaign)
     setCampaignModalOpen(false)
     localStorage.setItem("currentCampaign", JSON.stringify(campaign))
-    const userIsSuperuser = isSuperuser || authIsSuperuser
-    if (!userIsSuperuser && user && campaign.id) {
-      const userType = user.user_type === "manager" ? "manager" : "employee"
-      const userId = user.user_type === "manager" ? user.user_info?.id || user.user_id : user.user_info?.id || user.user_id
+    // Employee-only gate (see above): never run for managers/admins/superusers.
+    if (user?.user_type === "employee" && campaign.id) {
+      const userType = "employee"
+      const userId = user.user_info?.id || user.user_id
       if (userId) {
         setIsCheckingCompletion(true)
         try {
@@ -359,7 +357,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       } else {
         toast({ title: "Manglende brukerinformasjon", description: "Kunne ikke sjekke kursfullføring. Vennligst logg inn på nytt.", variant: "destructive" })
       }
-    } else if (userIsSuperuser) {
+    } else {
       setCompletionStatus(null)
       clearCompletionCache()
     }
