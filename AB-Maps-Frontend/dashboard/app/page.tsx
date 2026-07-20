@@ -11,10 +11,17 @@ export default function Page() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  // Briefing is turned off for now: route users straight to their dashboard.
-  // Managers → /dashbord, employees → /employee (which forwards to /employee/dashbord).
+  // Briefing is turned off for now: route users straight from "/" to the right place.
+  //  - still resolving auth  → wait (blank splash)
+  //  - not logged in         → /login   (was missing → root showed a blank page)
+  //  - employee              → /employee (forwards to /employee/dashbord)
+  //  - manager/admin         → /dashbord
   useEffect(() => {
-    if (isLoading || !isAuthenticated || !user) return;
+    if (isLoading) return;
+    if (!isAuthenticated || !user) {
+      router.replace("/login");
+      return;
+    }
     router.replace(user.user_type === "employee" ? "/employee" : "/dashbord");
   }, [user, isAuthenticated, isLoading, router]);
 
