@@ -340,7 +340,8 @@ function AppContent() {
     };
     timer = setTimeout(tick, 3000);
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
+  }, []);
 
   // Handler for showing Talkmore results from AreaDialog
   // NOTE: Must be defined AFTER useMapState to access showToast and showAreaDialog

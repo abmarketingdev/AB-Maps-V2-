@@ -271,7 +271,8 @@ function App() {
     };
     timer = setTimeout(tick, 3000);
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
-  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
+  }, [token]);
 
   // Debug locked areas loading
   useEffect(() => {
