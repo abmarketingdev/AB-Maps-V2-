@@ -10,6 +10,25 @@
 import { API_CONFIG } from '../config/apiConfig';
 import { formatNorwegianAddress, isPointInPolygon } from '../utils/addressUtils';
 
+/**
+ * Live-update poll target: the current server "tile generation" for a campaign.
+ * Increments on ANY map change (area create/update/delete, address edits, polygon
+ * delete). The map polls it and refetches only when it moves. Pure Redis read on the
+ * backend, so it's cheap even at high frequency.
+ */
+export const getTileGeneration = async (campaignId) => {
+  let token = null;
+  try { token = window.authService?.getAccessToken?.() || null; } catch (e) { /* ignore */ }
+  if (!token) token = localStorage.getItem('accessToken') || localStorage.getItem('access_token');
+  const base = process.env.REACT_APP_TILE_SERVER_URL || 'http://localhost:8000';
+  const res = await fetch(`${base}/tiles/gen/?campaign_id=${encodeURIComponent(campaignId)}`, {
+    headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+  });
+  if (!res.ok) throw new Error(`tile gen ${res.status}`);
+  const data = await res.json();
+  return typeof data.gen === 'number' ? data.gen : null;
+};
+
 export const getAddressesInPolygon = async (points) => {
   if (!points || points.length < 3) return [];
 

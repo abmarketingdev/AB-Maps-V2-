@@ -51,7 +51,7 @@ import useMapRotation from './hooks/useMapRotation';
 
 
 // Services
-import { searchAddress, getEmployeeProfile, getTeamAssignedAreas, getCampaignAreas, getTalkmoreAreaResults } from './services/apiService';
+import { searchAddress, getEmployeeProfile, getTeamAssignedAreas, getCampaignAreas, getTalkmoreAreaResults, getTileGeneration } from './services/apiService';
 import locationService from './services/locationService';
 import { isPointInPolygon } from './utils/addressUtils';
 
@@ -231,6 +231,47 @@ function App() {
   useEffect(() => {
     mapRefAccessor.current = mapRef;
   }, [mapRef]);
+
+  // ── Live map updates (no manual refresh) ──────────────────────────────────
+  // Poll the server "tile generation" for the active campaign. It increments on ANY
+  // map change (a manager creating/deleting an area, address edits, polygon delete),
+  // so when the number moves we refetch the areas + bump tilesVersion and the map
+  // updates on its own. Jittered 10–15s; the value is compared client-side (tiny GET).
+  const liveGenRef = useRef(null);
+  const livePosRef = useRef(null);
+  useEffect(() => { livePosRef.current = position; }, [position]);
+  useEffect(() => {
+    if (!token) return undefined;
+    let cancelled = false;
+    let timer = null;
+    const readCampaignId = () => {
+      const raw = localStorage.getItem('currentCampaign');
+      if (!raw) return null;
+      try { return JSON.parse(raw)?.id || null; } catch (e) { return raw; }
+    };
+    const tick = async () => {
+      const cid = readCampaignId();
+      if (cid) {
+        try {
+          const gen = await getTileGeneration(cid);
+          if (!cancelled && gen != null) {
+            if (liveGenRef.current != null && gen !== liveGenRef.current) {
+              setTilesVersion(v => v + 1);              // markers refetch (post-change)
+              try {
+                const p = livePosRef.current;
+                const areas = await getCampaignAreas(null, p?.lat ?? null, p?.lng ?? null);
+                if (!cancelled) setCampaignAreas(Array.isArray(areas) ? areas : (areas?.results || []));
+              } catch (e) { /* keep polling */ }
+            }
+            liveGenRef.current = gen;
+          }
+        } catch (e) { /* transient network — keep polling */ }
+      }
+      if (!cancelled) timer = setTimeout(tick, 10000 + Math.floor(Math.random() * 5000));
+    };
+    timer = setTimeout(tick, 3000);
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debug locked areas loading
   useEffect(() => {

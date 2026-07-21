@@ -87,7 +87,7 @@ import useTalkmoreJob from './hooks/useTalkmoreJob';
 import useEnrichmentJobTracker from './hooks/useEnrichmentJobTracker';
 
 // Services
-import { getAddressesInPolygon, reverseGeocode } from './services/apiService';
+import { getAddressesInPolygon, reverseGeocode, getTileGeneration } from './services/apiService';
 import managerWebSocketService from './services/managerWebSocketService';
 import authService from './services/authService';
 import { API_CONFIG } from './config/apiConfig';
@@ -306,6 +306,41 @@ function AppContent() {
   useEffect(() => {
     showToastRef.current = showToast;
   }, [showToast]);
+
+  // ── Live map updates (no manual refresh) ──────────────────────────────────
+  // Poll the server "tile generation" for the active campaign; when it moves (any
+  // create/update/delete by this manager OR anyone else), refetch the areas in view +
+  // bump tilesVersion so the map updates on its own. Jittered 10–15s, compared client-side.
+  const liveGenRef = useRef(null);
+  const fetchAreasRef = useRef(fetchAreasInViewport);
+  useEffect(() => { fetchAreasRef.current = fetchAreasInViewport; }, [fetchAreasInViewport]);
+  useEffect(() => {
+    let cancelled = false;
+    let timer = null;
+    const readCid = () => {
+      const raw = localStorage.getItem('currentCampaign') || localStorage.getItem('selectedCampaign');
+      if (!raw) return null;
+      try { return JSON.parse(raw)?.id || null; } catch (e) { return raw; }
+    };
+    const tick = async () => {
+      const cid = readCid();
+      if (cid) {
+        try {
+          const gen = await getTileGeneration(cid);
+          if (!cancelled && gen != null) {
+            if (liveGenRef.current != null && gen !== liveGenRef.current) {
+              setTilesVersion(v => v + 1);
+              try { if (fetchAreasRef.current) await fetchAreasRef.current(); } catch (e) { /* keep polling */ }
+            }
+            liveGenRef.current = gen;
+          }
+        } catch (e) { /* transient — keep polling */ }
+      }
+      if (!cancelled) timer = setTimeout(tick, 10000 + Math.floor(Math.random() * 5000));
+    };
+    timer = setTimeout(tick, 3000);
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handler for showing Talkmore results from AreaDialog
   // NOTE: Must be defined AFTER useMapState to access showToast and showAreaDialog

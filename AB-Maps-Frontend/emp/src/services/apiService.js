@@ -356,6 +356,21 @@ export const getCampaignAreas = async (token = null, lat = null, lng = null) => 
 };
 
 /**
+ * Live-update poll target: the current server "tile generation" for a campaign.
+ * This integer increments whenever ANY map data changes (area create/update/delete,
+ * address edits, polygon delete). The map polls it and refetches only when it moves.
+ * Backend is a pure Redis read (no DB) so this is cheap even at high frequency.
+ */
+export const getTileGeneration = async (campaignId) => {
+  const base = process.env.REACT_APP_TILE_SERVER_URL || 'http://localhost:8000';
+  const url = `${base}/tiles/gen/?campaign_id=${encodeURIComponent(campaignId)}`;
+  const response = await fetchWithAuthRefresh(url, { method: 'GET' });
+  if (!response.ok) throw new Error(`tile gen ${response.status}`);
+  const data = await response.json();
+  return typeof data.gen === 'number' ? data.gen : null;
+};
+
+/**
  * Get headers with campaign_id from localStorage
  * Note: Authorization header is now handled by apiInterceptor
  */
