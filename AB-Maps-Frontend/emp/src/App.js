@@ -259,8 +259,15 @@ function App() {
               setTilesVersion(v => v + 1);              // markers refetch (post-change)
               try {
                 const p = livePosRef.current;
-                const areas = await getCampaignAreas(null, p?.lat ?? null, p?.lng ?? null);
-                if (!cancelled) setCampaignAreas(Array.isArray(areas) ? areas : (areas?.results || []));
+                // position is a [lat, lng] ARRAY (defaults to Oslo). Extract by index — reading
+                // .lat/.lng gives undefined, which drops getCampaignAreas onto the campaign_areas
+                // fallback (a DIFFERENT shape that the map can't render → all areas vanish).
+                const lat = Array.isArray(p) ? p[0] : (p?.lat ?? p?.latitude ?? null);
+                const lng = Array.isArray(p) ? p[1] : (p?.lng ?? p?.lon ?? p?.longitude ?? null);
+                if (lat != null && lng != null) {
+                  const areas = await getCampaignAreas(null, lat, lng);  // nearby → array (same as initial load)
+                  if (!cancelled && Array.isArray(areas)) setCampaignAreas(areas);
+                }
               } catch (e) { /* keep polling */ }
             }
             liveGenRef.current = gen;

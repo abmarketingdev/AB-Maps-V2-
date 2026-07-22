@@ -2132,6 +2132,9 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
     closeAssignEmployeesModal,
     // Fetch areas handler
     fetchAreasInViewport,
+    // Full area reload (REPLACES areas — reflects creates AND deletes, no toast). Used by the
+    // live gen-poll; fetchAreasInViewport only upserts (additive) so it can't show deletions.
+    loadAreasData,
     // Remove areas by IDs (for immediate deletion)
     removeAreasByIds,
     applyAddressMarkerUpdate,

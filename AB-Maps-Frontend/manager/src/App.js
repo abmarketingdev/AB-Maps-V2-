@@ -280,6 +280,7 @@ function AppContent() {
     showToast,
     // Fetch areas handler
     fetchAreasInViewport,
+    loadAreasData,
     // Remove areas by IDs (for immediate deletion)
     removeAreasByIds,
     applyAddressMarkerUpdate,
@@ -312,8 +313,8 @@ function AppContent() {
   // create/update/delete by this manager OR anyone else), refetch the areas in view +
   // bump tilesVersion so the map updates on its own. Jittered 10–15s, compared client-side.
   const liveGenRef = useRef(null);
-  const fetchAreasRef = useRef(fetchAreasInViewport);
-  useEffect(() => { fetchAreasRef.current = fetchAreasInViewport; }, [fetchAreasInViewport]);
+  const refreshAreasRef = useRef(loadAreasData);
+  useEffect(() => { refreshAreasRef.current = loadAreasData; }, [loadAreasData]);
   useEffect(() => {
     let cancelled = false;
     let timer = null;
@@ -330,7 +331,7 @@ function AppContent() {
           if (!cancelled && gen != null) {
             if (liveGenRef.current != null && gen !== liveGenRef.current) {
               setTilesVersion(v => v + 1);
-              try { if (fetchAreasRef.current) await fetchAreasRef.current(); } catch (e) { /* keep polling */ }
+              try { if (refreshAreasRef.current) await refreshAreasRef.current(); } catch (e) { /* keep polling */ }
             }
             liveGenRef.current = gen;
           }

@@ -23,6 +23,7 @@ export const getTileGeneration = async (campaignId) => {
   const base = process.env.REACT_APP_TILE_SERVER_URL || 'http://localhost:8000';
   const res = await fetch(`${base}/tiles/gen/?campaign_id=${encodeURIComponent(campaignId)}`, {
     headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+    cache: 'no-store',
   });
   if (!res.ok) throw new Error(`tile gen ${res.status}`);
   const data = await res.json();

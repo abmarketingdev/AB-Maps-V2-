@@ -364,7 +364,7 @@ export const getCampaignAreas = async (token = null, lat = null, lng = null) => 
 export const getTileGeneration = async (campaignId) => {
   const base = process.env.REACT_APP_TILE_SERVER_URL || 'http://localhost:8000';
   const url = `${base}/tiles/gen/?campaign_id=${encodeURIComponent(campaignId)}`;
-  const response = await fetchWithAuthRefresh(url, { method: 'GET' });
+  const response = await fetchWithAuthRefresh(url, { method: 'GET', cache: 'no-store' });
   if (!response.ok) throw new Error(`tile gen ${response.status}`);
   const data = await response.json();
   return typeof data.gen === 'number' ? data.gen : null;
