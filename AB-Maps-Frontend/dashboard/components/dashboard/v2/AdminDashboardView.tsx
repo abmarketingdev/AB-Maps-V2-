@@ -407,7 +407,8 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
         <div className="p-6">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/15 mb-4"><Trash2 className="h-5 w-5 text-rose-400" /></div>
           <h2 className="text-lg font-bold text-ab-fg mb-1">Slett bruker</h2>
-          <p className="text-sm text-ab-fg-3 mb-5">Slette <span className="text-ab-fg-2 font-medium">{fullName(modal.user)}</span>? Dette kan ikke angres.</p>
+          <p className="text-sm text-ab-fg-3 mb-2">Slette <span className="text-ab-fg-2 font-medium">{fullName(modal.user)}</span>? Brukeren mister tilgangen og fjernes fra alle lister. Dette kan ikke angres.</p>
+          <p className="text-sm text-ab-fg-3 mb-5">Registrerte data beholdes: banking, adresser og salg blir liggende og teller fortsatt på navnet i historikk og statistikk.</p>
           <div className="flex justify-end gap-2">
             <button onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover">Avbryt</button>
             <button onClick={() => { onDelete(modal.user); onClose() }} className="cursor-pointer rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500">Slett</button>
