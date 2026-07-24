@@ -54,7 +54,7 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      setError("Vennligst skriv inn både brukernavn og passord");
+      setError("Vennligst skriv inn både brukernavn/e-post og passord");
       return;
     }
     setError("");
@@ -349,7 +349,7 @@ const LoginPage: React.FC = () => {
 
           <div className="space-y-1.5">
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">
-              Brukernavn
+              Brukernavn eller e-post
             </label>
             <div className="relative">
               <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-3 pointer-events-none z-10" />
@@ -357,7 +357,7 @@ const LoginPage: React.FC = () => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="brukernavn"
+                placeholder="brukernavn eller e-post"
                 autoFocus
                 required
                 className="ab-input"
