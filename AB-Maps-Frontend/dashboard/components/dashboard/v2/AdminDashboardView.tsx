@@ -308,8 +308,8 @@ export function AdminDashboardView() {
                   <RoleBadge role={u.role} dept={u.dept} salesChief={u.isSalesChief} />
                   {/* Row menu */}
                   <div className="relative">
-                    <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)}
-                      className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)} aria-label="Handlinger"
+                      className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover opacity-60 group-hover:opacity-100 transition-all">
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
                     <AnimatePresence>
