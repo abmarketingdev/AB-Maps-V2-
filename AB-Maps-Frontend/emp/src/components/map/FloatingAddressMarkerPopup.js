@@ -457,8 +457,8 @@ const FloatingAddressMarkerPopup = ({
                   <span style={{ fontWeight: '600', marginRight: '8px' }}>
                     {marker.creator_name}
                   </span>
-                  <span style={{ 
-                    color: '#666', 
+                  <span style={{
+                    color: '#666',
                     fontSize: '13px',
                     textTransform: 'capitalize'
                   }}>
@@ -467,7 +467,26 @@ const FloatingAddressMarkerPopup = ({
                 </div>
               </div>
             )}
-            
+
+            {/* Created date - reads Address.recorded_at from serializer */}
+            {(fullAddressData?.recorded_at || marker?.recordedAt) && (
+              <div className="fam-creator-section">
+                <h5>Opprettet</h5>
+                <div className="fam-creator-display">
+                  <span style={{ fontWeight: '600', marginRight: '8px' }}>
+                    {new Date(fullAddressData?.recorded_at || marker.recordedAt).toLocaleDateString('nb-NO', {
+                      day: 'numeric', month: 'long', year: 'numeric'
+                    })}
+                  </span>
+                  <span style={{ color: '#666', fontSize: '13px' }}>
+                    kl. {new Date(fullAddressData?.recorded_at || marker.recordedAt).toLocaleTimeString('nb-NO', {
+                      hour: '2-digit', minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="fam-status-section">
               <h5>Status</h5>
               <div className="fam-status-display">
