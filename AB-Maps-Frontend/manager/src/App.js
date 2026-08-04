@@ -347,31 +347,6 @@ function AppContent() {
     // eslint-disable-next-line
   }, []);
 
-  // Filter `areas` by drawn-date range (2026-08-05 boss ask).
-  // ONLY applies when no campaign is selected — matches boss's Norwegian
-  // "filter for datoer tegnet område på «ingen valgt kampanje»". Once a
-  // campaign is picked, campaign scoping takes over and this widget is
-  // hidden in the sidebar (see ManagerToolbar). Filter state itself is
-  // preserved silently in case the user clears the campaign again.
-  // Fra inclusive at 00:00:00; Til inclusive at 23:59:59. Empty range → pass-through.
-  // Areas without created_at hidden under any active filter; visible under empty.
-  // Draft + locked areas are NOT filtered here (their layers stay unchanged).
-  const filteredAreas = useMemo(() => {
-    if (selectedCampaign) return areas;                 // campaign scope takes precedence
-    const from = areaDateFilter?.from;
-    const to = areaDateFilter?.to;
-    if (!from && !to) return areas;
-    const fromMs = from ? new Date(from + 'T00:00:00').getTime() : -Infinity;
-    const toMs   = to   ? new Date(to   + 'T23:59:59.999').getTime() : Infinity;
-    if (isNaN(fromMs) || isNaN(toMs)) return areas;   // bad input → don't accidentally hide everything
-    return (areas || []).filter(a => {
-      if (!a?.created_at) return false;
-      const t = new Date(a.created_at).getTime();
-      if (isNaN(t)) return false;
-      return t >= fromMs && t <= toMs;
-    });
-  }, [areas, areaDateFilter, selectedCampaign]);
-
   // Handler for showing Talkmore results from AreaDialog
   // NOTE: Must be defined AFTER useMapState to access showToast and showAreaDialog
   const handleShowTalkmoreResults = useCallback(async (areaId) => {
@@ -472,6 +447,32 @@ function AppContent() {
   // Campaign state
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [permissionStatus, setPermissionStatus] = useState('prompt');
+
+  // Filter `areas` by drawn-date range (2026-08-05 boss ask).
+  // MUST be after selectedCampaign useState above — useMemo body executes
+  // during render, and referencing selectedCampaign before its declaration
+  // hits a TDZ ReferenceError that crashes the whole tree (blank screen bug
+  // introduced in c66e2f5, fixed here).
+  // Only applies when no campaign is selected; campaign scoping takes over
+  // once one is picked. Fra inclusive at 00:00, Til inclusive at 23:59.999.
+  // Empty range → pass-through. Areas without created_at hidden under any
+  // active filter, visible under empty filter. Draft + locked areas never
+  // filtered (their layers stay unchanged).
+  const filteredAreas = useMemo(() => {
+    if (selectedCampaign) return areas;                 // campaign scope takes precedence
+    const from = areaDateFilter?.from;
+    const to = areaDateFilter?.to;
+    if (!from && !to) return areas;
+    const fromMs = from ? new Date(from + 'T00:00:00').getTime() : -Infinity;
+    const toMs   = to   ? new Date(to   + 'T23:59:59.999').getTime() : Infinity;
+    if (isNaN(fromMs) || isNaN(toMs)) return areas;   // bad input → don't accidentally hide everything
+    return (areas || []).filter(a => {
+      if (!a?.created_at) return false;
+      const t = new Date(a.created_at).getTime();
+      if (isNaN(t)) return false;
+      return t >= fromMs && t <= toMs;
+    });
+  }, [areas, areaDateFilter, selectedCampaign]);
   
   // DEPRECATED: Age Stats popup state - feature temporarily disabled
   // const [showAgeStatsPopup, setShowAgeStatsPopup] = useState(false);
