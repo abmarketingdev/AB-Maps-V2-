@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FaMapMarkedAlt, FaChevronDown, FaChevronUp, FaSignOutAlt, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { areaService } from '../../services/areaService';
@@ -24,7 +24,9 @@ const ManagerSummaryDropdown = ({
   open,
   onToggle,
   onAreaSelect,
-  onCampaignSelect
+  onCampaignSelect,
+  areaDateFilter,       // { from: 'yyyy-mm-dd', to: 'yyyy-mm-dd' } — empty strings = filter off
+  setAreaDateFilter,    // (fn|obj) => void — same shape
 }) => {
   const { logout } = useAuth();
   const [managerAreas, setManagerAreas] = useState([]);
@@ -34,6 +36,28 @@ const ManagerSummaryDropdown = ({
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [currentCampaign, setCurrentCampaign] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
+
+  // Apply the drawn-date filter to the sidebar list. Same date-window semantics
+  // as App.js filteredAreas: Fra inclusive at 00:00, Til inclusive at 23:59.
+  // Draft areas never reach this list, so we don't need a special-case there.
+  const filteredManagerAreas = useMemo(() => {
+    const from = areaDateFilter?.from;
+    const to = areaDateFilter?.to;
+    if (!from && !to) return managerAreas;
+    const fromMs = from ? new Date(from + 'T00:00:00').getTime() : -Infinity;
+    const toMs   = to   ? new Date(to   + 'T23:59:59.999').getTime() : Infinity;
+    if (isNaN(fromMs) || isNaN(toMs)) return managerAreas;
+    return (managerAreas || []).filter(a => {
+      if (!a?.created_at) return false;
+      const t = new Date(a.created_at).getTime();
+      if (isNaN(t)) return false;
+      return t >= fromMs && t <= toMs;
+    });
+  }, [managerAreas, areaDateFilter]);
+
+  const filterActive = !!(areaDateFilter?.from || areaDateFilter?.to);
+  const totalCount = managerAreas.length;
+  const shownCount = filteredManagerAreas.length;
 
   // Load the selectable campaigns for the picker.
   useEffect(() => {
@@ -238,10 +262,10 @@ const ManagerSummaryDropdown = ({
                 <div className="mobile-areas-list">
                   {loading ? (
                     <div className="mobile-loading">Laster inn områder...</div>
-                  ) : managerAreas.length === 0 ? (
+                  ) : filteredManagerAreas.length === 0 ? (
                     <div className="mobile-no-data">Ingen områder funnet</div>
                   ) : (
-                    managerAreas.map(area => (
+                    filteredManagerAreas.map(area => (
                       <button
                         key={area.id}
                         className="mobile-area-item"
@@ -284,7 +308,9 @@ const ManagerSummaryDropdown = ({
           <div className="summary-info">
             <div className="summary-name">{managerName}</div>
             <div className="summary-meta">
-              {loading ? 'Laster inn...' : `${managerAreas.length} tildelt område${managerAreas.length !== 1 ? 'r' : ''}`} &bull; {totalOnlineCount} pålogget
+              {loading ? 'Laster inn...' : (filterActive
+                ? `${shownCount} av ${totalCount} tildelt område${totalCount !== 1 ? 'r' : ''}`
+                : `${totalCount} tildelt område${totalCount !== 1 ? 'r' : ''}`)} &bull; {totalOnlineCount} pålogget
             </div>
           </div>
           {open ? <FaChevronUp size={18} /> : <FaChevronDown size={18} />}
@@ -315,13 +341,51 @@ const ManagerSummaryDropdown = ({
               ))}
             </select>
           </div>
+
+          {/* Drawn-date filter (2026-08-05 boss ask). Both empty = show all
+              (default). Any date filled = narrow the map + this sidebar to
+              areas whose created_at is within the range. */}
+          <div className="campaign-info" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '4px', paddingTop: '10px' }}>
+            <div className="campaign-label">Filter tegnet:</div>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+                Fra:{' '}
+                <input
+                  type="date"
+                  value={areaDateFilter?.from || ''}
+                  onChange={(e) => setAreaDateFilter && setAreaDateFilter(prev => ({ ...(prev || {}), from: e.target.value }))}
+                  style={{ padding: '3px 5px', fontSize: '12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: '#fff' }}
+                />
+              </label>
+              <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+                Til:{' '}
+                <input
+                  type="date"
+                  value={areaDateFilter?.to || ''}
+                  onChange={(e) => setAreaDateFilter && setAreaDateFilter(prev => ({ ...(prev || {}), to: e.target.value }))}
+                  style={{ padding: '3px 5px', fontSize: '12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: '#fff' }}
+                />
+              </label>
+              {filterActive && (
+                <button
+                  type="button"
+                  onClick={() => setAreaDateFilter && setAreaDateFilter({ from: '', to: '' })}
+                  title="Nullstill filter"
+                  style={{ padding: '2px 8px', fontSize: '11px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'rgba(255,255,255,0.8)', cursor: 'pointer' }}
+                >
+                  × Nullstill
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="area-list">
             {loading ? (
               <div className="loading-message">Laster inn områder...</div>
-            ) : managerAreas.length === 0 ? (
+            ) : filteredManagerAreas.length === 0 ? (
               <div className="no-areas-message">Ingen områder funnet</div>
             ) : (
-              managerAreas.map(area => (
+              filteredManagerAreas.map(area => (
                 <div key={area.id} className="area-item-container">
                   <button
                     className="area-item"

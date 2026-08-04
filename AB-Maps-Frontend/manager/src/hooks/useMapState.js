@@ -108,6 +108,11 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
   const [draftAreas, setDraftAreas] = useState([]); // For areas not yet saved to backend
   const [assignedAreas, setAssignedAreas] = useState([]); // Areas assigned to current manager
   const [lockedAreas, setLockedAreas] = useState([]); // Locked areas from campaign
+  // Drawn-date filter for areas ({from,to} as ISO yyyy-mm-dd strings, empty = disabled).
+  // Boss ask 2026-08-05: user should be able to narrow the visible areas by when
+  // they were drawn. Applies to both `areas` and `assignedAreas` (see App.js memos).
+  // Draft + locked areas are unaffected regardless of filter.
+  const [areaDateFilter, setAreaDateFilter] = useState({ from: '', to: '' });
   const [showOverlapToolbar, setShowOverlapToolbar] = useState(false);
   const [userLocation, setUserLocation] = useState(null); // { lat, lon }
   const [lastFetchLocation, setLastFetchLocation] = useState(null); // Track last fetch location
@@ -2061,6 +2066,9 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
     areas,
     assignedAreas,
     lockedAreas,
+    // Drawn-date filter (see state definition above)
+    areaDateFilter,
+    setAreaDateFilter,
     currentArea,
     showAreaDialog,
     editingAreaIndex,

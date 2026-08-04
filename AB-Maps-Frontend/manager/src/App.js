@@ -209,6 +209,9 @@ function AppContent() {
     assignedAreas,
     lockedAreas,
     draftAreas,
+    // Drawn-date filter (2026-08-05 boss ask)
+    areaDateFilter,
+    setAreaDateFilter,
     currentArea,
     showAreaDialog,
     editingAreaIndex,
@@ -343,6 +346,25 @@ function AppContent() {
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
     // eslint-disable-next-line
   }, []);
+
+  // Filter `areas` by drawn-date range (2026-08-05 boss ask).
+  // Fra inclusive at 00:00:00; Til inclusive at 23:59:59. Empty range → pass-through.
+  // Areas without created_at hidden under any active filter; visible under empty.
+  // Draft + locked areas are NOT filtered here (their layers stay unchanged).
+  const filteredAreas = useMemo(() => {
+    const from = areaDateFilter?.from;
+    const to = areaDateFilter?.to;
+    if (!from && !to) return areas;
+    const fromMs = from ? new Date(from + 'T00:00:00').getTime() : -Infinity;
+    const toMs   = to   ? new Date(to   + 'T23:59:59.999').getTime() : Infinity;
+    if (isNaN(fromMs) || isNaN(toMs)) return areas;   // bad input → don't accidentally hide everything
+    return (areas || []).filter(a => {
+      if (!a?.created_at) return false;
+      const t = new Date(a.created_at).getTime();
+      if (isNaN(t)) return false;
+      return t >= fromMs && t <= toMs;
+    });
+  }, [areas, areaDateFilter]);
 
   // Handler for showing Talkmore results from AreaDialog
   // NOTE: Must be defined AFTER useMapState to access showToast and showAreaDialog
@@ -1985,9 +2007,11 @@ function AppContent() {
           isMovementMode={isMovementMode}
         />
         
-        {/* Display saved areas using Canvas polygon layer for stability */}
+        {/* Display saved areas using Canvas polygon layer for stability.
+            Uses filteredAreas so the drawn-date range filter (top-right widget)
+            hides polygons outside the picked range; empty filter = show all. */}
         <CanvasPolygonLayer
-          polygons={areas?.map(area => ({
+          polygons={filteredAreas?.map(area => ({
             id: area.id,
             coordinates: area.polygon_geometry?.coordinates || [],
             color: area.color,
@@ -2001,9 +2025,12 @@ function AppContent() {
             dashArray: null
           })}
           onPolygonClick={(props, latlng, eventType) => {
-            
+
             if (eventType === 'contextmenu') {
-              // Handle right-click/long-press for saved areas
+              // Handle right-click/long-press for saved areas.
+              // Look up index in the UNfiltered `areas` array — handleAreaEdit
+              // reads areas[index] internally, so we must not pass a filtered
+              // index or the wrong area would be opened.
               const areaId = props.id;
               const index = areas.findIndex(a => a.id === areaId);
               if (index !== -1) {
@@ -2305,6 +2332,8 @@ function AppContent() {
         onAreaSelect={handleAreaSelectDropdown}
         selectedCampaign={selectedCampaign}
         onCampaignSelect={handleCampaignSelect}
+        areaDateFilter={areaDateFilter}
+        setAreaDateFilter={setAreaDateFilter}
       />
 
       {showEmployeeList && selectedAreaForEmployees && (
