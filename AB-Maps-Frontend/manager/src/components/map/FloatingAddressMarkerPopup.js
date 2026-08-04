@@ -591,24 +591,35 @@ const FloatingAddressMarkerPopup = ({
           </div>
         )}
 
-        {/* Created date - reads Address.recorded_at from serializer */}
-        {(fullAddressData?.recorded_at || marker?.recordedAt) && (
-          <div className="creator-section">
-            <h5>Opprettet</h5>
-            <div className="creator-display">
-              <span style={{ fontWeight: '600', marginRight: '8px' }}>
-                {new Date(fullAddressData?.recorded_at || marker.recordedAt).toLocaleDateString('nb-NO', {
-                  day: 'numeric', month: 'long', year: 'numeric'
-                })}
-              </span>
-              <span style={{ color: '#666', fontSize: '13px' }}>
-                kl. {new Date(fullAddressData?.recorded_at || marker.recordedAt).toLocaleTimeString('nb-NO', {
-                  hour: '2-digit', minute: '2-digit'
-                })}
-              </span>
+        {/* Created date — fall through every timestamp the backend/marker might expose.
+            Older addresses only have created_at/added_at; newer ones have recorded_at. */}
+        {(() => {
+          const ts =
+            fullAddressData?.recorded_at ||
+            fullAddressData?.added_at ||
+            fullAddressData?.created_at ||
+            marker?.recordedAt ||
+            marker?.addedAt ||
+            marker?.createdAt ||
+            marker?.created_at ||
+            null;
+          if (!ts) return null;
+          const d = new Date(ts);
+          if (isNaN(d.getTime())) return null;
+          return (
+            <div className="creator-section">
+              <h5>Opprettet</h5>
+              <div className="creator-display">
+                <span style={{ fontWeight: '600', marginRight: '8px' }}>
+                  {d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+                <span style={{ color: '#666', fontSize: '13px' }}>
+                  kl. {d.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         <div className="status-section">
           <h5>Status</h5>
