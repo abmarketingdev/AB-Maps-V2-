@@ -5,6 +5,18 @@ import { areaService } from '../../services/areaService';
 import { getCampaignById, getCampaigns } from '../../services/campaignFormService';
 import './ManagerToolbar.css';
 
+// Compact "Tegnet <d. mmm>" for the sidebar area cards.
+// Users have been putting the drawn-date into the area title so they could
+// scan the sidebar list; surfacing it here lets them stop. Returns null on
+// missing/bad timestamps so the sub-line simply doesn't render (no "Invalid
+// Date" leaks). Title is untouched.
+const formatDrawnShort = (ts) => {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return null;
+  return `Tegnet ${d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}`;
+};
+
 
 const ManagerSummaryDropdown = ({
   managerName,
@@ -241,6 +253,11 @@ const ManagerSummaryDropdown = ({
                         <div className="mobile-area-info">
                           <span className="mobile-area-name">{area.name}</span>
                           <span className="mobile-area-stats">{area.house_count} boliger</span>
+                          {formatDrawnShort(area.created_at) && (
+                            <span className="mobile-area-drawn" style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
+                              {formatDrawnShort(area.created_at)}
+                            </span>
+                          )}
                         </div>
                         <div 
                           className="mobile-area-color" 
@@ -315,6 +332,11 @@ const ManagerSummaryDropdown = ({
                       <span className="area-stats">
                         {area.house_count} boliger
                       </span>
+                      {formatDrawnShort(area.created_at) && (
+                        <span className="area-drawn" style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
+                          {formatDrawnShort(area.created_at)}
+                        </span>
+                      )}
                     </div>
                     <div 
                       className="area-color-indicator" 
