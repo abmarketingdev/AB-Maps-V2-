@@ -240,18 +240,14 @@ const AreaDialog = ({
             const d = new Date(ts);
             if (isNaN(d.getTime())) return null;
             return (
-              <div className="form-group" style={{ marginTop: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
-                  Tegnet:
-                </label>
-                <div style={{ padding: '8px', color: '#fff', fontSize: '14px' }}>
-                  <span style={{ fontWeight: '600', marginRight: '8px' }}>
-                    {d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </span>
-                  <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '13px' }}>
-                    kl. {d.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
+              <div className="form-group" style={{ marginTop: '10px', display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap', fontSize: '14px' }}>
+                <label style={{ fontWeight: '500', margin: 0 }}>Tegnet:</label>
+                <span style={{ color: '#fff', fontWeight: '600' }}>
+                  {d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '13px' }}>
+                  kl. {d.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
+                </span>
               </div>
             );
           })()}
