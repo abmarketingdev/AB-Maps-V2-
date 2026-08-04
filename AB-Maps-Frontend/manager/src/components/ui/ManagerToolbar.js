@@ -224,7 +224,9 @@ const ManagerSummaryDropdown = ({
                   </div>
                   <div className="mobile-user-details">
                     <h3>{managerName}</h3>
-                    <p>{managerAreas.length} tildelt område{managerAreas.length !== 1 ? 'r' : ''} • {totalOnlineCount} pålogget</p>
+                    <p>{filterActive
+                      ? `${shownCount} av ${totalCount} tildelt område${totalCount !== 1 ? 'r' : ''}`
+                      : `${totalCount} tildelt område${totalCount !== 1 ? 'r' : ''}`} • {totalOnlineCount} pålogget</p>
                   </div>
                 </div>
                 <button className="mobile-close-btn" onClick={handleMobileToggle}>
@@ -246,6 +248,43 @@ const ManagerSummaryDropdown = ({
                   ))}
                 </select>
               </div>
+
+              {/* Drawn-date filter — mirror of the desktop widget. Only visible when
+                  no campaign is selected. Both empty = show all. */}
+              {!currentCampaign && (
+                <div className="mobile-campaign-info" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <div className="mobile-campaign-label">Filter tegnet:</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '13px', color: '#444' }}>
+                      Fra:
+                      <input
+                        type="date"
+                        value={areaDateFilter?.from || ''}
+                        onChange={(e) => setAreaDateFilter && setAreaDateFilter(prev => ({ ...(prev || {}), from: e.target.value }))}
+                        style={{ display: 'block', width: '100%', padding: '10px', marginTop: '4px', fontSize: '15px', borderRadius: '8px', border: '1px solid #d0d0d5', background: '#fff' }}
+                      />
+                    </label>
+                    <label style={{ fontSize: '13px', color: '#444' }}>
+                      Til:
+                      <input
+                        type="date"
+                        value={areaDateFilter?.to || ''}
+                        onChange={(e) => setAreaDateFilter && setAreaDateFilter(prev => ({ ...(prev || {}), to: e.target.value }))}
+                        style={{ display: 'block', width: '100%', padding: '10px', marginTop: '4px', fontSize: '15px', borderRadius: '8px', border: '1px solid #d0d0d5', background: '#fff' }}
+                      />
+                    </label>
+                    {filterActive && (
+                      <button
+                        type="button"
+                        onClick={() => setAreaDateFilter && setAreaDateFilter({ from: '', to: '' })}
+                        style={{ alignSelf: 'flex-start', padding: '8px 14px', fontSize: '13px', borderRadius: '8px', border: '1px solid #d0d0d5', background: '#fff', color: '#555', cursor: 'pointer' }}
+                      >
+                        × Nullstill filter
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Quick Actions */}
               <div className="mobile-quick-actions">
