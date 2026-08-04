@@ -244,11 +244,11 @@ const AreaDialog = ({
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
                   Tegnet:
                 </label>
-                <div style={{ padding: '8px', color: '#333', fontSize: '14px' }}>
+                <div style={{ padding: '8px', color: '#fff', fontSize: '14px' }}>
                   <span style={{ fontWeight: '600', marginRight: '8px' }}>
                     {d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>
-                  <span style={{ color: '#666', fontSize: '13px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '13px' }}>
                     kl. {d.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
