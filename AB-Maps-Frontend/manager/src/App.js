@@ -1756,8 +1756,11 @@ function AppContent() {
           zoomOffset={0}
         />
         
-        {/* Vector Tiles Layer - only show when enabled and at appropriate zoom */}
-        {mapRef && useVectorTiles && zoomLevel >= 16 && currentUser && (
+        {/* Vector Tiles Layer - only show when enabled and at appropriate zoom.
+            Also gated on selectedCampaign — with no campaign picked, the map
+            shows only areas (per client request 2026-08-05: markers cluttered
+            the map and hid place names / base tiles). */}
+        {mapRef && useVectorTiles && zoomLevel >= 16 && currentUser && selectedCampaign && (
           <VectorTileLayer
             baseUrl={`${process.env.REACT_APP_TILE_SERVER_URL || 'http://localhost:8000'}/tiles/{z}/{x}/{y}.pbf`}
             minZoom={16}
@@ -1774,15 +1777,18 @@ function AppContent() {
             isDeleteMode={isDeleteMode}
           />
         )}
-        
-        {/* Optimistic markers overlay */}
-        {useVectorTiles && <OptimisticMarkerOverlay markers={optimisticMarkers} />}
-        
-        {/* Talkmore enrichment markers (area-based and job-based results) */}
-        <TalkmoreMarkersLayer 
-          features={[...talkmoreAreaFeatures, ...talkmoreJobFeatures]} 
-          enabled={talkmoreAreaFeatures.length > 0 || talkmoreJobFeatures.length > 0}
-        />
+
+        {/* Optimistic markers overlay — same no-campaign guard */}
+        {useVectorTiles && selectedCampaign && <OptimisticMarkerOverlay markers={optimisticMarkers} />}
+
+        {/* Talkmore enrichment markers (area-based and job-based results).
+            Also hidden when no campaign is picked. */}
+        {selectedCampaign && (
+          <TalkmoreMarkersLayer
+            features={[...talkmoreAreaFeatures, ...talkmoreJobFeatures]}
+            enabled={talkmoreAreaFeatures.length > 0 || talkmoreJobFeatures.length > 0}
+          />
+        )}
         
         {/* Talkmore Job Status Panel (optional - only shown if job_id in URL) */}
         {talkmoreJobId && talkmoreJobStatus && (
