@@ -230,7 +230,32 @@ const AreaDialog = ({
               </div>
             )}
           </div>
-          
+
+          {/* Tegnet — read-only display of when the area was drawn.
+              Backend auto-timestamps every area on create; drafts (not yet
+              saved) simply have no created_at and this block silently hides. */}
+          {(() => {
+            const ts = areaData?.created_at || areaData?.createdAt || null;
+            if (!ts) return null;
+            const d = new Date(ts);
+            if (isNaN(d.getTime())) return null;
+            return (
+              <div className="form-group" style={{ marginTop: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
+                  Tegnet:
+                </label>
+                <div style={{ padding: '8px', color: '#333', fontSize: '14px' }}>
+                  <span style={{ fontWeight: '600', marginRight: '8px' }}>
+                    {d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
+                  <span style={{ color: '#666', fontSize: '13px' }}>
+                    kl. {d.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="area-info">
             <p>
               Salgsmuligheter: {
