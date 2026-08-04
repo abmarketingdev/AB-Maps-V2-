@@ -1264,6 +1264,7 @@ const useMapState = (suppressNextMapClick, shouldSuppressMapClick, additionalPar
       // Get apartment count from response - check both apartment_counts and apartment_count
       apartmentCount: area.apartment_counts ?? area.apartment_count ?? 0,  // NEW: Include apartment count from GET response
       endDate: area.end_date ? formatISOToLocal(area.end_date) : null,  // NEW: Load and convert end_date from area
+      created_at: area.created_at ?? area.createdAt ?? null,  // pass through so AreaDialog can render "Tegnet"
       isDraft: !!isDraft,
       addressCalculationStatus: isDraft ? (area.addressCalculationStatus || 'completed') : undefined,  // NEW: Include status for drafts
       addressCalculationError: isDraft ? area.addressCalculationError : undefined,  // NEW: Include error message
