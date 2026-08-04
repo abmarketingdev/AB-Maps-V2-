@@ -348,10 +348,16 @@ function AppContent() {
   }, []);
 
   // Filter `areas` by drawn-date range (2026-08-05 boss ask).
+  // ONLY applies when no campaign is selected — matches boss's Norwegian
+  // "filter for datoer tegnet område på «ingen valgt kampanje»". Once a
+  // campaign is picked, campaign scoping takes over and this widget is
+  // hidden in the sidebar (see ManagerToolbar). Filter state itself is
+  // preserved silently in case the user clears the campaign again.
   // Fra inclusive at 00:00:00; Til inclusive at 23:59:59. Empty range → pass-through.
   // Areas without created_at hidden under any active filter; visible under empty.
   // Draft + locked areas are NOT filtered here (their layers stay unchanged).
   const filteredAreas = useMemo(() => {
+    if (selectedCampaign) return areas;                 // campaign scope takes precedence
     const from = areaDateFilter?.from;
     const to = areaDateFilter?.to;
     if (!from && !to) return areas;
@@ -364,7 +370,7 @@ function AppContent() {
       if (isNaN(t)) return false;
       return t >= fromMs && t <= toMs;
     });
-  }, [areas, areaDateFilter]);
+  }, [areas, areaDateFilter, selectedCampaign]);
 
   // Handler for showing Talkmore results from AreaDialog
   // NOTE: Must be defined AFTER useMapState to access showToast and showAreaDialog

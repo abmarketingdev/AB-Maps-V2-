@@ -39,8 +39,11 @@ const ManagerSummaryDropdown = ({
 
   // Apply the drawn-date filter to the sidebar list. Same date-window semantics
   // as App.js filteredAreas: Fra inclusive at 00:00, Til inclusive at 23:59.
-  // Draft areas never reach this list, so we don't need a special-case there.
+  // ONLY applies when no campaign is selected — matches App.js filteredAreas
+  // gating (see boss ask 2026-08-05: filter is a browsing tool for the
+  // no-campaign view). Filter UI is also hidden while a campaign is active.
   const filteredManagerAreas = useMemo(() => {
+    if (currentCampaign) return managerAreas;           // campaign scope takes precedence
     const from = areaDateFilter?.from;
     const to = areaDateFilter?.to;
     if (!from && !to) return managerAreas;
@@ -53,9 +56,11 @@ const ManagerSummaryDropdown = ({
       if (isNaN(t)) return false;
       return t >= fromMs && t <= toMs;
     });
-  }, [managerAreas, areaDateFilter]);
+  }, [managerAreas, areaDateFilter, currentCampaign]);
 
-  const filterActive = !!(areaDateFilter?.from || areaDateFilter?.to);
+  // "Filter is active" only in the no-campaign browsing view; UI + summary
+  // counter both key off this.
+  const filterActive = !currentCampaign && !!(areaDateFilter?.from || areaDateFilter?.to);
   const totalCount = managerAreas.length;
   const shownCount = filteredManagerAreas.length;
 
@@ -342,9 +347,14 @@ const ManagerSummaryDropdown = ({
             </select>
           </div>
 
-          {/* Drawn-date filter (2026-08-05 boss ask). Both empty = show all
-              (default). Any date filled = narrow the map + this sidebar to
-              areas whose created_at is within the range. */}
+          {/* Drawn-date filter (2026-08-05 boss ask). ONLY visible when no
+              campaign is selected — filter is a browsing tool for the
+              no-campaign view where 5000+ areas render at once. Both empty =
+              show all (default). Any date filled = narrow the map + this
+              sidebar to areas whose created_at is within the range.
+              Filter STATE is preserved when a campaign is picked, so
+              clearing the campaign restores the previous filter. */}
+          {!currentCampaign && (
           <div className="campaign-info" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '4px', paddingTop: '10px' }}>
             <div className="campaign-label">Filter tegnet:</div>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -378,6 +388,7 @@ const ManagerSummaryDropdown = ({
               )}
             </div>
           </div>
+          )}
 
           <div className="area-list">
             {loading ? (
