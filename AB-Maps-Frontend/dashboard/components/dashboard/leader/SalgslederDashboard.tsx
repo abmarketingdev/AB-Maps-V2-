@@ -36,37 +36,31 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
   const list = await listTeams({ pageSize: 50, campaignId })
   if (!list.results.length) return []
 
-  // Fetch full team detail + per-member earnings in parallel, per team.
-  // Each pair fetches independently so a single team's earnings failure
-  // (403 for a non-chief on that specific team, or 500) doesn't tank the
-  // whole page — we just fall back to zeros for that team's members.
+  // Fetch full team detail + per-member earnings + per-member doors per team.
+  // Doors uses the TEAM's own campaign_id (not the sidebar's selected campaign)
+  // so we still get real doors even when no campaign is picked in the sidebar
+  // — each team's page-visible "NORSK FOLKEHJELP" badge already comes from
+  // team.campaign.id, so we use the same value here for the doors filter.
   const results = await Promise.all(list.results.map(async (t) => {
     const [detail, earnings] = await Promise.all([
       getTeam(t.id).catch(() => null),
       fetchTeamMemberEarnings(t.id, { period }).catch(() => null),
     ])
-    return { detail, earnings }
-  }))
-
-  // One parallel batch fetch for all doors across all team members. Analytics
-  // endpoint takes a comma-separated ab_person_ids list, so it's ONE request
-  // regardless of team count. Keyed by ab_person_id for merge below.
-  const allAbIds = new Set<string>()
-  for (const { earnings } of results) {
-    if (!earnings) continue
-    for (const m of earnings.members) {
-      if (m.ab_person_id) allAbIds.add(m.ab_person_id)
+    const teamCampaignId = detail?.campaign?.id
+    const abIds = (earnings?.members ?? [])
+      .map((m) => m.ab_person_id)
+      .filter((x): x is string => Boolean(x))
+    const doorsByAb = new Map<string, number>()
+    if (teamCampaignId && abIds.length) {
+      try {
+        const resp = await fetchEmployeeDoors({
+          campaignId: teamCampaignId, period, abPersonIds: abIds,
+        })
+        for (const r of resp.doors_by_employee) doorsByAb.set(r.ab_person_id, r.doors)
+      } catch { /* silent — doors falls back to 0 per promoter below */ }
     }
-  }
-  const doorsByAb = new Map<string, number>()
-  if (allAbIds.size && campaignId) {
-    try {
-      const resp = await fetchEmployeeDoors({
-        campaignId, period, abPersonIds: Array.from(allAbIds),
-      })
-      for (const r of resp.doors_by_employee) doorsByAb.set(r.ab_person_id, r.doors)
-    } catch { /* silent — doors falls back to 0 per promoter below */ }
-  }
+    return { detail, earnings, doorsByAb }
+  }))
 
   // Distinct color palette for teams whose backend `color` field is null.
   // Cycles through 8 aurora-friendly shades so 2+ teams don't all look teal.
@@ -77,8 +71,8 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
 
   // Build lookup: person_id → earnings row (fast merge in the map below)
   return results
-    .filter((r): r is { detail: NonNullable<typeof r.detail>; earnings: typeof r.earnings } => r.detail !== null)
-    .map(({ detail, earnings }, idx) => {
+    .filter((r): r is { detail: NonNullable<typeof r.detail>; earnings: typeof r.earnings; doorsByAb: Map<string, number> } => r.detail !== null)
+    .map(({ detail, earnings, doorsByAb }, idx) => {
       const earningsByPerson = new Map<string, { recruited: number; active_percent: number; sum_vervinger: number; ab_person_id: string | null }>()
       if (earnings) {
         for (const m of earnings.members) {
