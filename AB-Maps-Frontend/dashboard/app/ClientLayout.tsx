@@ -7,7 +7,7 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   Home,
-  DollarSign,
+  BarChart3,
   Bell,
   Menu,
   X,
@@ -370,7 +370,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
       { href: "/dashbord",  title: "Dashbord",  icon: <Home className="h-4 w-4" />,        group: "ARBEIDSFLATE" },
-      { href: "/sales",     title: "Statistikk",icon: <DollarSign className="h-4 w-4" />,  group: "ARBEIDSFLATE" },
+      { href: "/sales",     title: "Statistikk",icon: <BarChart3 className="h-4 w-4" />,   group: "ARBEIDSFLATE" },
       { href: "/rapport",   title: "Rapport",   icon: <FileText className="h-4 w-4" />,    group: "ARBEIDSFLATE" },
       { href: "/todo",      title: "Oppgaver",  icon: <CheckSquare className="h-4 w-4" />, group: "ARBEIDSFLATE" },
     ]

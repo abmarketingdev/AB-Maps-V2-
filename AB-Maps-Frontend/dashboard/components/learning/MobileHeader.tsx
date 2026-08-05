@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { LogOut, User, Menu, Home, BarChart3, Map, DollarSign, FileText, MapPinned } from "lucide-react";
+import { LogOut, User, Menu, Home, BarChart3, Map, FileText, MapPinned } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { LearningAuthService } from "@/services/learningAuthService";
@@ -95,8 +95,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
     },
     {
       href: "/sales",
-      title: "Salg",
-      icon: <DollarSign className="w-4 h-4" />,
+      title: "Statistikk",
+      icon: <BarChart3 className="w-4 h-4" />,
     },
     {
       href: "/rapport",
