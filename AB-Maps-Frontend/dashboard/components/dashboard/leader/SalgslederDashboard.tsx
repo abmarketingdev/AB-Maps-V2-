@@ -1,21 +1,42 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import dynamic from "next/dynamic"
 import { motion, useReducedMotion } from "framer-motion"
 import { Sparkles } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useLang } from "@/lib/i18n"
 import { useSelectedCampaign } from "@/components/campaign/CampaignGuard"
-import { EmbeddedManagerWidgets } from "./EmbeddedManagerWidgets"
 import { SectionHeader } from "./SectionHeader"
 import { AuroraBg } from "./AuroraBg"
 import { AvatarStack } from "./Avatar"
 import { LivePulseDot } from "./LivePulseDot"
 import { MonthPicker } from "./MonthPicker"
 import { TeamPanel } from "./TeamPanel"
-import { TopplisterRow } from "./TopplisterRow"
 import { LonnRowSalgsleder } from "./LonnRowSalgsleder"
 import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
+
+// Below-the-fold heavy widgets — dynamically imported so their JS chunks
+// don't block initial paint on mobile. TopplisterRow pulls in the RoyMascot
+// SVG animations; EmbeddedManagerWidgets pulls in TrendChart (recharts,
+// ~150KB) + MoodRing + KPIStrip + ActivityFeed. Both render a small
+// skeleton placeholder while their chunk loads in the background.
+const TopplisterRow = dynamic(
+  () => import("./TopplisterRow").then((m) => ({ default: m.TopplisterRow })),
+  { ssr: false, loading: () => <SectionSkeleton height="h-64" label="Laster topplister…" /> }
+)
+const EmbeddedManagerWidgets = dynamic(
+  () => import("./EmbeddedManagerWidgets").then((m) => ({ default: m.EmbeddedManagerWidgets })),
+  { ssr: false, loading: () => <SectionSkeleton height="h-96" label="Laster sanntid…" /> }
+)
+
+function SectionSkeleton({ height, label }: { height: string; label: string }) {
+  return (
+    <div className={`${height} w-full rounded-2xl border border-ab-line bg-ab-elevated animate-pulse flex items-center justify-center`}>
+      <span className="text-xs text-ab-fg-4">{label}</span>
+    </div>
+  )
+}
 import { listTeams, getTeam, fetchTeamMemberEarnings } from "@/lib/api/teams"
 import { fetchEmployeeDoors } from "@/lib/api/dashboardOverview"
 import { type TeamNode } from "./dummyData"
