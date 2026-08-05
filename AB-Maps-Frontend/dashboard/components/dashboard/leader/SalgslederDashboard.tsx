@@ -46,10 +46,17 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
     return { detail, earnings }
   }))
 
+  // Distinct color palette for teams whose backend `color` field is null.
+  // Cycles through 8 aurora-friendly shades so 2+ teams don't all look teal.
+  const TEAM_COLOR_PALETTE = [
+    "#3461FF", "#0E9384", "#F59E0B", "#F43F5E",
+    "#8B5CF6", "#10B981", "#EC4899", "#06B6D4",
+  ]
+
   // Build lookup: person_id → earnings row (fast merge in the map below)
   return results
     .filter((r): r is { detail: NonNullable<typeof r.detail>; earnings: typeof r.earnings } => r.detail !== null)
-    .map(({ detail, earnings }) => {
+    .map(({ detail, earnings }, idx) => {
       const earningsByPerson = new Map<string, { recruited: number; active_percent: number; sum_vervinger: number }>()
       if (earnings) {
         for (const m of earnings.members) {
@@ -64,7 +71,7 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
         id: detail.id,
         name: detail.name,
         city: detail.campaign?.name ?? "",
-        color: detail.color || "#0E9384",
+        color: detail.color || TEAM_COLOR_PALETTE[idx % TEAM_COLOR_PALETTE.length],
         managerName: detail.owner?.name ?? "—",
         chiefContribution: 0,
         leaderContribution: 0,
