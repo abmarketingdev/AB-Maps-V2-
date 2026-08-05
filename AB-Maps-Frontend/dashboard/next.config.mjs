@@ -49,6 +49,18 @@ const nextConfig = {
     webpackBuildWorker: false,
     parallelServerBuildTraces: false,
     parallelServerCompiles: false,
+    // Tree-shake barrel-imported libs so we don't ship the WHOLE lucide-react
+    // icon set (500+ icons, we use ~30) and don't pull every framer-motion
+    // helper we never call. Cuts the vendor chunk substantially (Next 15
+    // does this via a compile-time barrel transform, not a runtime cost).
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "recharts",
+      "date-fns",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+    ],
   },
   webpack(config) {
     config.resolve.alias = {
