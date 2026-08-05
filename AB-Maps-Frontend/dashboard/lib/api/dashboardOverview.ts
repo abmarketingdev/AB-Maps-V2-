@@ -147,3 +147,28 @@ export async function fetchActivities(limit = 50, campaignId?: string): Promise<
     `/api/dashboard/v2/activities/${qp({ limit: String(limit), campaign_id: campaignId })}`,
   ));
 }
+
+// ─── Per-employee doors for TeamPanel (Phase 3.5, 2026-08-05) ───────────────
+// Backend: analytics-service EmployeeDoorsByPeriodView. Aggregates DoorKnock
+// grouped by employee_id, joined to IdentityDirectory for ab_person_id. Used
+// alongside hr-service's member-earnings endpoint to fill the DOORS column
+// of TeamPanel — the rest (recruited/active/vervinger) comes from hr.
+export interface EmployeeDoorsRow { ab_person_id: string; doors: number }
+export interface EmployeeDoorsByPeriod {
+  campaign_id: string | null;
+  period: string | null;
+  doors_by_employee: EmployeeDoorsRow[];
+}
+export async function fetchEmployeeDoors(opts: {
+  campaignId?: string;
+  period?: string;
+  abPersonIds?: string[];
+}): Promise<EmployeeDoorsByPeriod> {
+  return getJSON<EmployeeDoorsByPeriod>(
+    `/api/dashboard/v2/employees/doors-by-period/${qp({
+      campaign_id: opts.campaignId,
+      period: opts.period,
+      ab_person_ids: opts.abPersonIds && opts.abPersonIds.length ? opts.abPersonIds.join(',') : undefined,
+    })}`,
+  );
+}

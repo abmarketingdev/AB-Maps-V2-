@@ -17,14 +17,16 @@ import { TopplisterRow } from "./TopplisterRow"
 import { LonnRowSalgsleder } from "./LonnRowSalgsleder"
 import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
 import { listTeams, getTeam, fetchTeamMemberEarnings } from "@/lib/api/teams"
+import { fetchEmployeeDoors } from "@/lib/api/dashboardOverview"
 import { type TeamNode } from "./dummyData"
 
 // Adapter: real HR /api/hr/teams/ → dashboard's TeamNode shape (what
 // TeamPanel expects). Real data covers team header (name, color, city
 // via campaign, managerName via owner) + member NAMES + per-member
-// recruited / active% / sum_vervinger via the Phase 3 backend endpoint
-// (2026-08-05). Doors/doorsGoal/recruitedGoal remain 0 for now — no
-// goals endpoint yet (waiting on boss decision, Phase D).
+// RECRUITED / ACTIVE% / SUM_VERVINGER via the Phase 3 hr-service endpoint,
+// and per-member DOORS via the Phase 3.5 analytics-service endpoint
+// (2026-08-05). doorsGoal/recruitedGoal remain 0 for now — no goals
+// endpoint yet (Phase D — boss confirmed per-team scope, pending impl).
 //
 // Scoped to the currently-selected campaign via CampaignGuard context —
 // without this, admin/superuser sees every team across every campaign.
@@ -46,6 +48,26 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
     return { detail, earnings }
   }))
 
+  // One parallel batch fetch for all doors across all team members. Analytics
+  // endpoint takes a comma-separated ab_person_ids list, so it's ONE request
+  // regardless of team count. Keyed by ab_person_id for merge below.
+  const allAbIds = new Set<string>()
+  for (const { earnings } of results) {
+    if (!earnings) continue
+    for (const m of earnings.members) {
+      if (m.ab_person_id) allAbIds.add(m.ab_person_id)
+    }
+  }
+  const doorsByAb = new Map<string, number>()
+  if (allAbIds.size && campaignId) {
+    try {
+      const resp = await fetchEmployeeDoors({
+        campaignId, period, abPersonIds: Array.from(allAbIds),
+      })
+      for (const r of resp.doors_by_employee) doorsByAb.set(r.ab_person_id, r.doors)
+    } catch { /* silent — doors falls back to 0 per promoter below */ }
+  }
+
   // Distinct color palette for teams whose backend `color` field is null.
   // Cycles through 8 aurora-friendly shades so 2+ teams don't all look teal.
   const TEAM_COLOR_PALETTE = [
@@ -57,13 +79,14 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
   return results
     .filter((r): r is { detail: NonNullable<typeof r.detail>; earnings: typeof r.earnings } => r.detail !== null)
     .map(({ detail, earnings }, idx) => {
-      const earningsByPerson = new Map<string, { recruited: number; active_percent: number; sum_vervinger: number }>()
+      const earningsByPerson = new Map<string, { recruited: number; active_percent: number; sum_vervinger: number; ab_person_id: string | null }>()
       if (earnings) {
         for (const m of earnings.members) {
           earningsByPerson.set(m.person_id, {
             recruited: m.recruited,
             active_percent: m.active_percent,
             sum_vervinger: m.sum_vervinger,
+            ab_person_id: m.ab_person_id,
           })
         }
       }
@@ -78,14 +101,15 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
         promoters: detail.members
           .filter((m) => m.person_type === "employee")
           .map((m) => {
-            const e = earningsByPerson.get(m.id) ?? { recruited: 0, active_percent: 0, sum_vervinger: 0 }
+            const e = earningsByPerson.get(m.id) ?? { recruited: 0, active_percent: 0, sum_vervinger: 0, ab_person_id: null }
+            const doorsCount = e.ab_person_id ? (doorsByAb.get(e.ab_person_id) ?? 0) : 0
             return {
               id: m.id,
               name: m.name,
-              doors: 0,          // no per-member doors endpoint yet (Phase D blocker)
-              doorsGoal: 0,      // 0 = "no goal set yet" → TeamPanel hides "/N" display
+              doors: doorsCount,               // REAL from /employees/doors-by-period/ (Phase 3.5)
+              doorsGoal: 0,                    // Phase D — team-level goal, not per-promoter
               recruited: e.recruited,          // REAL from /member-earnings/
-              recruitedGoal: 0,  // 0 = same convention as doorsGoal (Phase D blocker)
+              recruitedGoal: 0,                // Phase D — team-level goal, not per-promoter
               activePercent: e.active_percent, // REAL
               sumVervinger: Math.round(e.sum_vervinger), // REAL (nearest kroner)
             }
