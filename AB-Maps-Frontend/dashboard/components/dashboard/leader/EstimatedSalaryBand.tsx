@@ -1,28 +1,49 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Sparkles } from "lucide-react"
 import { useLang } from "@/lib/i18n"
-import { Placeholder } from "./Placeholder"
+import { fetchSalarySummary, fetchMySalary, currentPeriod } from "@/lib/api/salary"
 
 interface EstimatedSalaryBandProps {
-  value: number
-  placeholder?: boolean
+  /**
+   * Which endpoint to consume:
+   *   'salgsleder' → /api/hr/salary/summary/ (manager view)
+   *   'promoter'   → /api/hr/salary/me/      (employee view)
+   * Both return the same shape but scoped differently.
+   */
+  variant?: 'salgsleder' | 'promoter'
 }
 
 // The wide "Estimert lønn ved oppnåelse av mål" band under the LØNN row.
-// Full-width, one big number. Slight gradient so it reads as a promise/target,
-// not a fact.
-export function EstimatedSalaryBand({ value, placeholder }: EstimatedSalaryBandProps) {
+// Renders REAL projected salary — from /api/hr/salary/{summary,me}/'s
+// `estimert_lonn_ved_mal` field. That field requires the Goals endpoint
+// (Phase D) to be populated; until then it's null and this component
+// renders nothing (no fake number, silent hide).
+export function EstimatedSalaryBand({ variant = 'salgsleder' }: EstimatedSalaryBandProps) {
   const reduced = useReducedMotion()
   const { t, lang } = useLang()
+  const [value, setValue] = useState<number | null>(null)
 
-  const num = (
-    <>
-      <span className="text-ab-fg">{value.toLocaleString(lang === "no" ? "nb-NO" : "en-GB")}</span>
-      <span className="ml-2 text-lg font-medium text-ab-fg-3">{t("kr")}</span>
-    </>
-  )
+  useEffect(() => {
+    let cancelled = false
+    const fetcher = variant === 'promoter' ? fetchMySalary : fetchSalarySummary
+    fetcher({ period: currentPeriod() })
+      .then((s: any) => {
+        if (cancelled) return
+        const raw = s?.estimert_lonn_ved_mal
+        if (raw != null) {
+          const parsed = parseFloat(raw)
+          if (!isNaN(parsed) && parsed > 0) setValue(parsed)
+        }
+      })
+      .catch(() => { /* silent — component hides itself when value stays null */ })
+    return () => { cancelled = true }
+  }, [variant])
+
+  // Silent hide until Phase D goals endpoint ships (nothing to promise yet).
+  if (value === null) return null
 
   return (
     <motion.div
@@ -31,7 +52,6 @@ export function EstimatedSalaryBand({ value, placeholder }: EstimatedSalaryBandP
       transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
       className="relative overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated px-6 py-5"
     >
-      {/* Ambient gradient — subtle, only visible on close read */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -55,7 +75,10 @@ export function EstimatedSalaryBand({ value, placeholder }: EstimatedSalaryBandP
         </div>
 
         <div className="font-mono text-3xl font-bold tracking-tight">
-          {placeholder ? <Placeholder>{num}</Placeholder> : num}
+          <span className="text-ab-fg">
+            {value.toLocaleString(lang === "no" ? "nb-NO" : "en-GB")}
+          </span>
+          <span className="ml-2 text-lg font-medium text-ab-fg-3">{t("kr")}</span>
         </div>
       </div>
     </motion.div>

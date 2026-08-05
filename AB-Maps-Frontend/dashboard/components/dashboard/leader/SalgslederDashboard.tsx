@@ -13,6 +13,8 @@ import { AvatarStack } from "./Avatar"
 import { LivePulseDot } from "./LivePulseDot"
 import { TeamPanel } from "./TeamPanel"
 import { TopplisterRow } from "./TopplisterRow"
+import { LonnRowSalgsleder } from "./LonnRowSalgsleder"
+import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
 import { listTeams, getTeam, fetchTeamMemberEarnings } from "@/lib/api/teams"
 import { teams as dummyTeams, type TeamNode } from "./dummyData"
 
@@ -162,19 +164,24 @@ export function SalgslederDashboard() {
         </motion.section>
 
         <div className="relative px-4 sm:px-6 py-6 sm:py-8 space-y-8">
-          {/* ═════════════════ MÅL MÅNED + MÅL UKE + LØNN + EstimatedSalaryBand ═════════════════
-              These sections are HIDDEN until the corresponding backend endpoints ship
-              (Phase 2+5 for LØNN, Phase D for MÅL MÅNED/UKE goals).
-              Per boss constraint 2026-08-05: no fake data. Once /api/hr/salary/summary/
-              and /api/hr/goals/ ship, these blocks come back — the components are still
-              in the tree (LonnRowSalgsleder, EstimatedSalaryBand, MÅL section) waiting
-              for their data. Team + Topplister + Sanntid all use real data and stay. */}
+          {/* MÅL MÅNED + MÅL UKE remain hidden until Phase D (Goals endpoint).
+              LØNN + EstimatedSalaryBand were unhidden Phase 2+5 (2026-08-05):
+              components self-hide (render null) when the salary endpoint
+              feature-flag is OFF or returns unavailable — never fake data. */}
 
           {/* ═════════════════ Team ═════════════════ */}
           <div>
             <SectionHeader label={t("Team")} accent="teamleder" />
             <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Klikk et team for å se promotørene bak tallene")}</p>
             <TeamPanel teams={teams} />
+          </div>
+
+          {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}
+          <div className="space-y-3">
+            <SectionHeader label={t("Lønn")} accent="teamleder" />
+            <p className="pl-4 text-[11px] text-ab-fg-3">{t("Klikk Sum vervinger eller Lederprovisjon for team-fordeling")}</p>
+            <LonnRowSalgsleder />
+            <EstimatedSalaryBand />
           </div>
 
           {/* ═════════════════ Topplister ═════════════════ */}
