@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Sparkles } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
@@ -20,103 +20,99 @@ import { listTeams, getTeam, fetchTeamMemberEarnings } from "@/lib/api/teams"
 import { fetchEmployeeDoors } from "@/lib/api/dashboardOverview"
 import { type TeamNode } from "./dummyData"
 
-// Adapter: real HR /api/hr/teams/ → dashboard's TeamNode shape (what
-// TeamPanel expects). Real data covers team header (name, color, city
-// via campaign, managerName via owner) + member NAMES + per-member
-// RECRUITED / ACTIVE% / SUM_VERVINGER via the Phase 3 hr-service endpoint,
-// and per-member DOORS via the Phase 3.5 analytics-service endpoint
-// (2026-08-05). doorsGoal/recruitedGoal remain 0 for now — no goals
-// endpoint yet (Phase D — boss confirmed per-team scope, pending impl).
+// LAZY-LOAD ADAPTER (mobile-perf fix, 2026-08-06):
+// - fetchTeamsShallow: ONE `/api/hr/teams/` call → returns team headers
+//   (name / color / campaign badge / owner / member_count) with EMPTY promoters
+//   list. This is all we need to paint the collapsed cards.
+// - fetchTeamDetail: per-team `getTeam + fetchTeamMemberEarnings + fetchEmployeeDoors`
+//   fired ONLY when the user expands that team card. Adds 3 requests per
+//   expansion, vs the previous 3N-per-page-load stampede that made mobile lag.
 //
-// Scoped to the currently-selected campaign via CampaignGuard context —
-// without this, admin/superuser sees every team across every campaign.
-// `period` (YYYY-MM) comes from the MonthPicker; without it we'd always
-// query current month (Aug 5 2026 problem: no data uploaded yet → 0s).
-async function fetchTeamsAsNodes(campaignId: string | undefined, period: string): Promise<TeamNode[]> {
+// Result: page-load network drops from ~35 to ~7 requests on a 10-team account.
+
+const TEAM_COLOR_PALETTE = [
+  "#3461FF", "#0E9384", "#F59E0B", "#F43F5E",
+  "#8B5CF6", "#10B981", "#EC4899", "#06B6D4",
+]
+
+async function fetchTeamsShallow(campaignId: string | undefined): Promise<TeamNode[]> {
   const list = await listTeams({ pageSize: 50, campaignId })
-  if (!list.results.length) return []
-
-  // Fetch full team detail + per-member earnings + per-member doors per team.
-  // Doors uses the TEAM's own campaign_id (not the sidebar's selected campaign)
-  // so we still get real doors even when no campaign is picked in the sidebar
-  // — each team's page-visible "NORSK FOLKEHJELP" badge already comes from
-  // team.campaign.id, so we use the same value here for the doors filter.
-  const results = await Promise.all(list.results.map(async (t) => {
-    const [detail, earnings] = await Promise.all([
-      getTeam(t.id).catch(() => null),
-      fetchTeamMemberEarnings(t.id, { period }).catch(() => null),
-    ])
-    const teamCampaignId = detail?.campaign?.id
-    const abIds = (earnings?.members ?? [])
-      .map((m) => m.ab_person_id)
-      .filter((x): x is string => Boolean(x))
-    const doorsByAb = new Map<string, number>()
-    if (teamCampaignId && abIds.length) {
-      try {
-        const resp = await fetchEmployeeDoors({
-          campaignId: teamCampaignId, period, abPersonIds: abIds,
-        })
-        for (const r of resp.doors_by_employee) doorsByAb.set(r.ab_person_id, r.doors)
-      } catch { /* silent — doors falls back to 0 per promoter below */ }
-    }
-    return { detail, earnings, doorsByAb }
+  return list.results.map((t, idx) => ({
+    id: t.id,
+    name: t.name,
+    city: t.campaign?.name ?? "",
+    color: t.color || TEAM_COLOR_PALETTE[idx % TEAM_COLOR_PALETTE.length],
+    managerName: t.owner?.name ?? "—",
+    chiefContribution: 0,
+    leaderContribution: 0,
+    teamDoorsGoal: 0,        // fills in when the card expands
+    teamRecruitedGoal: 0,    // fills in when the card expands
+    canEditGoals: false,     // fills in when the card expands (from team_goals payload)
+    memberCount: t.member_count,  // truthful pre-expansion count from listTeams
+    promoters: [],           // empty until expanded
   }))
+}
 
-  // Distinct color palette for teams whose backend `color` field is null.
-  // Cycles through 8 aurora-friendly shades so 2+ teams don't all look teal.
-  const TEAM_COLOR_PALETTE = [
-    "#3461FF", "#0E9384", "#F59E0B", "#F43F5E",
-    "#8B5CF6", "#10B981", "#EC4899", "#06B6D4",
-  ]
+async function fetchTeamDetail(teamId: string, period: string): Promise<{
+  promoters: TeamNode["promoters"]
+  teamDoorsGoal: number
+  teamRecruitedGoal: number
+  canEditGoals: boolean
+} | null> {
+  const [detail, earnings] = await Promise.all([
+    getTeam(teamId).catch(() => null),
+    fetchTeamMemberEarnings(teamId, { period }).catch(() => null),
+  ])
+  if (!detail) return null
 
-  // Build lookup: person_id → earnings row (fast merge in the map below)
-  return results
-    .filter((r): r is { detail: NonNullable<typeof r.detail>; earnings: typeof r.earnings; doorsByAb: Map<string, number> } => r.detail !== null)
-    .map(({ detail, earnings, doorsByAb }, idx) => {
-      const earningsByPerson = new Map<string, { recruited: number; active_percent: number; sum_vervinger: number; ab_person_id: string | null }>()
-      if (earnings) {
-        for (const m of earnings.members) {
-          earningsByPerson.set(m.person_id, {
-            recruited: m.recruited,
-            active_percent: m.active_percent,
-            sum_vervinger: m.sum_vervinger,
-            ab_person_id: m.ab_person_id,
-          })
+  // Fetch doors AFTER earnings resolves (we need earnings.members to know the ab_ids).
+  const teamCampaignId = detail.campaign?.id
+  const abIds = (earnings?.members ?? [])
+    .map((m) => m.ab_person_id)
+    .filter((x): x is string => Boolean(x))
+  const doorsByAb = new Map<string, number>()
+  if (teamCampaignId && abIds.length) {
+    try {
+      const resp = await fetchEmployeeDoors({
+        campaignId: teamCampaignId, period, abPersonIds: abIds,
+      })
+      for (const r of resp.doors_by_employee) doorsByAb.set(r.ab_person_id, r.doors)
+    } catch { /* silent — doors falls back to 0 per promoter below */ }
+  }
+
+  const earningsByPerson = new Map<string, { recruited: number; active_percent: number; sum_vervinger: number; ab_person_id: string | null }>()
+  if (earnings) {
+    for (const m of earnings.members) {
+      earningsByPerson.set(m.person_id, {
+        recruited: m.recruited,
+        active_percent: m.active_percent,
+        sum_vervinger: m.sum_vervinger,
+        ab_person_id: m.ab_person_id,
+      })
+    }
+  }
+  const tg = earnings?.team_goals
+  return {
+    teamDoorsGoal: tg?.doors_goal ?? 0,
+    teamRecruitedGoal: tg?.recruited_goal ?? 0,
+    canEditGoals: tg?.can_edit ?? false,
+    promoters: detail.members
+      .filter((m) => m.person_type === "employee")
+      .map((m) => {
+        const e = earningsByPerson.get(m.id) ?? { recruited: 0, active_percent: 0, sum_vervinger: 0, ab_person_id: null }
+        const doorsCount = e.ab_person_id ? (doorsByAb.get(e.ab_person_id) ?? 0) : 0
+        return {
+          id: m.id,
+          name: m.name,
+          doors: doorsCount,
+          doorsGoal: 0,
+          recruited: e.recruited,
+          recruitedGoal: 0,
+          activePercent: e.active_percent,
+          sumVervinger: Math.round(e.sum_vervinger),
         }
-      }
-      // Phase D — per-team, per-month goal comes attached to the earnings
-      // response. When backend hasn't shipped Phase D yet, team_goals is
-      // undefined and we fall back to 0/unset (TeamPanel hides "/N" chip).
-      const tg = earnings?.team_goals
-      return {
-        id: detail.id,
-        name: detail.name,
-        city: detail.campaign?.name ?? "",
-        color: detail.color || TEAM_COLOR_PALETTE[idx % TEAM_COLOR_PALETTE.length],
-        managerName: detail.owner?.name ?? "—",
-        chiefContribution: 0,
-        leaderContribution: 0,
-        teamDoorsGoal: tg?.doors_goal ?? 0,
-        teamRecruitedGoal: tg?.recruited_goal ?? 0,
-        canEditGoals: tg?.can_edit ?? false,
-        promoters: detail.members
-          .filter((m) => m.person_type === "employee")
-          .map((m) => {
-            const e = earningsByPerson.get(m.id) ?? { recruited: 0, active_percent: 0, sum_vervinger: 0, ab_person_id: null }
-            const doorsCount = e.ab_person_id ? (doorsByAb.get(e.ab_person_id) ?? 0) : 0
-            return {
-              id: m.id,
-              name: m.name,
-              doors: doorsCount,               // REAL from /employees/doors-by-period/ (Phase 3.5)
-              doorsGoal: 0,                    // Phase D — team-level goal, not per-promoter
-              recruited: e.recruited,          // REAL from /member-earnings/
-              recruitedGoal: 0,                // Phase D — team-level goal, not per-promoter
-              activePercent: e.active_percent, // REAL
-              sumVervinger: Math.round(e.sum_vervinger), // REAL (nearest kroner)
-            }
-          }),
-      }
-    })
+      }),
+  }
 }
 
 // Salgsleder / Teamleder dashboard — Aurora Nordic redesign.
@@ -153,24 +149,51 @@ export function SalgslederDashboard() {
     window.history.replaceState({}, "", url.toString())
   }, [period])
 
-  // Real teams from /api/hr/teams/ (with getTeam + member-earnings per team).
-  // Scoped to the currently-selected campaign via CampaignGuard context.
-  // Refetches when the user switches campaigns OR picks a different month.
+  // Teams from /api/hr/teams/ — SHALLOW on load (just headers), then per-team
+  // detail is fetched lazily when a card is expanded. Cut initial network
+  // waterfall from ~35 requests to ~7 on a 10-team account (mobile-perf fix).
   const { selectedCampaign } = useSelectedCampaign()
   const campaignId: string | undefined = selectedCampaign?.id
   const [teams, setTeams] = useState<TeamNode[]>([])
-  // Bumped after a successful goal save so the effect refetches without
+  const [loadingTeamIds, setLoadingTeamIds] = useState<Set<string>>(new Set())
+  const loadedTeamIdsRef = useRef<Set<string>>(new Set())
+  // Bumped after a successful goal save so the effect re-fetches without
   // needing to change campaign or period.
   const [refreshTick, setRefreshTick] = useState(0)
+
   useEffect(() => {
     let cancelled = false
-    fetchTeamsAsNodes(campaignId, period)
-      .then((real) => { if (!cancelled) setTeams(real) })
+    // Reset lazy-load state whenever the filter changes; expanded team detail
+    // is period/campaign-specific and stale if the user switches either.
+    loadedTeamIdsRef.current = new Set()
+    setLoadingTeamIds(new Set())
+    fetchTeamsShallow(campaignId)
+      .then((shells) => { if (!cancelled) setTeams(shells) })
       .catch(() => { if (!cancelled) setTeams([]) })
     return () => { cancelled = true }
   }, [campaignId, period, refreshTick])
 
-  const totalPromoters = teams.reduce((s, tm) => s + tm.promoters.length, 0)
+  // Called by TeamPanel when a card is expanded for the first time.
+  // Also called after a goal save (to force refresh that specific team).
+  const loadTeamDetail = useCallback(async (teamId: string, force = false) => {
+    if (!force && loadedTeamIdsRef.current.has(teamId)) return
+    loadedTeamIdsRef.current.add(teamId)
+    setLoadingTeamIds((prev) => { const n = new Set(prev); n.add(teamId); return n })
+    try {
+      const detail = await fetchTeamDetail(teamId, period)
+      if (!detail) return
+      setTeams((prev) => prev.map((t) => t.id === teamId ? { ...t, ...detail } : t))
+    } catch {
+      // On failure, allow retry by removing from loaded set
+      loadedTeamIdsRef.current.delete(teamId)
+    } finally {
+      setLoadingTeamIds((prev) => { const n = new Set(prev); n.delete(teamId); return n })
+    }
+  }, [period])
+
+  // Use memberCount from the shallow list when promoters haven't been lazy-
+  // loaded yet — otherwise pre-expansion the hero would say '0 promotører'.
+  const totalPromoters = teams.reduce((s, tm) => s + (tm.memberCount ?? tm.promoters.length), 0)
   const leaderNames = teams.map((tm) => tm.managerName)
 
   return (
@@ -227,7 +250,13 @@ export function SalgslederDashboard() {
           <div>
             <SectionHeader label={t("Team")} accent="teamleder" />
             <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Klikk et team for å se promotørene bak tallene")}</p>
-            <TeamPanel teams={teams} period={period} onGoalSaved={() => setRefreshTick((n) => n + 1)} />
+            <TeamPanel
+              teams={teams}
+              period={period}
+              loadingTeamIds={loadingTeamIds}
+              onTeamExpand={loadTeamDetail}
+              onGoalSaved={(teamId) => { if (teamId) loadTeamDetail(teamId, true) }}
+            />
           </div>
 
           {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}

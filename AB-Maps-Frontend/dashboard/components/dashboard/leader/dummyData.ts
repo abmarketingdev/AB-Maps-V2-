@@ -49,6 +49,10 @@ export type TeamNode = {
   teamRecruitedGoal?: number
   // Frontend hint from backend team_goals.can_edit — shows pencil icon when true.
   canEditGoals?: boolean
+  // Populated from the shallow /api/hr/teams/ list even before the card is
+  // expanded (so the "N promotører" header line is truthful pre-expansion).
+  // Falls back to promoters.length when not set.
+  memberCount?: number
 }
 
 export const teams: TeamNode[] = [
