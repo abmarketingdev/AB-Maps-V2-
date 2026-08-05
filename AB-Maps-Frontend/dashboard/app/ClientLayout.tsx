@@ -722,8 +722,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
               <StatusPill tone="live" className="hidden lg:inline-flex">LIVE</StatusPill>
 
-              <HeaderLangToggle />
-
               <ThemeToggle />
 
               <DropdownMenu>

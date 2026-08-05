@@ -113,18 +113,15 @@ interface LangCtx { lang: Lang; setLang: (l: Lang) => void; t: (no: string) => s
 const Ctx = createContext<LangCtx>({ lang: "no", setLang: () => {}, t: (s) => s })
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  // Norwegian-only (2026-08-06 boss decision). Toggle removed from the header;
+  // any user who previously flipped to EN via the old toggle would have
+  // "abmaps-lang":"en" cached in localStorage — clear it once so they reset.
   const [lang, setLangState] = useState<Lang>("no")
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("abmaps-lang") as Lang | null
-      if (saved === "no" || saved === "en") setLangState(saved)
-    } catch {}
+    try { localStorage.removeItem("abmaps-lang") } catch {}
   }, [])
-  const setLang = (l: Lang) => {
-    setLangState(l)
-    try { localStorage.setItem("abmaps-lang", l) } catch {}
-  }
-  const t = (no: string) => lang === "no" ? no : (DICT[no] ?? no)
+  const setLang = (_l: Lang) => { setLangState("no") }  // callable but locked to "no"
+  const t = (no: string) => no  // Norwegian source strings pass through unchanged
   return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>
 }
 
