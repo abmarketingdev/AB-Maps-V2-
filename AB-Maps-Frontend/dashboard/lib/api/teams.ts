@@ -230,6 +230,34 @@ export function fetchTeamLeaderboard(opts: { campaignId: string; metric: Leaderb
   return getJSON<TeamLeaderboard>(`/api/hr/teams/leaderboard/${qp({ campaign_id: opts.campaignId, metric: opts.metric, start_date: opts.startDate, end_date: opts.endDate })}`);
 }
 
+// Phase 3 (2026-08-05) — per-member earnings for a single team.
+// Powers the expanded rows of TeamPanel in the redesigned dashboards.
+// Backend endpoint documented in hr-service/teams/views.py member_earnings().
+export interface TeamMemberEarning {
+  person_id: string;
+  ab_person_id: string | null;
+  name: string;
+  type: 'employee' | 'manager';
+  recruited: number;
+  active_donors: number;
+  active_percent: number;   // integer 0-100
+  sum_vervinger: number;    // NOK, float
+}
+export interface TeamMemberEarnings {
+  team_id: string;
+  period: string | null;
+  members: TeamMemberEarning[];
+}
+
+export function fetchTeamMemberEarnings(
+  teamId: string,
+  opts: { period?: string } = {},
+): Promise<TeamMemberEarnings> {
+  return getJSON<TeamMemberEarnings>(
+    `/api/hr/teams/${teamId}/member-earnings/${qp({ period: opts.period })}`,
+  );
+}
+
 function errMsg(data: unknown, fallback: string): string {
   if (data && typeof data === 'object') {
     const obj = data as Record<string, unknown>;

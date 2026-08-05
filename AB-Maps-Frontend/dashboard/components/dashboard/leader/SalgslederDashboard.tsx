@@ -13,48 +13,77 @@ import { AvatarStack } from "./Avatar"
 import { LivePulseDot } from "./LivePulseDot"
 import { TeamPanel } from "./TeamPanel"
 import { TopplisterRow } from "./TopplisterRow"
-import { listTeams, getTeam } from "@/lib/api/teams"
+import { listTeams, getTeam, fetchTeamMemberEarnings } from "@/lib/api/teams"
 import { teams as dummyTeams, type TeamNode } from "./dummyData"
 
 // Adapter: real HR /api/hr/teams/ → dashboard's TeamNode shape (what
 // TeamPanel expects). Real data covers team header (name, color, city
-// via campaign, managerName via owner) + member NAMES. Per-promoter
-// metrics (doors/goals/vervinger/etc) have no matching backend endpoint
-// today, so we default to 0 — visually honest ("hasn't started yet")
-// rather than fabricated. When a per-member analytics endpoint ships,
-// this adapter is the single place to enrich those numbers.
+// via campaign, managerName via owner) + member NAMES + per-member
+// recruited / active% / sum_vervinger via the Phase 3 backend endpoint
+// (2026-08-05). Doors/doorsGoal/recruitedGoal remain 0 for now — no
+// goals endpoint yet (waiting on boss decision, Phase D).
 //
 // Scoped to the currently-selected campaign via CampaignGuard context —
-// without this, admin/superuser sees every team across every campaign
-// (bug reported 2026-08-05: 28 teams shown under CARE campaign because
-// filter wasn't passed).
+// without this, admin/superuser sees every team across every campaign.
 async function fetchTeamsAsNodes(campaignId?: string): Promise<TeamNode[]> {
   const list = await listTeams({ pageSize: 50, campaignId })
   if (!list.results.length) return []
-  const details = await Promise.all(list.results.map((t) => getTeam(t.id).catch(() => null)))
-  return details
-    .filter((d): d is NonNullable<typeof d> => d !== null)
-    .map((d) => ({
-      id: d.id,
-      name: d.name,
-      city: d.campaign?.name ?? "",
-      color: d.color || "#0E9384",
-      managerName: d.owner?.name ?? "—",
-      chiefContribution: 0,
-      leaderContribution: 0,
-      promoters: d.members
-        .filter((m) => m.person_type === "employee")
-        .map((m) => ({
-          id: m.id,
-          name: m.name,
-          doors: 0,
-          doorsGoal: 40,
-          recruited: 0,
-          recruitedGoal: 10,
-          activePercent: 0,
-          sumVervinger: 0,
-        })),
-    }))
+
+  // Current period as YYYY-MM (Oslo month) — used to scope earnings query.
+  const now = new Date()
+  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+
+  // Fetch full team detail + per-member earnings in parallel, per team.
+  // Each pair fetches independently so a single team's earnings failure
+  // (403 for a non-chief on that specific team, or 500) doesn't tank the
+  // whole page — we just fall back to zeros for that team's members.
+  const results = await Promise.all(list.results.map(async (t) => {
+    const [detail, earnings] = await Promise.all([
+      getTeam(t.id).catch(() => null),
+      fetchTeamMemberEarnings(t.id, { period }).catch(() => null),
+    ])
+    return { detail, earnings }
+  }))
+
+  // Build lookup: person_id → earnings row (fast merge in the map below)
+  return results
+    .filter((r): r is { detail: NonNullable<typeof r.detail>; earnings: typeof r.earnings } => r.detail !== null)
+    .map(({ detail, earnings }) => {
+      const earningsByPerson = new Map<string, { recruited: number; active_percent: number; sum_vervinger: number }>()
+      if (earnings) {
+        for (const m of earnings.members) {
+          earningsByPerson.set(m.person_id, {
+            recruited: m.recruited,
+            active_percent: m.active_percent,
+            sum_vervinger: m.sum_vervinger,
+          })
+        }
+      }
+      return {
+        id: detail.id,
+        name: detail.name,
+        city: detail.campaign?.name ?? "",
+        color: detail.color || "#0E9384",
+        managerName: detail.owner?.name ?? "—",
+        chiefContribution: 0,
+        leaderContribution: 0,
+        promoters: detail.members
+          .filter((m) => m.person_type === "employee")
+          .map((m) => {
+            const e = earningsByPerson.get(m.id) ?? { recruited: 0, active_percent: 0, sum_vervinger: 0 }
+            return {
+              id: m.id,
+              name: m.name,
+              doors: 0,          // no per-member doors endpoint yet (Phase D goals blocker)
+              doorsGoal: 40,     // static placeholder until Goals model ships
+              recruited: e.recruited,          // REAL from /member-earnings/
+              recruitedGoal: 10, // static placeholder
+              activePercent: e.active_percent, // REAL
+              sumVervinger: Math.round(e.sum_vervinger), // REAL (nearest kroner)
+            }
+          }),
+      }
+    })
 }
 
 // Salgsleder / Teamleder dashboard — Aurora Nordic redesign.
