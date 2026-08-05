@@ -16,7 +16,7 @@ import { TopplisterRow } from "./TopplisterRow"
 import { LonnRowSalgsleder } from "./LonnRowSalgsleder"
 import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
 import { listTeams, getTeam, fetchTeamMemberEarnings } from "@/lib/api/teams"
-import { teams as dummyTeams, type TeamNode } from "./dummyData"
+import { type TeamNode } from "./dummyData"
 
 // Adapter: real HR /api/hr/teams/ → dashboard's TeamNode shape (what
 // TeamPanel expects). Real data covers team header (name, color, city
@@ -103,18 +103,20 @@ export function SalgslederDashboard() {
     t("God kveld")
   const firstName = (user?.user_info?.name?.split(" ")[0]) || (user?.username?.split(" ")[0]) || "der"
 
-  // Real teams from /api/hr/teams/ (with getTeam for member lists),
-  // scoped to the currently-selected campaign. Refetches when the user
-  // switches campaigns in the sidebar picker. Falls back to dummy teams
-  // if the fetch fails (never crashes the whole dashboard).
+  // Real teams from /api/hr/teams/ (with getTeam + member-earnings per team).
+  // Scoped to the currently-selected campaign via CampaignGuard context.
+  // Refetches when the user switches campaigns (CampaignGuard now listens
+  // for the "ab:campaign-changed" event, so context updates → this effect
+  // re-runs). Starts empty (no dummy flash on first load — reported
+  // 2026-08-05 — users saw Oslo Nord/Sør/Vest for ~1s before real load).
   const { selectedCampaign } = useSelectedCampaign()
   const campaignId: string | undefined = selectedCampaign?.id
-  const [teams, setTeams] = useState<TeamNode[]>(dummyTeams)
+  const [teams, setTeams] = useState<TeamNode[]>([])
   useEffect(() => {
     let cancelled = false
     fetchTeamsAsNodes(campaignId)
-      .then((real) => { if (!cancelled) setTeams(real.length ? real : []) })
-      .catch(() => { /* keep dummy fallback silently */ })
+      .then((real) => { if (!cancelled) setTeams(real) })
+      .catch(() => { if (!cancelled) setTeams([]) })
     return () => { cancelled = true }
   }, [campaignId])
 

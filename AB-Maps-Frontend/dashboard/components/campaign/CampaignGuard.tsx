@@ -29,6 +29,27 @@ export default function CampaignGuard({ children }: CampaignGuardProps) {
     }
   }, [isAuthenticated]);
 
+  // React to campaign switches from ANY picker in the app.
+  // CampaignPicker dispatches `ab:campaign-changed` when the user picks a
+  // campaign in the sidebar; the storage event fires when a sibling tab
+  // updates localStorage. Without these listeners the guard's selectedCampaign
+  // state stays stale — my consumers (Salgsleder team panel, Topplister) then
+  // scope to the OLD campaign, showing e.g. NORSK teams under CARE (reported
+  // 2026-08-05). See fix commit for details.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const onCampaignChanged = () => checkCampaignSelection();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "currentCampaign") checkCampaignSelection();
+    };
+    window.addEventListener("ab:campaign-changed", onCampaignChanged);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("ab:campaign-changed", onCampaignChanged);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [isAuthenticated]);
+
   const checkCampaignSelection = () => {
     const storedCampaign = localStorage.getItem('currentCampaign');
     if (storedCampaign) {
