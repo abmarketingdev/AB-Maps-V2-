@@ -842,25 +842,32 @@ export function RapportView() {
     })
   }
 
-  const handlePeriodChange = (key: string) => {
+  // Returns the new {start, end} so the caller can pass them straight into
+  // loadReport() — bypasses the React-async-setState race where clicking a
+  // period chip previously read the STALE dates from loadReport's closure.
+  const handlePeriodChange = (key: string): { start: string; end: string } => {
     setPeriod(key)
     const today = todayISO()
-    if      (key === "1D")  { setStartDate(daysAgoISO(1));  setEndDate(today) }
-    else if (key === "1W")  { setStartDate(daysAgoISO(7));  setEndDate(today) }
-    else if (key === "1M")  { setStartDate(daysAgoISO(30)); setEndDate(today) }
-    else if (key === "YTD") { setStartDate(`${new Date().getFullYear()}-01-01`); setEndDate(today) }
-    // CUSTOM → keep whatever start/end dates the user last had; the entry-state
-    // form now shows two date inputs the user can edit directly.
+    let start = startDate, end = endDate
+    if      (key === "1D")  { start = daysAgoISO(1);  end = today }
+    else if (key === "1W")  { start = daysAgoISO(7);  end = today }
+    else if (key === "1M")  { start = daysAgoISO(30); end = today }
+    else if (key === "YTD") { start = `${new Date().getFullYear()}-01-01`; end = today }
+    // CUSTOM → keep whatever start/end dates the user last had.
+    setStartDate(start); setEndDate(end)
+    return { start, end }
   }
 
-  const loadReport = useCallback(async () => {
+  const loadReport = useCallback(async (override?: { start_date?: string; end_date?: string }) => {
     setLoadingTable(true)
     const ids = activeCampaignIds.size > 0 ? Array.from(activeCampaignIds) : campaigns.map(c => c.id)
-    filtersRef.current = { campaign_ids: ids, start_date: startDate, end_date: endDate }
+    const s = override?.start_date ?? startDate
+    const e = override?.end_date ?? endDate
+    filtersRef.current = { campaign_ids: ids, start_date: s, end_date: e }
     setAddressCache(new Map())
     setSelectedUser(null)
     try {
-      const data = await fetchTableData({ campaign_ids: ids, start_date: startDate, end_date: endDate })
+      const data = await fetchTableData({ campaign_ids: ids, start_date: s, end_date: e })
       setTableData(data)
       setHasLoaded(true)
     } catch (err) {
@@ -993,7 +1000,15 @@ export function RapportView() {
                   {PERIODS.map(({ key, label }) => (
                     <button
                       key={key}
-                      onClick={() => { handlePeriodChange(key); loadReport() }}
+                      onClick={() => {
+                        // For presets, compute fresh dates + fetch immediately with them
+                        // (bypasses React-async-setState race). For CUSTOM, only flip the
+                        // period visual — user edits the dates in the inputs below, then
+                        // hits "Bruk datoer" to refetch.
+                        if (key === "CUSTOM") { setPeriod("CUSTOM"); return }
+                        const { start, end } = handlePeriodChange(key)
+                        loadReport({ start_date: start, end_date: end })
+                      }}
                       className={cn(
                         "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150",
                         period === key ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2"
@@ -1003,6 +1018,34 @@ export function RapportView() {
                     </button>
                   ))}
                 </div>
+                {/* Inline custom-range editor for the active state */}
+                {period === "CUSTOM" && (
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl bg-ab-elevated border border-ab-line p-1.5">
+                    <input
+                      type="date"
+                      value={startDate}
+                      max={endDate || undefined}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="rounded-lg border border-ab-line bg-ab-hover px-2 py-1 text-xs text-ab-fg outline-none focus:border-blue-500/50"
+                    />
+                    <span className="text-[10px] uppercase tracking-wider text-ab-fg-4">til</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      min={startDate || undefined}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="rounded-lg border border-ab-line bg-ab-hover px-2 py-1 text-xs text-ab-fg outline-none focus:border-blue-500/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => loadReport({ start_date: startDate, end_date: endDate })}
+                      disabled={!startDate || !endDate || startDate > endDate || loadingTable}
+                      className="cursor-pointer rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Bruk datoer
+                    </button>
+                  </div>
+                )}
 
                 {/* Campaign pills */}
                 <div className="flex flex-wrap gap-1.5">
