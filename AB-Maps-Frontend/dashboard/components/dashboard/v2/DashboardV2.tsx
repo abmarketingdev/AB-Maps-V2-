@@ -49,11 +49,12 @@ export function DashboardV2() {
     fetchLeaderboard(m, 5, campaignId).then((leaderboard) => setData((d) => (d ? { ...d, leaderboard } : d))).catch(() => {})
   }, [campaignId])
 
-  // Poll the live activity feed (~30s) until SSE ships (guide §6).
+  // Poll the live activity feed (~60s) until SSE ships (guide §6).
+  // Bumped 30s → 60s 2026-08-06 to reduce mobile network churn / battery burn.
   useEffect(() => {
     const id = window.setInterval(() => {
       fetchActivities(50, campaignId).then((activities) => setData((d) => (d ? { ...d, activities } : d))).catch(() => {})
-    }, 30000)
+    }, 60000)
     return () => window.clearInterval(id)
   }, [campaignId])
 

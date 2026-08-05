@@ -19,6 +19,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preconnect to the API host so TLS + DNS is in flight while the JS
+            bundle is still downloading — saves 100-300ms on the first API
+            call on mobile 4G (2026-08-06 perf pass). */}
+        <link rel="preconnect" href="https://api.abmapsv2.absystem.no" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api.abmapsv2.absystem.no" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
       </head>

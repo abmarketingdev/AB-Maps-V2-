@@ -45,7 +45,9 @@ export function EmployeeDashboardView() {
     fetchEmployeeToday()
       .then((d) => { if (!cancelled) { setData(d); setStatus("ok") } })
       .catch(() => { if (!cancelled) setStatus("error") })
-    const id = window.setInterval(() => { void refetch() }, 20000)
+    // 60s polling (bumped from 20s 2026-08-06) — mobile battery + perceived
+    // responsiveness win; live-badge freshness within 60s is fine for users.
+    const id = window.setInterval(() => { void refetch() }, 60000)
     return () => { cancelled = true; window.clearInterval(id) }
   }, [firstName, refetch])
 
