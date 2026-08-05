@@ -7,7 +7,6 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   Home,
-  BarChart3,
   Bell,
   Menu,
   X,
