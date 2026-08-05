@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion"
 import { Sparkles } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useLang } from "@/lib/i18n"
+import { useSelectedCampaign } from "@/components/campaign/CampaignGuard"
 import { EmbeddedManagerWidgets } from "./EmbeddedManagerWidgets"
 import { SectionHeader } from "./SectionHeader"
 import { AuroraBg } from "./AuroraBg"
@@ -22,8 +23,13 @@ import { teams as dummyTeams, type TeamNode } from "./dummyData"
 // today, so we default to 0 — visually honest ("hasn't started yet")
 // rather than fabricated. When a per-member analytics endpoint ships,
 // this adapter is the single place to enrich those numbers.
-async function fetchTeamsAsNodes(): Promise<TeamNode[]> {
-  const list = await listTeams({ pageSize: 50 })
+//
+// Scoped to the currently-selected campaign via CampaignGuard context —
+// without this, admin/superuser sees every team across every campaign
+// (bug reported 2026-08-05: 28 teams shown under CARE campaign because
+// filter wasn't passed).
+async function fetchTeamsAsNodes(campaignId?: string): Promise<TeamNode[]> {
+  const list = await listTeams({ pageSize: 50, campaignId })
   if (!list.results.length) return []
   const details = await Promise.all(list.results.map((t) => getTeam(t.id).catch(() => null)))
   return details
@@ -66,17 +72,20 @@ export function SalgslederDashboard() {
     t("God kveld")
   const firstName = (user?.user_info?.name?.split(" ")[0]) || (user?.username?.split(" ")[0]) || "der"
 
-  // Real teams from /api/hr/teams/ (with getTeam for member lists).
-  // Falls back to dummy teams if the fetch fails, so the section always
-  // renders SOMETHING and never crashes the whole dashboard.
+  // Real teams from /api/hr/teams/ (with getTeam for member lists),
+  // scoped to the currently-selected campaign. Refetches when the user
+  // switches campaigns in the sidebar picker. Falls back to dummy teams
+  // if the fetch fails (never crashes the whole dashboard).
+  const { selectedCampaign } = useSelectedCampaign()
+  const campaignId: string | undefined = selectedCampaign?.id
   const [teams, setTeams] = useState<TeamNode[]>(dummyTeams)
   useEffect(() => {
     let cancelled = false
-    fetchTeamsAsNodes()
-      .then((real) => { if (!cancelled && real.length) setTeams(real) })
+    fetchTeamsAsNodes(campaignId)
+      .then((real) => { if (!cancelled) setTeams(real.length ? real : []) })
       .catch(() => { /* keep dummy fallback silently */ })
     return () => { cancelled = true }
-  }, [])
+  }, [campaignId])
 
   const totalPromoters = teams.reduce((s, tm) => s + tm.promoters.length, 0)
   const leaderNames = teams.map((tm) => tm.managerName)
@@ -142,7 +151,7 @@ export function SalgslederDashboard() {
           {/* ═════════════════ Topplister ═════════════════ */}
           <div>
             <SectionHeader label={t("Topplister")} accent="teamleder" />
-            <TopplisterRow />
+            <TopplisterRow campaignId={campaignId} />
           </div>
 
           {/* ═════════════════ Sanntid — live widgets from prod manager view ═════════════════ */}

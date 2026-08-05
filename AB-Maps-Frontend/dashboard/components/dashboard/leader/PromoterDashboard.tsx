@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "framer-motion"
 import { Plus, Sparkles } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useLang } from "@/lib/i18n"
+import { useSelectedCampaign } from "@/components/campaign/CampaignGuard"
 import { EmployeeTodayProvider } from "./EmployeeTodayContext"
 import { EmbeddedPromoterWidgets } from "./EmbeddedPromoterWidgets"
 import { SectionHeader } from "./SectionHeader"
@@ -27,6 +28,8 @@ export function PromoterDashboard() {
 function PromoterDashboardInner() {
   const { user } = useAuth()
   const { t, lang } = useLang()
+  const { selectedCampaign } = useSelectedCampaign()
+  const campaignId: string | undefined = selectedCampaign?.id
   const reduced = useReducedMotion()
   const now = new Date()
   const hour = now.getHours()
@@ -99,7 +102,7 @@ function PromoterDashboardInner() {
           {/* ═════════════════ Topplister ═════════════════ */}
           <div>
             <SectionHeader label={t("Topplister")} accent="teamleder" />
-            <TopplisterRow />
+            <TopplisterRow campaignId={campaignId} />
           </div>
         </div>
       </div>
