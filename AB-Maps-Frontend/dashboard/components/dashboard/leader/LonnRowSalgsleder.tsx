@@ -7,22 +7,28 @@ import { LonnTile } from "./LonnTile"
 import { ExpandableLonnCard, type BreakdownRow } from "./ExpandableLonnCard"
 import { fetchSalarySummary, currentPeriod, type SalarySummary } from "@/lib/api/salary"
 
+interface LonnRowSalgslederProps {
+  /** YYYY-MM. When omitted, defaults to current month. */
+  period?: string
+}
+
 // 4-tile LØNN row for the Salgsleder view.
 // Wired to real /api/hr/salary/summary/ (Phase 2+5, 2026-08-05).
 // Feature-flagged on backend — when off, endpoint 503s → fetch throws → we
 // render nothing (parent controls whether to show a "coming soon" message).
-export function LonnRowSalgsleder() {
+export function LonnRowSalgsleder({ period }: LonnRowSalgslederProps = {}) {
   const { t } = useLang()
   const [summary, setSummary] = useState<SalarySummary | null>(null)
   const [status, setStatus] = useState<"loading" | "ok" | "unavailable">("loading")
 
   useEffect(() => {
     let cancelled = false
-    fetchSalarySummary({ period: currentPeriod() })
+    setStatus("loading")
+    fetchSalarySummary({ period: period ?? currentPeriod() })
       .then((s) => { if (!cancelled) { setSummary(s); setStatus("ok") } })
       .catch(() => { if (!cancelled) setStatus("unavailable") })
     return () => { cancelled = true }
-  }, [])
+  }, [period])
 
   // While loading / unavailable → render null so parent can decide UX.
   // Parent (SalgslederDashboard) wraps this in the LØNN section which is

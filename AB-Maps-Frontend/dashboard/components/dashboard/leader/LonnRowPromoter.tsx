@@ -6,21 +6,27 @@ import { useLang } from "@/lib/i18n"
 import { LonnTile } from "./LonnTile"
 import { fetchMySalary, currentPeriod, type MySalary } from "@/lib/api/salary"
 
+interface LonnRowPromoterProps {
+  /** YYYY-MM. When omitted, defaults to current month. */
+  period?: string
+}
+
 // 3-tile LØNN row for the Promotør view. Wired to real /api/hr/salary/me/
 // (Phase 2+5, 2026-08-05). Feature-flagged on backend — when off, endpoint
 // 503s → fetch throws → we render nothing so parent can hide the section.
-export function LonnRowPromoter() {
+export function LonnRowPromoter({ period }: LonnRowPromoterProps = {}) {
   const { t } = useLang()
   const [summary, setSummary] = useState<MySalary | null>(null)
   const [status, setStatus] = useState<"loading" | "ok" | "unavailable">("loading")
 
   useEffect(() => {
     let cancelled = false
-    fetchMySalary({ period: currentPeriod() })
+    setStatus("loading")
+    fetchMySalary({ period: period ?? currentPeriod() })
       .then((s) => { if (!cancelled) { setSummary(s); setStatus("ok") } })
       .catch(() => { if (!cancelled) setStatus("unavailable") })
     return () => { cancelled = true }
-  }, [])
+  }, [period])
 
   if (status !== "ok" || !summary) return null
 

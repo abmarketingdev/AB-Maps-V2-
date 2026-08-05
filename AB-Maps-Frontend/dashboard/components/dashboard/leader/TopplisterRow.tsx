@@ -7,8 +7,6 @@ import { RoyMascot, MOOD_TO_ROY } from "@/components/gamification/RoyMascot"
 import { computeMood } from "@/components/gamification/lib/mood"
 import { fetchLeaderboard, type LeaderItem } from "@/lib/api/dashboardOverview"
 import { useLang } from "@/lib/i18n"
-import { Placeholder } from "./Placeholder"
-import { topplisterDoorsFallback, topplisterRecruited, topplisterActive } from "./dummyData"
 
 const RANK_COLORS = ["#f59e0b", "#94a3b8", "#cd7f32", "rgba(255,255,255,0.3)", "rgba(255,255,255,0.3)"]
 
@@ -17,17 +15,22 @@ const RANK_COLORS = ["#f59e0b", "#94a3b8", "#cd7f32", "rgba(255,255,255,0.3)", "
 // same computeMood, same rank medal colours, same mood badge, same score line —
 // so it feels like the same product, just three of them side-by-side.
 function LeaderColumn({
-  title, subtitle, rows, delay = 0, placeholder = false,
+  title, subtitle, rows, delay = 0, emptyLabel,
 }: {
   title: string
   subtitle: string
   rows: LeaderItem[]
   delay?: number
-  placeholder?: boolean
+  /** Rendered when rows.length === 0. Defaults to "Ingen data ennå". */
+  emptyLabel?: string
 }) {
   const reduced = useReducedMotion()
 
-  const inner = (
+  const inner = rows.length === 0 ? (
+    <div className="rounded-xl border border-dashed border-ab-line-1 px-4 py-8 text-center">
+      <p className="text-xs text-ab-fg-3">{emptyLabel ?? "Ingen data ennå"}</p>
+    </div>
+  ) : (
     <div className="space-y-3">
       {rows.map((entry, i) => {
         const moodOut = computeMood({
@@ -104,7 +107,7 @@ function LeaderColumn({
         </div>
       </div>
 
-      {placeholder ? <Placeholder>{inner}</Placeholder> : inner}
+      {inner}
     </motion.div>
   )
 }
@@ -116,44 +119,39 @@ interface TopplisterRowProps {
 }
 
 // 3-column TOPPLISTER row for the Salgsleder + Promoter views.
-// All three columns are now fed by REAL /api/dashboard/v2/leaderboard endpoint
-// (Phase 4, 2026-08-05 — added `recruited` metric on backend, kept `consistency`
-// for col 3). Falls back to dummy only on network error / empty response.
-//
-// Column-3 label changed from "Aktive givere (%)" to "Mest konsistent" because
-// backend supports `consistency` (days-per-week active vs threshold), not a
-// literal "active donors %" — that would require hr sales replica which is
-// deferred. Boss OK'd the relabel 2026-08-05.
+// All three columns are fed by REAL /api/dashboard/v2/leaderboard endpoint
+// (Phase 4, 2026-08-05 — added `recruited` metric on backend, kept
+// `consistency` for col 3). Each column starts EMPTY and only fills when
+// the real fetch returns data — no more dummy fallback (removed 2026-08-05
+// after users saw dummy names for periods with no upload).
 export function TopplisterRow({ doorsEntries, campaignId }: TopplisterRowProps = {}) {
   const { t } = useLang()
-  const [doors, setDoors] = useState<LeaderItem[]>(doorsEntries ?? topplisterDoorsFallback)
-  const [recruited, setRecruited] = useState<LeaderItem[]>(topplisterRecruited)
-  const [consistent, setConsistent] = useState<LeaderItem[]>(topplisterActive)
+  const [doors, setDoors] = useState<LeaderItem[]>(doorsEntries ?? [])
+  const [recruited, setRecruited] = useState<LeaderItem[]>([])
+  const [consistent, setConsistent] = useState<LeaderItem[]>([])
 
   useEffect(() => {
     let cancelled = false
-    // Column 1 — doors (already wired)
     if (!doorsEntries) {
       fetchLeaderboard("doors", 5, campaignId)
-        .then(entries => { if (!cancelled && entries?.length) setDoors(entries) })
-        .catch(() => { /* keep fallback */ })
+        .then(entries => { if (!cancelled) setDoors(entries ?? []) })
+        .catch(() => { if (!cancelled) setDoors([]) })
     }
-    // Column 2 — recruited (NEW backend metric per Phase 4)
     fetchLeaderboard("recruited", 5, campaignId)
-      .then(entries => { if (!cancelled && entries?.length) setRecruited(entries) })
-      .catch(() => { /* keep dummy fallback */ })
-    // Column 3 — consistency (existing metric, relabelled to "Mest konsistent")
+      .then(entries => { if (!cancelled) setRecruited(entries ?? []) })
+      .catch(() => { if (!cancelled) setRecruited([]) })
     fetchLeaderboard("consistency", 5, campaignId)
-      .then(entries => { if (!cancelled && entries?.length) setConsistent(entries) })
-      .catch(() => { /* keep dummy fallback */ })
+      .then(entries => { if (!cancelled) setConsistent(entries ?? []) })
+      .catch(() => { if (!cancelled) setConsistent([]) })
     return () => { cancelled = true }
   }, [doorsEntries, campaignId])
 
+  const empty = t("Ingen data ennå")
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-      <LeaderColumn title={t("Antall dører banket")} subtitle={t("Beste selgere denne perioden")} rows={doors}     delay={0.0}  />
-      <LeaderColumn title={t("Rekrutterte givere")}  subtitle={t("Flest nye givere")}             rows={recruited} delay={0.08} />
-      <LeaderColumn title={t("Mest konsistent")}     subtitle={t("Høyest aktivitet daglig")}      rows={consistent} delay={0.16} />
+      <LeaderColumn title={t("Antall dører banket")} subtitle={t("Beste selgere denne perioden")} rows={doors}      emptyLabel={empty} delay={0.0}  />
+      <LeaderColumn title={t("Rekrutterte givere")}  subtitle={t("Flest nye givere")}             rows={recruited}  emptyLabel={empty} delay={0.08} />
+      <LeaderColumn title={t("Mest konsistent")}     subtitle={t("Høyest aktivitet daglig")}      rows={consistent} emptyLabel={empty} delay={0.16} />
     </div>
   )
 }

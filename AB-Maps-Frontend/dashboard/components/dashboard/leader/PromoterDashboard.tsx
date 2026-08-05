@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Plus, Sparkles } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
@@ -11,6 +12,7 @@ import { SectionHeader } from "./SectionHeader"
 import { AuroraBg } from "./AuroraBg"
 import { MagneticButton } from "./MagneticButton"
 import { LivePulseDot } from "./LivePulseDot"
+import { MonthPicker } from "./MonthPicker"
 import { TopplisterRow } from "./TopplisterRow"
 import { LonnRowPromoter } from "./LonnRowPromoter"
 import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
@@ -41,6 +43,22 @@ function PromoterDashboardInner() {
     t("God kveld")
   const firstName = (user?.user_info?.name?.split(" ")[0]) || (user?.username?.split(" ")[0]) || "der"
 
+  // LØNN month selector — same pattern as SalgslederDashboard.
+  const [period, setPeriod] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("period")
+      if (p && /^\d{4}-\d{2}$/.test(p)) return p
+    }
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+  })
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const url = new URL(window.location.href)
+    url.searchParams.set("period", period)
+    window.history.replaceState({}, "", url.toString())
+  }, [period])
+
   return (
     <div className="min-h-screen bg-ab-base">
       {/* Ambient blob glows for pages without hero */}
@@ -66,14 +84,16 @@ function PromoterDashboardInner() {
               <h1 className="mt-2 font-instrument text-4xl sm:text-6xl leading-[1.02] text-ab-fg">
                 {greeting}, <span className="italic text-aurora-amber">{firstName}</span> <span className="not-italic">👋</span>
               </h1>
-              <p className="mt-3 flex items-center gap-2 text-sm text-ab-fg-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ab-fg-2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-aurora-amber ring-1 ring-inset ring-aurora-amber/25">
                   <Sparkles className="h-3 w-3" />
                   {t("Promotør")}
                 </span>
                 <span className="text-ab-fg-3">·</span>
                 <span className="text-ab-fg-3">{t("La oss knuse dagen sammen")}</span>
-              </p>
+                <span className="text-ab-fg-3">·</span>
+                <MonthPicker value={period} onChange={setPeriod} />
+              </div>
             </div>
 
             {/* Registrer dør → redirect to /emp/ map app (the REAL knock endpoint).
@@ -104,8 +124,8 @@ function PromoterDashboardInner() {
           {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}
           <div className="space-y-3">
             <SectionHeader label={t("Lønn")} accent="teamleder" />
-            <LonnRowPromoter />
-            <EstimatedSalaryBand variant="promoter" />
+            <LonnRowPromoter period={period} />
+            <EstimatedSalaryBand variant="promoter" period={period} />
           </div>
 
           {/* ═════════════════ Topplister ═════════════════ */}

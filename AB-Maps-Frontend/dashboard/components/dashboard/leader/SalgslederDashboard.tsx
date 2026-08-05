@@ -11,6 +11,7 @@ import { SectionHeader } from "./SectionHeader"
 import { AuroraBg } from "./AuroraBg"
 import { AvatarStack } from "./Avatar"
 import { LivePulseDot } from "./LivePulseDot"
+import { MonthPicker } from "./MonthPicker"
 import { TeamPanel } from "./TeamPanel"
 import { TopplisterRow } from "./TopplisterRow"
 import { LonnRowSalgsleder } from "./LonnRowSalgsleder"
@@ -27,13 +28,11 @@ import { type TeamNode } from "./dummyData"
 //
 // Scoped to the currently-selected campaign via CampaignGuard context —
 // without this, admin/superuser sees every team across every campaign.
-async function fetchTeamsAsNodes(campaignId?: string): Promise<TeamNode[]> {
+// `period` (YYYY-MM) comes from the MonthPicker; without it we'd always
+// query current month (Aug 5 2026 problem: no data uploaded yet → 0s).
+async function fetchTeamsAsNodes(campaignId: string | undefined, period: string): Promise<TeamNode[]> {
   const list = await listTeams({ pageSize: 50, campaignId })
   if (!list.results.length) return []
-
-  // Current period as YYYY-MM (Oslo month) — used to scope earnings query.
-  const now = new Date()
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
 
   // Fetch full team detail + per-member earnings in parallel, per team.
   // Each pair fetches independently so a single team's earnings failure
@@ -76,10 +75,10 @@ async function fetchTeamsAsNodes(campaignId?: string): Promise<TeamNode[]> {
             return {
               id: m.id,
               name: m.name,
-              doors: 0,          // no per-member doors endpoint yet (Phase D goals blocker)
-              doorsGoal: 40,     // static placeholder until Goals model ships
+              doors: 0,          // no per-member doors endpoint yet (Phase D blocker)
+              doorsGoal: 0,      // 0 = "no goal set yet" → TeamPanel hides "/N" display
               recruited: e.recruited,          // REAL from /member-earnings/
-              recruitedGoal: 10, // static placeholder
+              recruitedGoal: 0,  // 0 = same convention as doorsGoal (Phase D blocker)
               activePercent: e.active_percent, // REAL
               sumVervinger: Math.round(e.sum_vervinger), // REAL (nearest kroner)
             }
@@ -103,22 +102,38 @@ export function SalgslederDashboard() {
     t("God kveld")
   const firstName = (user?.user_info?.name?.split(" ")[0]) || (user?.username?.split(" ")[0]) || "der"
 
+  // Selected month for LØNN + TeamPanel. Defaults to current month; user
+  // can pick any of the last 12 via MonthPicker in the hero. Persisted in
+  // URL as ?period=YYYY-MM so refresh/bookmarks preserve it. Sanntid +
+  // Topplister ignore this — they're inherently "now" / rolling window.
+  const [period, setPeriod] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("period")
+      if (p && /^\d{4}-\d{2}$/.test(p)) return p
+    }
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+  })
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const url = new URL(window.location.href)
+    url.searchParams.set("period", period)
+    window.history.replaceState({}, "", url.toString())
+  }, [period])
+
   // Real teams from /api/hr/teams/ (with getTeam + member-earnings per team).
   // Scoped to the currently-selected campaign via CampaignGuard context.
-  // Refetches when the user switches campaigns (CampaignGuard now listens
-  // for the "ab:campaign-changed" event, so context updates → this effect
-  // re-runs). Starts empty (no dummy flash on first load — reported
-  // 2026-08-05 — users saw Oslo Nord/Sør/Vest for ~1s before real load).
+  // Refetches when the user switches campaigns OR picks a different month.
   const { selectedCampaign } = useSelectedCampaign()
   const campaignId: string | undefined = selectedCampaign?.id
   const [teams, setTeams] = useState<TeamNode[]>([])
   useEffect(() => {
     let cancelled = false
-    fetchTeamsAsNodes(campaignId)
+    fetchTeamsAsNodes(campaignId, period)
       .then((real) => { if (!cancelled) setTeams(real) })
       .catch(() => { if (!cancelled) setTeams([]) })
     return () => { cancelled = true }
-  }, [campaignId])
+  }, [campaignId, period])
 
   const totalPromoters = teams.reduce((s, tm) => s + tm.promoters.length, 0)
   const leaderNames = teams.map((tm) => tm.managerName)
@@ -160,6 +175,8 @@ export function SalgslederDashboard() {
                     <span className="font-mono text-ab-fg">{totalPromoters}</span> {t("promotører")}
                   </span>
                 </div>
+                <span className="text-ab-fg-3">·</span>
+                <MonthPicker value={period} onChange={setPeriod} />
               </div>
             </div>
           </div>
@@ -182,8 +199,8 @@ export function SalgslederDashboard() {
           <div className="space-y-3">
             <SectionHeader label={t("Lønn")} accent="teamleder" />
             <p className="pl-4 text-[11px] text-ab-fg-3">{t("Klikk Sum vervinger eller Lederprovisjon for team-fordeling")}</p>
-            <LonnRowSalgsleder />
-            <EstimatedSalaryBand />
+            <LonnRowSalgsleder period={period} />
+            <EstimatedSalaryBand period={period} />
           </div>
 
           {/* ═════════════════ Topplister ═════════════════ */}

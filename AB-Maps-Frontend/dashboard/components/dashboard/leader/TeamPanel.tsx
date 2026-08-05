@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { ChevronDown, DoorOpen, UserPlus, Activity, Trophy, Flame } from "lucide-react"
-import { Placeholder } from "./Placeholder"
 import { Avatar } from "./Avatar"
 import { useLang } from "@/lib/i18n"
 import type { TeamNode } from "./dummyData"
@@ -116,11 +115,11 @@ function TeamCard({ team, index }: { team: TeamNode; index: number }) {
           </div>
         </div>
 
-        {/* Summary chips */}
+        {/* Summary chips — goals hidden until Phase D (goal=0 → show just the count). */}
         <div className="hidden md:flex items-center gap-2">
-          <SummaryChip icon={<DoorOpen className="h-3 w-3" />} label={t("Dører")} value={`${totalDoors}/${totalDoorsGoal}`} accent="#8B5CF6" />
-          <SummaryChip icon={<UserPlus className="h-3 w-3" />} label={t("Rekrutt.")} value={<Placeholder>{totalRec}/{totalRecGoal}</Placeholder>} accent="#0E9384" />
-          <SummaryChip icon={<Activity className="h-3 w-3" />} label={t("Aktive")} value={<Placeholder>{avgActive}%</Placeholder>} accent="#F43F5E" />
+          <SummaryChip icon={<DoorOpen className="h-3 w-3" />} label={t("Dører")} value={totalDoorsGoal ? `${totalDoors}/${totalDoorsGoal}` : `${totalDoors}`} accent="#8B5CF6" />
+          <SummaryChip icon={<UserPlus className="h-3 w-3" />} label={t("Rekrutt.")} value={totalRecGoal ? `${totalRec}/${totalRecGoal}` : `${totalRec}`} accent="#0E9384" />
+          <SummaryChip icon={<Activity className="h-3 w-3" />} label={t("Aktive")} value={`${avgActive}%`} accent="#F43F5E" />
         </div>
 
         <motion.div
@@ -225,7 +224,7 @@ function TeamCard({ team, index }: { team: TeamNode; index: number }) {
                             </div>
                             <span className="font-mono text-[11px] tabular-nums shrink-0">
                               <span className="font-semibold text-ab-fg">{p.doors}</span>
-                              <span className="text-ab-fg-4">/{p.doorsGoal}</span>
+                              {p.doorsGoal > 0 && <span className="text-ab-fg-4">/{p.doorsGoal}</span>}
                             </span>
                           </div>
 
@@ -242,33 +241,27 @@ function TeamCard({ team, index }: { team: TeamNode; index: number }) {
                               />
                             </div>
                             <span className="font-mono text-[11px] tabular-nums shrink-0">
-                              <Placeholder>
-                                <span className="font-semibold text-ab-fg">{p.recruited}</span>
-                                <span className="text-ab-fg-4">/{p.recruitedGoal}</span>
-                              </Placeholder>
+                              <span className="font-semibold text-ab-fg">{p.recruited}</span>
+                              {p.recruitedGoal > 0 && <span className="text-ab-fg-4">/{p.recruitedGoal}</span>}
                             </span>
                           </div>
 
                           {/* Aktive — colored pill */}
                           <div className="flex justify-end">
-                            <Placeholder>
-                              <span
-                                className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-mono font-semibold"
-                                style={{ background: hexAlpha(activeColor, 0.15), color: activeColor }}
-                              >
-                                {p.activePercent}%
-                              </span>
-                            </Placeholder>
+                            <span
+                              className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-mono font-semibold"
+                              style={{ background: hexAlpha(activeColor, 0.15), color: activeColor }}
+                            >
+                              {p.activePercent}%
+                            </span>
                           </div>
 
                           {/* Vervinger — mono kr, highlighted for top-1 */}
                           <div className="text-right font-mono text-[11px] tabular-nums">
-                            <Placeholder>
-                              <span className={isTop1 ? "font-bold text-aurora-amber" : "font-semibold text-ab-fg"}>
-                                {p.sumVervinger.toLocaleString("nb-NO")}
-                              </span>
-                              <span className="ml-0.5 text-ab-fg-4">kr</span>
-                            </Placeholder>
+                            <span className={isTop1 ? "font-bold text-aurora-amber" : "font-semibold text-ab-fg"}>
+                              {p.sumVervinger.toLocaleString("nb-NO")}
+                            </span>
+                            <span className="ml-0.5 text-ab-fg-4">kr</span>
                           </div>
                         </motion.div>
                       )
@@ -288,12 +281,12 @@ function TeamCard({ team, index }: { team: TeamNode; index: number }) {
                     </span>
                     <span className="text-xs font-semibold uppercase tracking-wider text-ab-fg-2">{t("Team totalt")}</span>
                     <span className="font-mono text-xs font-bold text-ab-fg tabular-nums">{totalDoors}</span>
-                    <span className="font-mono text-xs font-bold text-ab-fg tabular-nums"><Placeholder>{totalRec}</Placeholder></span>
+                    <span className="font-mono text-xs font-bold text-ab-fg tabular-nums">{totalRec}</span>
                     <span className="text-right font-mono text-xs font-bold tabular-nums" style={{ color: avgActive >= 80 ? "#10b981" : avgActive >= 65 ? "#F59E0B" : "#F43F5E" }}>
-                      <Placeholder>{avgActive}%</Placeholder>
+                      {avgActive}%
                     </span>
                     <span className="text-right font-mono text-xs font-bold text-ab-fg tabular-nums">
-                      <Placeholder>{totalVervinger.toLocaleString("nb-NO")}<span className="ml-0.5 text-ab-fg-4"> kr</span></Placeholder>
+                      {totalVervinger.toLocaleString("nb-NO")}<span className="ml-0.5 text-ab-fg-4"> kr</span>
                     </span>
                   </div>
                 </div>
