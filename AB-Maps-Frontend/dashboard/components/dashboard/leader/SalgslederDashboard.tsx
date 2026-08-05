@@ -90,6 +90,10 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
           })
         }
       }
+      // Phase D — per-team, per-month goal comes attached to the earnings
+      // response. When backend hasn't shipped Phase D yet, team_goals is
+      // undefined and we fall back to 0/unset (TeamPanel hides "/N" chip).
+      const tg = earnings?.team_goals
       return {
         id: detail.id,
         name: detail.name,
@@ -98,6 +102,9 @@ async function fetchTeamsAsNodes(campaignId: string | undefined, period: string)
         managerName: detail.owner?.name ?? "—",
         chiefContribution: 0,
         leaderContribution: 0,
+        teamDoorsGoal: tg?.doors_goal ?? 0,
+        teamRecruitedGoal: tg?.recruited_goal ?? 0,
+        canEditGoals: tg?.can_edit ?? false,
         promoters: detail.members
           .filter((m) => m.person_type === "employee")
           .map((m) => {
@@ -158,13 +165,16 @@ export function SalgslederDashboard() {
   const { selectedCampaign } = useSelectedCampaign()
   const campaignId: string | undefined = selectedCampaign?.id
   const [teams, setTeams] = useState<TeamNode[]>([])
+  // Bumped after a successful goal save so the effect refetches without
+  // needing to change campaign or period.
+  const [refreshTick, setRefreshTick] = useState(0)
   useEffect(() => {
     let cancelled = false
     fetchTeamsAsNodes(campaignId, period)
       .then((real) => { if (!cancelled) setTeams(real) })
       .catch(() => { if (!cancelled) setTeams([]) })
     return () => { cancelled = true }
-  }, [campaignId, period])
+  }, [campaignId, period, refreshTick])
 
   const totalPromoters = teams.reduce((s, tm) => s + tm.promoters.length, 0)
   const leaderNames = teams.map((tm) => tm.managerName)
@@ -223,7 +233,7 @@ export function SalgslederDashboard() {
           <div>
             <SectionHeader label={t("Team")} accent="teamleder" />
             <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Klikk et team for å se promotørene bak tallene")}</p>
-            <TeamPanel teams={teams} />
+            <TeamPanel teams={teams} period={period} onGoalSaved={() => setRefreshTick((n) => n + 1)} />
           </div>
 
           {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}

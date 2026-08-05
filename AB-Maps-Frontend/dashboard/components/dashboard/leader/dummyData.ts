@@ -43,6 +43,12 @@ export type TeamNode = {
   chiefContribution: number // kr the salgsleder earns from this team (chief_rate × team perf)
   leaderContribution: number // kr the team manager earns (leader_rate × team perf)
   promoters: PromoterInTeam[]
+  // Phase D (2026-08-05) — per-team, per-month goal. 0 = unset (TeamPanel
+  // hides the "/N" fraction on team-total chips + progress bar denominator).
+  teamDoorsGoal?: number
+  teamRecruitedGoal?: number
+  // Frontend hint from backend team_goals.can_edit — shows pencil icon when true.
+  canEditGoals?: boolean
 }
 
 export const teams: TeamNode[] = [

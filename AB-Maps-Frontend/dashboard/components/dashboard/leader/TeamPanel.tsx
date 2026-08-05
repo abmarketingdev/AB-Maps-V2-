@@ -2,13 +2,19 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
-import { ChevronDown, DoorOpen, UserPlus, Activity, Trophy, Flame } from "lucide-react"
+import { ChevronDown, DoorOpen, UserPlus, Activity, Trophy, Flame, Pencil } from "lucide-react"
 import { Avatar } from "./Avatar"
 import { useLang } from "@/lib/i18n"
+import { SetTeamGoalModal } from "./SetTeamGoalModal"
 import type { TeamNode } from "./dummyData"
 
 interface TeamPanelProps {
   teams: TeamNode[]
+  /** Selected month (YYYY-MM). Used when opening SetTeamGoalModal so the
+   *  save PUTs against the currently-viewed period. */
+  period?: string
+  /** Called after a successful goal save so parent can refetch. */
+  onGoalSaved?: () => void
 }
 
 function hexAlpha(hex: string, a: number) {
@@ -16,30 +22,33 @@ function hexAlpha(hex: string, a: number) {
   return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`
 }
 
-export function TeamPanel({ teams }: TeamPanelProps) {
+export function TeamPanel({ teams, period, onGoalSaved }: TeamPanelProps) {
   return (
     <div className="space-y-3">
       {teams.map((team, i) => (
-        <TeamCard key={team.id} team={team} index={i} />
+        <TeamCard key={team.id} team={team} index={i} period={period} onGoalSaved={onGoalSaved} />
       ))}
     </div>
   )
 }
 
-function TeamCard({ team, index }: { team: TeamNode; index: number }) {
+function TeamCard({ team, index, period, onGoalSaved }:
+  { team: TeamNode; index: number; period?: string; onGoalSaved?: () => void }) {
   const { t } = useLang()
   const reduced = useReducedMotion()
   const [open, setOpen] = useState(false)
+  const [goalModalOpen, setGoalModalOpen] = useState(false)
 
   const totalDoors     = team.promoters.reduce((s, p) => s + p.doors, 0)
-  const totalDoorsGoal = team.promoters.reduce((s, p) => s + p.doorsGoal, 0)
   const totalRec       = team.promoters.reduce((s, p) => s + p.recruited, 0)
-  const totalRecGoal   = team.promoters.reduce((s, p) => s + p.recruitedGoal, 0)
   const totalVervinger = team.promoters.reduce((s, p) => s + p.sumVervinger, 0)
   const avgActive      = team.promoters.length
     ? Math.round(team.promoters.reduce((s, p) => s + p.activePercent, 0) / team.promoters.length)
     : 0
-  const doorsPct = totalDoorsGoal ? Math.min(100, Math.round((totalDoors / totalDoorsGoal) * 100)) : 0
+  // Phase D — team-level goals from backend (unset → 0 → chip/bar hidden).
+  const totalDoorsGoal = team.teamDoorsGoal ?? 0
+  const totalRecGoal   = team.teamRecruitedGoal ?? 0
+  const doorsPct       = totalDoorsGoal ? Math.min(100, Math.round((totalDoors / totalDoorsGoal) * 100)) : 0
 
   // Rank promoters by sumVervinger — top 3 get medals
   const ranked = [...team.promoters].sort((a, b) => b.sumVervinger - a.sumVervinger)
@@ -93,6 +102,18 @@ function TeamCard({ team, index }: { team: TeamNode; index: number }) {
             >
               {team.city}
             </span>
+            {team.canEditGoals && (
+              <span
+                role="button"
+                tabIndex={0}
+                title={t("Sett mål for måneden")}
+                onClick={(e) => { e.stopPropagation(); setGoalModalOpen(true) }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); e.preventDefault(); setGoalModalOpen(true) } }}
+                className="inline-flex h-5 w-5 items-center justify-center rounded-md text-ab-fg-3 transition-colors hover:bg-white/[0.06] hover:text-aurora-amber cursor-pointer"
+              >
+                <Pencil className="h-3 w-3" />
+              </span>
+            )}
           </div>
           <p className="mt-0.5 truncate text-xs text-ab-fg-3">
             {t("Leder")}: <span className="font-medium text-ab-fg-2">{team.managerName}</span>
@@ -295,6 +316,23 @@ function TeamCard({ team, index }: { team: TeamNode; index: number }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Phase D — Set-goal modal. Rendered here so it lives inside the team
+          card component and gets team.id + current period automatically. */}
+      {goalModalOpen && (
+        <SetTeamGoalModal
+          teamId={team.id}
+          teamName={team.name}
+          period={period}
+          initialDoorsGoal={totalDoorsGoal}
+          initialRecruitedGoal={totalRecGoal}
+          onClose={() => setGoalModalOpen(false)}
+          onSaved={() => {
+            setGoalModalOpen(false)
+            onGoalSaved?.()
+          }}
+        />
+      )}
     </motion.div>
   )
 }

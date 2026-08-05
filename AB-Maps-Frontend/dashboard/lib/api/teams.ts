@@ -243,10 +243,26 @@ export interface TeamMemberEarning {
   active_percent: number;   // integer 0-100
   sum_vervinger: number;    // NOK, float
 }
+// Phase D (2026-08-05) — per-team, per-month goals. Attached to
+// TeamMemberEarnings response so the frontend has both counts + goals
+// in a single round-trip. `can_edit` reflects server-side permission
+// (leader / co_leader / sales_chief / HR-staff); frontend uses it
+// to show/hide the pencil icon that opens SetTeamGoalModal.
+export interface TeamGoalPayload {
+  team_id: string;
+  period: string | null;
+  doors_goal: number;      // 0 when unset
+  recruited_goal: number;  // 0 when unset
+  can_edit: boolean;
+  updated_at: string | null;
+  updated_by_id: string | null;
+}
+
 export interface TeamMemberEarnings {
   team_id: string;
   period: string | null;
   members: TeamMemberEarning[];
+  team_goals?: TeamGoalPayload;   // present when backend Phase D is deployed
 }
 
 export function fetchTeamMemberEarnings(
@@ -256,6 +272,30 @@ export function fetchTeamMemberEarnings(
   return getJSON<TeamMemberEarnings>(
     `/api/hr/teams/${teamId}/member-earnings/${qp({ period: opts.period })}`,
   );
+}
+
+// Phase D (2026-08-05) — dedicated goals endpoints. Also exposed via
+// team_goals in the member-earnings response, but callers that only need
+// to read or write goals (not the full member list) can use these.
+export function fetchTeamGoal(
+  teamId: string, opts: { period: string },
+): Promise<TeamGoalPayload> {
+  return getJSON<TeamGoalPayload>(
+    `/api/hr/teams/${teamId}/goals/${qp({ period: opts.period })}`,
+  );
+}
+
+export async function saveTeamGoal(
+  teamId: string,
+  body: { period: string; doors_goal: number; recruited_goal: number },
+): Promise<TeamGoalPayload> {
+  const res = await fetchWithAuth(`/api/hr/teams/${teamId}/goals/`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(errMsg(data, `Kunne ikke lagre mål (${res.status})`));
+  return data as TeamGoalPayload;
 }
 
 function errMsg(data: unknown, fallback: string): string {
