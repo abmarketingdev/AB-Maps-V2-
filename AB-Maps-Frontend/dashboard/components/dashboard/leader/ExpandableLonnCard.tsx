@@ -48,14 +48,24 @@ export function ExpandableLonnCard({
       initial={reduced ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="group relative overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated transition-all duration-200"
-      style={{ boxShadow: open ? `0 0 0 1px ${accent}55, 0 8px 32px -12px ${accent}66` : undefined }}
+      className="group relative overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated transition-all duration-200 sm:hover:-translate-y-0.5"
+      style={{
+        boxShadow: open
+          ? `0 0 0 1px ${accent}55, 0 8px 32px -12px ${accent}66`
+          : `inset 0 1px 0 0 rgba(255,255,255,0.04), 0 1px 2px 0 rgba(0,0,0,0.25)`,
+      }}
     >
+      {/* Persistent radial glow from top-right — laptop-visible only. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full opacity-0 sm:opacity-70 transition-opacity duration-300 group-hover:sm:opacity-100"
+        style={{ background: `radial-gradient(circle, ${accent}22 0%, transparent 60%)` }}
+      />
       <button
         type="button"
         onClick={() => canExpand && setOpen(v => !v)}
         disabled={!canExpand}
-        className={"block w-full p-5 text-left transition-colors " + (canExpand ? "cursor-pointer hover:bg-ab-hover" : "cursor-default")}
+        className={"relative block w-full p-5 sm:p-6 text-left transition-colors " + (canExpand ? "cursor-pointer hover:bg-ab-hover" : "cursor-default")}
       >
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3">
@@ -63,8 +73,12 @@ export function ExpandableLonnCard({
           </p>
           <div className="flex items-center gap-1.5">
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-xl"
-              style={{ background: `${accent}18`, color: accent }}
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:sm:scale-105"
+              style={{
+                background: `linear-gradient(135deg, ${accent}22, ${accent}0a)`,
+                color: accent,
+                boxShadow: `inset 0 0 0 1px ${accent}22, 0 4px 12px -6px ${accent}55`,
+              }}
             >
               {icon}
             </div>
@@ -80,7 +94,7 @@ export function ExpandableLonnCard({
           </div>
         </div>
 
-        <div className="mt-3 font-mono text-2xl font-bold tracking-tight">
+        <div className="mt-3 sm:mt-5 font-mono text-2xl sm:text-[2rem] sm:leading-none font-bold tracking-tight">
           {placeholder ? <Placeholder>{number}</Placeholder> : number}
         </div>
 
@@ -90,6 +104,14 @@ export function ExpandableLonnCard({
           </p>
         )}
       </button>
+
+      {/* Bottom accent stripe — always subtly visible on laptop, fills on hover. */}
+      {!open && (
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] opacity-0 sm:opacity-30 group-hover:opacity-100 transition-opacity duration-200"
+          style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }}
+        />
+      )}
 
       <AnimatePresence initial={false}>
         {open && breakdown && (
