@@ -513,14 +513,19 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             style={campaignColor ? { background: `${campaignColor}1f` } : undefined}
           />
           <div className={cn("h-14 flex items-center justify-between border-b border-ab-line-1", expanded ? "px-3" : "px-0 justify-center")}>
-            <Link href="/dashbord" className={cn("flex items-center gap-2.5 min-w-0", !expanded && "justify-center")}>
-              <div className="h-8 w-8 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center flex-shrink-0">
-                <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" priority />
-              </div>
-              {expanded && (
-                <div className="min-w-0">
-                  <div className="text-[13px] font-semibold text-ab-fg leading-tight">AB Marketing</div>
-                  <div className="eyebrow mt-0.5">Oslo Øst</div>
+            <Link href="/dashbord" className={cn("flex items-center min-w-0", !expanded && "justify-center")} aria-label="AB Marketing">
+              {expanded ? (
+                <Image
+                  src="/ab-logo.webp"
+                  alt="AB Marketing"
+                  width={160}
+                  height={40}
+                  className="h-8 w-auto object-contain invert brightness-[1.05]"
+                  priority
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center">
+                  <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" priority />
                 </div>
               )}
             </Link>
@@ -631,14 +636,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <SheetContent side="left" className="w-[82vw] max-w-xs p-0 bg-ab-canvas border-ab-line flex flex-col">
             <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <div className="h-12 px-3 flex items-center border-b border-ab-line-1 shrink-0">
-              <Link href="/dashbord" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-ab-md bg-ab-accent/10 border border-ab-accent/30 flex items-center justify-center">
-                  <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" />
-                </div>
-                <div>
-                  <div className="text-[13px] font-semibold text-ab-fg leading-none">AB Marketing</div>
-                  <div className="eyebrow mt-0.5">Oslo Øst</div>
-                </div>
+              <Link href="/dashbord" onClick={() => setMobileNavOpen(false)} className="flex items-center" aria-label="AB Marketing">
+                <Image
+                  src="/ab-logo.webp"
+                  alt="AB Marketing"
+                  width={140}
+                  height={32}
+                  className="h-7 w-auto object-contain invert brightness-[1.05]"
+                />
               </Link>
             </div>
             {/* Campaign selection on mobile lives in the top bar (header chip), NOT here — a
