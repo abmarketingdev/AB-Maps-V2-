@@ -189,14 +189,19 @@ export function EmployeeLayout({
           className="pointer-events-none absolute -top-10 -left-10 h-56 w-56 rounded-full bg-blue-600/10 blur-3xl"
         />
         <div className={cn("h-16 flex items-center justify-between border-b border-white/[0.06]", expanded ? "px-3.5" : "px-0 justify-center")}>
-          <Link href="/employee/dashbord" className={cn("flex items-center gap-2.5 min-w-0", !expanded && "justify-center")}>
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500/25 to-blue-600/10 border border-blue-400/25 flex items-center justify-center flex-shrink-0 shadow-[0_0_16px_-4px_rgba(59,130,246,0.5)]">
-              <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" priority />
-            </div>
-            {expanded && (
-              <div className="min-w-0">
-                <div className="text-[13.5px] font-semibold text-white leading-tight">AB Marketing</div>
-                <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/35 mt-0.5">Ansatt</div>
+          <Link href="/employee/dashbord" className={cn("flex items-center min-w-0", !expanded && "justify-center")} aria-label="AB Marketing">
+            {expanded ? (
+              <Image
+                src="/ab-logo.webp"
+                alt="AB Marketing"
+                width={160}
+                height={40}
+                className="h-8 w-auto object-contain invert brightness-[1.05]"
+                priority
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500/25 to-blue-600/10 border border-blue-400/25 flex items-center justify-center shadow-[0_0_16px_-4px_rgba(59,130,246,0.5)]">
+                <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" priority />
               </div>
             )}
           </Link>
@@ -308,16 +313,17 @@ export function EmployeeLayout({
           <div className="h-16 px-3.5 flex items-center border-b border-white/[0.06]">
             <Link
               href="/employee/dashbord"
-              className="flex items-center gap-2.5 min-w-0"
+              className="flex items-center min-w-0"
               onClick={() => setMobileMenuOpen(false)}
+              aria-label="AB Marketing"
             >
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500/25 to-blue-600/10 border border-blue-400/25 flex items-center justify-center flex-shrink-0 shadow-[0_0_16px_-4px_rgba(59,130,246,0.5)]">
-                <Image src="/abmarketing.png" alt="AB" width={18} height={18} className="object-contain" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[13.5px] font-semibold text-white leading-tight">AB Marketing</div>
-                <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/35 mt-0.5">Ansatt</div>
-              </div>
+              <Image
+                src="/ab-logo.webp"
+                alt="AB Marketing"
+                width={160}
+                height={40}
+                className="h-8 w-auto object-contain invert brightness-[1.05]"
+              />
             </Link>
           </div>
 
