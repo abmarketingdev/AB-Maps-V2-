@@ -225,6 +225,10 @@ function EntryState({
   toggleCampaign,
   period,
   setPeriod,
+  startDate,
+  endDate,
+  setStartDate,
+  setEndDate,
   onLoad,
 }: {
   campaigns: Campaign[]
@@ -235,13 +239,19 @@ function EntryState({
   toggleCampaign: (id: string) => void
   period: string
   setPeriod: (p: string) => void
+  startDate: string
+  endDate: string
+  setStartDate: (d: string) => void
+  setEndDate: (d: string) => void
   onLoad: () => void
 }) {
   const reduced = useReducedMotion()
   const PERIODS = [
     { key: "1D", label: "I dag" }, { key: "1W", label: "7 dager" },
     { key: "1M", label: "30 dager" }, { key: "YTD", label: "I år" },
+    { key: "CUSTOM", label: "Egendefinert" },
   ]
+  const customInvalid = period === "CUSTOM" && (!startDate || !endDate || startDate > endDate)
 
   return (
     <motion.div
@@ -296,7 +306,7 @@ function EntryState({
         {/* Period */}
         <div className="mb-8">
           <p className="text-[10px] uppercase tracking-widest text-ab-fg-4 mb-3">Periode</p>
-          <div className="flex justify-center gap-1 rounded-2xl bg-ab-elevated p-1 border border-ab-line">
+          <div className="flex flex-wrap justify-center gap-1 rounded-2xl bg-ab-elevated p-1 border border-ab-line">
             {PERIODS.map(({ key, label }) => (
               <button
                 key={key}
@@ -310,12 +320,40 @@ function EntryState({
               </button>
             ))}
           </div>
+          {/* Custom range picker — shown only when Egendefinert is selected. */}
+          {period === "CUSTOM" && (
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <label className="flex items-center gap-2 text-xs text-ab-fg-3">
+                <span className="uppercase tracking-wider">Fra</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  max={endDate || undefined}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="rounded-xl border border-ab-line bg-ab-hover px-3 py-2 text-sm text-ab-fg outline-none focus:border-blue-500/50"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-xs text-ab-fg-3">
+                <span className="uppercase tracking-wider">Til</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  min={startDate || undefined}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="rounded-xl border border-ab-line bg-ab-hover px-3 py-2 text-sm text-ab-fg outline-none focus:border-blue-500/50"
+                />
+              </label>
+            </div>
+          )}
+          {customInvalid && (
+            <p className="mt-2 text-[11px] text-rose-400">Velg gyldig datointervall (fra ≤ til).</p>
+          )}
         </div>
 
         {/* Load button */}
         <button
           onClick={onLoad}
-          disabled={loading}
+          disabled={loading || customInvalid}
           className="cursor-pointer inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-3 text-sm font-semibold text-white shadow-[0_0_24px_rgba(59,130,246,0.35)] hover:bg-blue-500 transition-all duration-150 disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
@@ -811,6 +849,8 @@ export function RapportView() {
     else if (key === "1W")  { setStartDate(daysAgoISO(7));  setEndDate(today) }
     else if (key === "1M")  { setStartDate(daysAgoISO(30)); setEndDate(today) }
     else if (key === "YTD") { setStartDate(`${new Date().getFullYear()}-01-01`); setEndDate(today) }
+    // CUSTOM → keep whatever start/end dates the user last had; the entry-state
+    // form now shows two date inputs the user can edit directly.
   }
 
   const loadReport = useCallback(async () => {
@@ -884,6 +924,7 @@ export function RapportView() {
   const PERIODS = [
     { key: "1D", label: "I dag" }, { key: "1W", label: "7 dager" },
     { key: "1M", label: "30 dager" }, { key: "YTD", label: "I år" },
+    { key: "CUSTOM", label: "Egendefinert" },
   ]
 
   return (
@@ -908,6 +949,10 @@ export function RapportView() {
               toggleCampaign={toggleCampaign}
               period={period}
               setPeriod={handlePeriodChange}
+              startDate={startDate}
+              endDate={endDate}
+              setStartDate={setStartDate}
+              setEndDate={setEndDate}
               onLoad={loadReport}
             />
           ) : (
