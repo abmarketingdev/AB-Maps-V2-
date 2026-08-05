@@ -80,6 +80,7 @@ export function SetTeamGoalModal({
 
   return createPortal(
     <AnimatePresence>
+      {/* Backdrop — click-to-close, blurred. Sits BEHIND the centring wrapper. */}
       <motion.div
         key="backdrop"
         initial={{ opacity: 0 }}
@@ -90,15 +91,24 @@ export function SetTeamGoalModal({
         style={{ position: "fixed", inset: 0, zIndex: 999 }}
         className="bg-black/60 backdrop-blur-sm"
       />
-      <motion.div
-        key="modal"
-        initial={{ opacity: 0, scale: 0.96, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 8 }}
-        transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 1000 }}
-        className="w-[calc(100vw-32px)] max-w-md overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated shadow-2xl"
+      {/* Centring wrapper. Flexbox handles the layout so framer-motion's
+          transform (used for scale + y animations) doesn't collide with the
+          positioning transform. pointer-events-none lets the backdrop below
+          keep receiving click-to-close; the modal re-enables pointer events. */}
+      <div
+        key="wrap"
+        style={{ position: "fixed", inset: 0, zIndex: 1000, pointerEvents: "none" }}
+        className="flex items-center justify-center p-3 sm:p-4"
       >
+        <motion.div
+          key="modal"
+          initial={{ opacity: 0, scale: 0.96, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: 8 }}
+          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          style={{ pointerEvents: "auto" }}
+          className="w-full max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-2xl border border-ab-line bg-ab-elevated shadow-2xl"
+        >
         {/* Header */}
         <div className="flex items-start justify-between gap-3 px-6 pt-5 pb-3">
           <div>
@@ -185,7 +195,8 @@ export function SetTeamGoalModal({
             {saving ? t("Lagrer…") : t("Lagre mål")}
           </button>
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </AnimatePresence>,
     document.body,
   )
