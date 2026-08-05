@@ -21,6 +21,7 @@ export interface MoodCount { mood: string; count: number }
 export interface CampaignHealthItem {
   id: string; name: string; target: number; current: number;
   employees: number; color: string; daysLeft: number;
+  ja?: number; jaRate?: number;    // 2026-08-06: real KPIs added to widget
 }
 export interface LeaderItem {
   rank: number; name: string; region: string;
@@ -52,7 +53,11 @@ interface RawStats {
 interface RawTrends { points: { date: string; doors: number; yes_rate: number }[] }
 interface RawMood { segments: { mood: string; count: number }[] }
 interface RawCampaignHealth {
-  campaigns: { id: string; name: string; target: number; current: number; employees: number; color: string | null; days_left: number }[];
+  campaigns: {
+    id: string; name: string; target: number; current: number;
+    employees: number; color: string | null; days_left: number;
+    ja?: number; ja_rate?: number;
+  }[];
 }
 interface RawLeaderboard {
   entries: {
@@ -94,6 +99,7 @@ const mapCampaigns = (c: RawCampaignHealth): CampaignHealthItem[] =>
   (c.campaigns ?? []).map((x) => ({
     id: x.id, name: x.name, target: x.target, current: x.current,
     employees: x.employees, color: x.color || '#3b82f6', daysLeft: x.days_left,
+    ja: x.ja, jaRate: x.ja_rate,
   }));
 
 const mapLeaderboard = (l: RawLeaderboard): LeaderItem[] =>

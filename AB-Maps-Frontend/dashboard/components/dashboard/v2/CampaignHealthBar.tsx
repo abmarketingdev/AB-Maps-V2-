@@ -1,20 +1,17 @@
 "use client"
 
 import { motion, useReducedMotion } from "framer-motion"
-import { Megaphone, Users } from "lucide-react"
+import { Megaphone, Users, DoorOpen } from "lucide-react"
 import type { CampaignHealthItem } from "@/lib/api/dashboardOverview"
 
 type Campaign = CampaignHealthItem
 
-function pct(c: Campaign) { return c.target > 0 ? Math.min((c.current / c.target) * 100, 100) : 0 }
-
-// Progress-based only — there is no campaign timeline (days_left is always 0).
-function statusLabel(c: Campaign): { text: string; color: string } {
-  const p = pct(c)
-  if (p >= 95) return { text: "Fullført snart", color: "#10b981" }
-  if (p >= 70) return { text: "I rute", color: "#10b981" }
-  if (p >= 40) return { text: "Pågår", color: "#f59e0b" }
-  return { text: "Bak skjema", color: "#f43f5e" }
+// Ja-rate colour scale — same thresholds used elsewhere in the dashboard so
+// the widget feels consistent with mood/leaderboard signals.
+function jaRateColor(rate: number): string {
+  if (rate >= 5) return "#10b981"    // green — hitting industry target
+  if (rate >= 3) return "#F59E0B"    // amber — marginal
+  return "#F43F5E"                    // rose — under target
 }
 
 interface CampaignHealthBarProps {
@@ -22,6 +19,12 @@ interface CampaignHealthBarProps {
   campaigns?: Campaign[]
 }
 
+// Redesigned 2026-08-06 (boss request). Was: fake progress bar + "0% fullført
+// · mål: 0 dører" because the analytics-service backend hardcoded target=0.
+// Now: 3 real KPIs per campaign (employees · doors · ja-rate) computed from
+// data we already have. Per-team goals stay on the Salgsleder dashboard's
+// TeamPanel (pencil icon → SetTeamGoalModal); this widget is company-wide
+// campaign activity, not team-vs-goal.
 export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarProps) {
   const reduced = useReducedMotion()
   const CAMPAIGNS = campaigns ?? []
@@ -37,7 +40,7 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-ab-fg">Kampanjestatus</h3>
-          <p className="mt-0.5 text-xs text-ab-fg-3">Fremdrift mot mål</p>
+          <p className="mt-0.5 text-xs text-ab-fg-3">Aktivitet per kampanje</p>
         </div>
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/15">
           <Megaphone className="h-4 w-4 text-cyan-400" />
@@ -45,54 +48,53 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
       </div>
 
       {/* Campaign rows */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {CAMPAIGNS.map((c, i) => {
-          const p = pct(c)
-          const status = statusLabel(c)
+          const jaRate = c.jaRate ?? 0
+          const jaColor = jaRateColor(jaRate)
           return (
             <motion.div
               key={c.id}
               initial={reduced ? false : { opacity: 0, x: -12 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 + i * 0.06, duration: 0.35 }}
+              transition={{ delay: 0.4 + i * 0.05, duration: 0.35 }}
+              className="group grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 hover:border-ab-line-1 hover:bg-white/[0.02] transition-colors"
             >
-              {/* Top row */}
-              <div className="mb-1.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full shrink-0" style={{ background: c.color }} />
-                  <span className="text-sm font-medium text-ab-fg-2">{c.name}</span>
-                </div>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1 text-ab-fg-3">
-                    <Users className="h-3 w-3" />
-                    {c.employees}
-                  </span>
-                  <span className="font-medium" style={{ color: status.color }}>{status.text}</span>
-                  <span className="font-mono font-semibold text-ab-fg-2">
-                    {c.current}/{c.target}
-                  </span>
-                </div>
+              {/* Left — colored dot + name */}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="h-2 w-2 rounded-full shrink-0" style={{ background: c.color }} />
+                <span className="truncate text-sm font-medium text-ab-fg-2">{c.name}</span>
               </div>
 
-              {/* Bar */}
-              <div className="h-2 overflow-hidden rounded-full bg-ab-hover">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: `linear-gradient(90deg, ${c.color}99, ${c.color})` }}
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${p}%` }}
-                  transition={{ delay: 0.5 + i * 0.06, duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
-                />
-              </div>
-
-              {/* Bottom row */}
-              <div className="mt-1 flex justify-between text-xs text-ab-fg-4">
-                <span>{Math.round(p)}% fullført</span>
-                <span>mål: {c.target.toLocaleString("nb-NO")} dører</span>
+              {/* Right — 3 KPIs, right-aligned mono */}
+              <div className="flex items-center gap-4 text-xs">
+                {/* Employees */}
+                <span className="flex items-center gap-1 text-ab-fg-3 tabular-nums" title="Ansatte tildelt">
+                  <Users className="h-3 w-3" />
+                  <span className="font-mono">{c.employees}</span>
+                </span>
+                {/* Doors — the primary volume metric */}
+                <span className="flex items-center gap-1 text-ab-fg-2 tabular-nums" title="Dører banket totalt">
+                  <DoorOpen className="h-3 w-3 text-ab-fg-4" />
+                  <span className="font-mono font-semibold text-ab-fg">
+                    {c.current.toLocaleString("nb-NO")}
+                  </span>
+                </span>
+                {/* Ja-rate — quality metric, colored pill */}
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold tabular-nums"
+                  style={{ background: `${jaColor}1f`, color: jaColor }}
+                  title="Ja-andel"
+                >
+                  {jaRate.toFixed(1)}% ja
+                </span>
               </div>
             </motion.div>
           )
         })}
+        {CAMPAIGNS.length === 0 && (
+          <p className="text-center text-xs text-ab-fg-4 py-4">Ingen kampanjedata ennå.</p>
+        )}
       </div>
     </motion.div>
   )
