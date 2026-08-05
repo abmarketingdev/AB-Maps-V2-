@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Check, ChevronDown } from "lucide-react"
 import { useLang } from "@/lib/i18n"
@@ -39,18 +40,46 @@ interface MonthPickerProps {
 
 // Pill dropdown for selecting a month. Aurora Nordic styling (borrowed from
 // SectionHeader + LonnTile). Renders inline in the dashboard hero panel.
+// Dropdown menu portals into document.body so it escapes ancestor
+// `overflow-hidden` clipping (hero panel needs overflow-hidden to contain
+// the AuroraBg blur; without portal the menu gets chopped mid-list).
 export function MonthPicker({ value, onChange }: MonthPickerProps) {
   const { t, lang } = useLang()
   const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [mounted, setMounted] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const options = useMemo(() => last12Months(), [])
   const now = currentPeriod()
 
-  // Close on outside click / ESC
+  useEffect(() => { setMounted(true) }, [])
+
+  // Position the menu below the button whenever it opens / on scroll+resize.
+  useEffect(() => {
+    if (!open) return
+    const place = () => {
+      const b = buttonRef.current?.getBoundingClientRect()
+      if (b) setRect({ top: b.bottom + 6, left: b.left, width: b.width })
+    }
+    place()
+    window.addEventListener("scroll", place, true)
+    window.addEventListener("resize", place)
+    return () => {
+      window.removeEventListener("scroll", place, true)
+      window.removeEventListener("resize", place)
+    }
+  }, [open])
+
+  // Close on outside click / ESC. Includes the portalled menu in the
+  // "inside" check so clicks inside the menu don't close it.
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (buttonRef.current?.contains(t)) return
+      if (menuRef.current?.contains(t)) return
+      setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false) }
     document.addEventListener("mousedown", onDown)
@@ -62,8 +91,9 @@ export function MonthPicker({ value, onChange }: MonthPickerProps) {
   }, [open])
 
   return (
-    <div ref={rootRef} className="relative inline-block">
+    <div className="inline-block">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen(v => !v)}
         className="inline-flex items-center gap-2 rounded-full border border-ab-line bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-ab-fg-2 transition-colors hover:border-aurora-amber/40 hover:bg-white/[0.06]"
@@ -73,45 +103,56 @@ export function MonthPicker({ value, onChange }: MonthPickerProps) {
         <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            transition={{ duration: 0.15 }}
-            className="absolute z-30 mt-1.5 min-w-[190px] overflow-hidden rounded-xl border border-ab-line bg-ab-elevated shadow-2xl"
-          >
-            <ul role="listbox" className="max-h-72 overflow-y-auto py-1 text-sm">
-              {options.map(p => {
-                const selected = p === value
-                const isNow = p === now
-                return (
-                  <li key={p}>
-                    <button
-                      type="button"
-                      onClick={() => { onChange(p); setOpen(false) }}
-                      className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left transition-colors ${
-                        selected ? "bg-white/[0.08] text-ab-fg" : "text-ab-fg-2 hover:bg-white/[0.05]"
-                      }`}
-                    >
-                      <span className="capitalize">{periodLabel(p, lang)}</span>
-                      <span className="flex items-center gap-1.5">
-                        {isNow && (
-                          <span className="text-[9px] font-mono uppercase tracking-wider text-aurora-amber">
-                            {t("nå")}
-                          </span>
-                        )}
-                        {selected && <Check className="h-3 w-3 text-aurora-amber" />}
-                      </span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {mounted && createPortal(
+        <AnimatePresence>
+          {open && rect && (
+            <motion.div
+              ref={menuRef}
+              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                position: "fixed",
+                top: rect.top,
+                left: rect.left,
+                minWidth: Math.max(190, rect.width),
+                zIndex: 1000,
+              }}
+              className="overflow-hidden rounded-xl border border-ab-line bg-ab-elevated shadow-2xl"
+            >
+              <ul role="listbox" className="max-h-72 overflow-y-auto py-1 text-sm">
+                {options.map(p => {
+                  const selected = p === value
+                  const isNow = p === now
+                  return (
+                    <li key={p}>
+                      <button
+                        type="button"
+                        onClick={() => { onChange(p); setOpen(false) }}
+                        className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left transition-colors ${
+                          selected ? "bg-white/[0.08] text-ab-fg" : "text-ab-fg-2 hover:bg-white/[0.05]"
+                        }`}
+                      >
+                        <span className="capitalize">{periodLabel(p, lang)}</span>
+                        <span className="flex items-center gap-1.5">
+                          {isNow && (
+                            <span className="text-[9px] font-mono uppercase tracking-wider text-aurora-amber">
+                              {t("nå")}
+                            </span>
+                          )}
+                          {selected && <Check className="h-3 w-3 text-aurora-amber" />}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </div>
   )
 }
