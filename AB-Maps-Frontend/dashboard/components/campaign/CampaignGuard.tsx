@@ -91,10 +91,13 @@ interface CampaignContextType {
 
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined);
 
-export const useSelectedCampaign = () => {
+export const useSelectedCampaign = (): CampaignContextType => {
   const context = useContext(CampaignContext);
-  if (!context) {
-    throw new Error('useSelectedCampaign must be used within a CampaignGuard');
-  }
-  return context;
+  // Return safe defaults when the provider isn't in the tree — happens
+  // during Next.js SSG prerender (CampaignGuard returns children without
+  // the provider when isAuthenticated is false, which it is at build time)
+  // and on routes that bypass the guard. Runtime consumers still get the
+  // real context because CampaignGuard mounts before any authenticated
+  // page renders.
+  return context ?? { selectedCampaign: null, changeCampaign: () => {} };
 }; 
