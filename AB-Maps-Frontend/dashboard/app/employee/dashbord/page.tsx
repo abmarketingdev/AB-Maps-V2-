@@ -8,7 +8,7 @@
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/lib/auth/ProtectedRoute";
 import { EmployeeLayout } from "@/components/employee/EmployeeLayout";
-import { EmployeeDashboardView } from "@/components/dashboard/v2/employee/EmployeeDashboardView";
+import { PromoterDashboard } from "@/components/dashboard/leader/PromoterDashboard";
 
 export default function EmployeeDashbordPage() {
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
@@ -28,7 +28,7 @@ export default function EmployeeDashbordPage() {
         selectedCampaign={selectedCampaign}
         onCampaignSelect={setSelectedCampaign}
       >
-        <EmployeeDashboardView />
+        <PromoterDashboard />
       </EmployeeLayout>
     </ProtectedRoute>
   );

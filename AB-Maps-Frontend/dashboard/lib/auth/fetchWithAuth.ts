@@ -13,6 +13,12 @@ export class SessionExpiredError extends Error {
 }
 
 function forceReLogin(): void {
+  // Demo mode: swallow the forced re-login. In local demo runs there's no
+  // backend at all, so every authed request 401s — we do NOT want that to
+  // wipe the demo role and bounce the boss to /login. The calling widget
+  // still receives SessionExpiredError and can render an empty state. On
+  // prod (env unset) the original behaviour runs.
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return;
   authService.logout().catch(() => { /* ignore */ });
   if (typeof window !== 'undefined') {
     window.location.href = '/login';

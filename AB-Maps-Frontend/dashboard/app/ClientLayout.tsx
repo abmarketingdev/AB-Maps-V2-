@@ -60,6 +60,7 @@ import StandaloneCampaignModal from "@/components/campaign/StandaloneCampaignMod
 import { useAuth } from "@/lib/auth/AuthContext"
 import { launchMap, currentCampaignId } from "@/lib/maps/launchMap"
 import type { Campaign } from "../services/campaignService"
+import { useLang } from "@/lib/i18n"
 import {
   checkCampaignCompletion,
   type CampaignCompletionResponse,
@@ -717,6 +718,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
               <StatusPill tone="live" className="hidden lg:inline-flex">LIVE</StatusPill>
 
+              <HeaderLangToggle />
+
               <ThemeToggle />
 
               <DropdownMenu>
@@ -835,5 +838,34 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         completionStatus={completionStatus}
       />
     </CampaignContext.Provider>
+  )
+}
+
+/**
+ * Compact NO/EN segmented control sitting inside the header alongside the
+ * search box, LIVE pill and theme toggle. Sized to match the ThemeToggle
+ * button (h-8) so the header row stays a single visual band.
+ */
+function HeaderLangToggle() {
+  const { lang, setLang } = useLang()
+  return (
+    <div className="hidden sm:inline-flex items-center h-8 rounded-ab-md border border-ab-line bg-ab-elevated overflow-hidden">
+      <button
+        onClick={() => setLang("no")}
+        aria-pressed={lang === "no"}
+        className={cn(
+          "px-2.5 h-full text-[11px] font-semibold tracking-wider transition-colors",
+          lang === "no" ? "bg-ab-accent text-white" : "text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover",
+        )}
+      >NO</button>
+      <button
+        onClick={() => setLang("en")}
+        aria-pressed={lang === "en"}
+        className={cn(
+          "px-2.5 h-full text-[11px] font-semibold tracking-wider transition-colors",
+          lang === "en" ? "bg-ab-accent text-white" : "text-ab-fg-3 hover:text-ab-fg hover:bg-ab-hover",
+        )}
+      >EN</button>
+    </div>
   )
 }

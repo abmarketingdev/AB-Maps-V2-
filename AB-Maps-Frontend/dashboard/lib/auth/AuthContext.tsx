@@ -10,6 +10,7 @@ import {
   type UserType,
   type UserInfo,
 } from './authService';
+import { demoAuth, makeDemoUser } from './demoAuth';
 
 interface User {
   user_id: string;
@@ -54,6 +55,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Re-hydrate the user on app load via verify (guide §1.4).
   useEffect(() => {
+    // DEMO MODE (NEXT_PUBLIC_DEMO_MODE=true, local boss-review only): skip
+    // the real backend verify + provide a fake user based on the role stored
+    // in localStorage by the /demo landing page. This ONLY runs when the env
+    // var is set — on prod (env unset) the original code path below runs
+    // unchanged: authService.verifyToken() against the real auth backend.
+    if (demoAuth.DEMO) {
+      const role = demoAuth.get();
+      if (role) {
+        const u = makeDemoUser(role);
+        setUser(u as unknown as User);
+      }
+      setIsLoading(false);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       try {
@@ -98,6 +114,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async (): Promise<void> => {
+    if (demoAuth.DEMO) {
+      demoAuth.clear();
+      setUser(null);
+      if (typeof window !== "undefined") window.location.href = "/demo";
+      return;
+    }
     try {
       await authService.logout();
     } finally {

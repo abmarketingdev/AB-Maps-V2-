@@ -111,6 +111,13 @@ const config: Config = {
           info:      "var(--ab-info-fg)",
           "info-bg": "var(--ab-info-bg)",
         },
+        aurora: {
+          sunrise: "var(--aurora-sunrise)",
+          amber:   "var(--aurora-amber)",
+          streak:  "var(--aurora-streak)",
+          rose:    "var(--aurora-rose)",
+          muted:   "var(--aurora-muted)",
+        },
         viz: {
           1: "var(--viz-1)",
           2: "var(--viz-2)",

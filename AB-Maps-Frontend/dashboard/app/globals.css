@@ -513,3 +513,92 @@ label:has(input:checked) .quiz-option-card {
   background-color: var(--ab-bg-overlay);
 }
 label:has(input:checked) .radio-dot { transform: scale(1); }
+
+/* ============================================================
+   Aurora Nordic — palette + motion for redesigned leader
+   dashboards (PromoterDashboard, SalgslederDashboard).
+   Warm accents layered over the existing dark ab-* base.
+   ============================================================ */
+:root, .dark {
+  --aurora-sunrise: #FF7A45;
+  --aurora-amber:   #FFC46B;
+  --aurora-streak:  #4ADE80;
+  --aurora-rose:    #F472B6;
+  --aurora-muted:   #8B93A7;
+}
+
+.font-instrument {
+  font-family: 'Instrument Serif', 'Fraunces', 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+@keyframes aurora-shift {
+  0%   { background-position:   0% 50%; transform: translate3d(0, 0, 0); }
+  25%  { background-position:  60% 40%; }
+  50%  { background-position: 100% 60%; transform: translate3d(-1%, 0, 0); }
+  75%  { background-position:  40% 55%; }
+  100% { background-position:   0% 50%; transform: translate3d(0, 0, 0); }
+}
+.aurora-canvas {
+  background:
+    radial-gradient(60% 60% at 20% 40%, rgba(255,122,69,0.35) 0%, transparent 60%),
+    radial-gradient(50% 50% at 70% 30%, rgba(52,97,255,0.30) 0%, transparent 65%),
+    radial-gradient(45% 45% at 60% 80%, rgba(74,222,128,0.20) 0%, transparent 70%),
+    radial-gradient(55% 55% at 90% 60%, rgba(255,196,107,0.22) 0%, transparent 65%);
+  background-size: 200% 200%;
+  animation: aurora-shift 30s ease-in-out infinite;
+  filter: blur(32px) saturate(1.1);
+}
+
+@keyframes aurora-glow {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+.aurora-glow { animation: aurora-glow 5s ease-in-out infinite; }
+
+@keyframes aurora-shimmer {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  15%  { opacity: 0.9; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+.aurora-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.aurora-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,196,107,0.35) 50%, transparent 70%);
+  animation: aurora-shimmer 2s ease-out;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); box-shadow: 0 0 0 0 rgba(74,222,128,0.55); }
+  50%      { opacity: 1;    transform: scale(1.1); box-shadow: 0 0 0 6px rgba(74,222,128,0);    }
+}
+.live-pulse { animation: live-pulse 2.2s ease-in-out infinite; }
+
+/* Race-bar leaderboard: bar slides in from 0 to its % width on mount */
+@keyframes race-fill {
+  from { width: 0%; }
+}
+.race-fill { animation: race-fill 1.1s cubic-bezier(0.23, 1, 0.32, 1) both; }
+
+/* Hero KPI aurora ring behind big number */
+.aurora-hero-glow {
+  background: radial-gradient(circle at center, rgba(255,122,69,0.25) 0%, rgba(52,97,255,0.15) 40%, transparent 70%);
+  filter: blur(40px);
+}
+
+/* Bento tile hover — subtle lift + accent line */
+.bento-tile {
+  transition: transform 0.28s cubic-bezier(0.23, 1, 0.32, 1),
+              border-color 0.28s, box-shadow 0.28s;
+}
+.bento-tile:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.14);
+  box-shadow: 0 20px 50px -25px rgba(0,0,0,0.6);
+}

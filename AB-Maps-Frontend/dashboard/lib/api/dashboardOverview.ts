@@ -5,7 +5,7 @@
 import { getJSON } from '@/lib/auth/fetchWithAuth';
 
 export type DashRange = '7d' | '30d' | '90d';
-export type LeaderMetric = 'ja_rate' | 'doors' | 'consistency';
+export type LeaderMetric = 'ja_rate' | 'doors' | 'consistency' | 'recruited';
 export type ActivityTone = 'info' | 'success' | 'warn' | 'danger' | 'neutral';
 
 // ─── Widget data shapes (consumed directly by the widgets) ──────────────────

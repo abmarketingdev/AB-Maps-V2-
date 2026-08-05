@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth/AuthContext";
 import { CompletionProvider } from "@/contexts/CompletionContext";
 import CampaignGuard from "@/components/campaign/CampaignGuard";
 import { Toaster } from "@/components/ui/toaster";
+import { LanguageProvider } from "@/lib/i18n";
 
 export const metadata = {
   generator: "v0.dev",
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">
@@ -31,9 +32,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <AuthProvider>
             <CompletionProvider>
               <CampaignsProvider>
-                <CampaignGuard>
-                  {children}
-                </CampaignGuard>
+                <LanguageProvider>
+                  <CampaignGuard>
+                    {children}
+                  </CampaignGuard>
+                </LanguageProvider>
                 <Toaster />
               </CampaignsProvider>
             </CompletionProvider>
