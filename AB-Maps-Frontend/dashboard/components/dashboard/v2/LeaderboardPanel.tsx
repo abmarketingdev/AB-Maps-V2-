@@ -39,7 +39,7 @@ export function LeaderboardPanel({ className, entries, metric = "ja_rate", onMet
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-ab-fg">Toppliste</h3>
-          <p className="mt-0.5 text-xs text-ab-fg-3">Beste selgere</p>
+          <p className="mt-0.5 text-xs text-ab-fg-3">Beste promotører</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex gap-1 rounded-xl bg-ab-elevated p-1">

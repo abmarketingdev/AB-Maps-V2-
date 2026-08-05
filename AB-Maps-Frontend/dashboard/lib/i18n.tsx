@@ -75,14 +75,14 @@ const DICT: Record<string, string> = {
   "Aktive givere": "Active donors",
   "Sum vervinger": "Total recruitments",
   "Lederprovisjon": "Leader commission",
-  "Estimert lønn": "Estimated salary",
+  "Estimert utbetaling": "Estimated payout",
   "Per team": "Per team",
   "ved oppnåelse av mål": "when goal is reached",
   "kr": "kr",
 
   // Topplister columns
   "Antall dører banket": "Doors knocked",
-  "Beste selgere denne perioden": "Top sellers this period",
+  "Beste promotører denne perioden": "Top promoters this period",
   "Rekrutterte givere": "Recruited donors",
   "Flest nye givere": "Most new donors",
   "Aktive givere (%)": "Active donors (%)",

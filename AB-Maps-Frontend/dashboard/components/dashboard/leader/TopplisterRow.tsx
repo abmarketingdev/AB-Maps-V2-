@@ -149,7 +149,7 @@ export function TopplisterRow({ doorsEntries, campaignId }: TopplisterRowProps =
   const empty = t("Ingen data ennå")
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-      <LeaderColumn title={t("Antall dører banket")} subtitle={t("Beste selgere denne perioden")} rows={doors}      emptyLabel={empty} delay={0.0}  />
+      <LeaderColumn title={t("Antall dører banket")} subtitle={t("Beste promotører denne perioden")} rows={doors}      emptyLabel={empty} delay={0.0}  />
       <LeaderColumn title={t("Rekrutterte givere")}  subtitle={t("Flest nye givere")}             rows={recruited}  emptyLabel={empty} delay={0.08} />
       <LeaderColumn title={t("Mest konsistent")}     subtitle={t("Høyest aktivitet daglig")}      rows={consistent} emptyLabel={empty} delay={0.16} />
     </div>

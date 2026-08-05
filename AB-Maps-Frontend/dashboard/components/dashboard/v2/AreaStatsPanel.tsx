@@ -171,7 +171,7 @@ export function AreaStatsPanel({ areaId, campaign, fallbackName, accent, start, 
                 {/* Assignees */}
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-ab-fg-3 mb-2.5 flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5" /> Tildelte selgere ({data.assignees.length})
+                    <Users className="h-3.5 w-3.5" /> Tildelte promotører ({data.assignees.length})
                   </p>
                   {data.assignees.length === 0 ? (
                     <p className="text-sm text-ab-fg-4">Ingen tildelte i dette området.</p>

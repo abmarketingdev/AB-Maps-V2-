@@ -73,7 +73,7 @@ export function EstimatedSalaryBand({ variant = 'salgsleder', period, campaignId
           </div>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3">
-              {t("Estimert lønn")}
+              {t("Estimert utbetaling")}
             </p>
             <p className="mt-0.5 text-xs text-ab-fg-3">{t("ved oppnåelse av mål")}</p>
           </div>

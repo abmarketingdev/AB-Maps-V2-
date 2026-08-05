@@ -1611,7 +1611,7 @@ function EmailLogDrawer({ d, loading, onClose }: { d: EmailLogDetail | null; loa
               </div>
             )}
             {d.flagged.length > 0 && (
-              <div><p className="text-xs font-semibold text-ab-fg-2 mb-2">Flaggede selgere ({d.flagged.length})</p>
+              <div><p className="text-xs font-semibold text-ab-fg-2 mb-2">Flaggede promotører ({d.flagged.length})</p>
                 <div className="space-y-2">
                   {d.flagged.map(f => (
                     <div key={f.person_id} className="rounded-xl border border-ab-line bg-ab-elevated p-3">

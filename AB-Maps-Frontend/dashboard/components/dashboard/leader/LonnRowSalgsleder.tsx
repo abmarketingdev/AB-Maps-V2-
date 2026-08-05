@@ -108,7 +108,7 @@ export function LonnRowSalgsleder({ period, campaignId, campaignName }: LonnRowS
         breakdownLabel={t("Per team")}
       />
       <LonnTile
-        label={t("Estimert lønn")}
+        label={t("Estimert utbetaling")}
         value={estimertLonnNum}
         suffix={t("kr")}
         accent="#F43F5E"

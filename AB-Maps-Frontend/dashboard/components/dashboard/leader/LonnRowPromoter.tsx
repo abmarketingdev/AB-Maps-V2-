@@ -64,7 +64,7 @@ export function LonnRowPromoter({ period, campaignId, campaignName }: LonnRowPro
         icon={<Coins className="h-4 w-4" />}
       />
       <LonnTile
-        label={t("Estimert lønn")}
+        label={t("Estimert utbetaling")}
         value={estimertLonnNum}
         suffix={t("kr")}
         accent="#F43F5E"
