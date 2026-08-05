@@ -206,8 +206,8 @@ export function SalgslederDashboard() {
           <div className="space-y-3">
             <SectionHeader label={t("Lønn")} accent="teamleder" />
             <p className="pl-4 text-[11px] text-ab-fg-3">{t("Klikk Sum vervinger eller Lederprovisjon for team-fordeling")}</p>
-            <LonnRowSalgsleder period={period} />
-            <EstimatedSalaryBand period={period} />
+            <LonnRowSalgsleder period={period} campaignId={campaignId} campaignName={selectedCampaign?.name} />
+            <EstimatedSalaryBand period={period} campaignId={campaignId} />
           </div>
 
           {/* ═════════════════ Topplister ═════════════════ */}

@@ -26,6 +26,7 @@ export interface SalaryPerTeamRow {
 export interface SalarySummary {
   period: string | null;
   scope: 'global' | 'chief_or_lead' | 'self';
+  campaign_scoped: boolean;    // true when campaign_id filter was applied
   aktive_givere: SalaryAktive;
   sum_vervinger: string;
   leder_provisjon: string;
@@ -38,6 +39,7 @@ export interface SalarySummary {
 export interface MySalary {
   period: string | null;
   scope: 'self';
+  campaign_scoped: boolean;
   aktive_givere: SalaryAktive;
   sum_vervinger: string;
   estimert_lonn: string;
@@ -48,16 +50,21 @@ export interface MySalary {
 
 // ─── Fetchers ────────────────────────────────────────────────────────────────
 
+function qs(opts: { period?: string; campaignId?: string }): string {
+  const parts: string[] = [];
+  if (opts.period) parts.push(`period=${encodeURIComponent(opts.period)}`);
+  if (opts.campaignId) parts.push(`campaign_id=${encodeURIComponent(opts.campaignId)}`);
+  return parts.length ? `?${parts.join('&')}` : '';
+}
+
 /** Salgsleder LØNN row. Auth: manager/chief/admin/hr — 403 for plain employees. */
-export function fetchSalarySummary(opts: { period?: string } = {}): Promise<SalarySummary> {
-  const q = opts.period ? `?period=${encodeURIComponent(opts.period)}` : '';
-  return getJSON<SalarySummary>(`/api/hr/salary/summary/${q}`);
+export function fetchSalarySummary(opts: { period?: string; campaignId?: string } = {}): Promise<SalarySummary> {
+  return getJSON<SalarySummary>(`/api/hr/salary/summary/${qs(opts)}`);
 }
 
 /** Promoter LØNN row. Auth: any authenticated user; always self-scoped. */
-export function fetchMySalary(opts: { period?: string } = {}): Promise<MySalary> {
-  const q = opts.period ? `?period=${encodeURIComponent(opts.period)}` : '';
-  return getJSON<MySalary>(`/api/hr/salary/me/${q}`);
+export function fetchMySalary(opts: { period?: string; campaignId?: string } = {}): Promise<MySalary> {
+  return getJSON<MySalary>(`/api/hr/salary/me/${qs(opts)}`);
 }
 
 /** Current period as YYYY-MM string (Oslo month) — helper for callers. */

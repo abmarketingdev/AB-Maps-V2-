@@ -124,8 +124,8 @@ function PromoterDashboardInner() {
           {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}
           <div className="space-y-3">
             <SectionHeader label={t("Lønn")} accent="teamleder" />
-            <LonnRowPromoter period={period} />
-            <EstimatedSalaryBand variant="promoter" period={period} />
+            <LonnRowPromoter period={period} campaignId={campaignId} campaignName={selectedCampaign?.name} />
+            <EstimatedSalaryBand variant="promoter" period={period} campaignId={campaignId} />
           </div>
 
           {/* ═════════════════ Topplister ═════════════════ */}

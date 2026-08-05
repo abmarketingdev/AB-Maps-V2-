@@ -16,6 +16,8 @@ interface EstimatedSalaryBandProps {
   variant?: 'salgsleder' | 'promoter'
   /** YYYY-MM. When omitted, defaults to current month. */
   period?: string
+  /** When set, backend restricts aggregation to this campaign. */
+  campaignId?: string
 }
 
 // The wide "Estimert lønn ved oppnåelse av mål" band under the LØNN row.
@@ -23,7 +25,7 @@ interface EstimatedSalaryBandProps {
 // `estimert_lonn_ved_mal` field. That field requires the Goals endpoint
 // (Phase D) to be populated; until then it's null and this component
 // renders nothing (no fake number, silent hide).
-export function EstimatedSalaryBand({ variant = 'salgsleder', period }: EstimatedSalaryBandProps) {
+export function EstimatedSalaryBand({ variant = 'salgsleder', period, campaignId }: EstimatedSalaryBandProps) {
   const reduced = useReducedMotion()
   const { t, lang } = useLang()
   const [value, setValue] = useState<number | null>(null)
@@ -32,7 +34,7 @@ export function EstimatedSalaryBand({ variant = 'salgsleder', period }: Estimate
     let cancelled = false
     setValue(null)  // reset when period changes so we don't flash stale
     const fetcher = variant === 'promoter' ? fetchMySalary : fetchSalarySummary
-    fetcher({ period: period ?? currentPeriod() })
+    fetcher({ period: period ?? currentPeriod(), campaignId })
       .then((s: any) => {
         if (cancelled) return
         const raw = s?.estimert_lonn_ved_mal
@@ -43,7 +45,7 @@ export function EstimatedSalaryBand({ variant = 'salgsleder', period }: Estimate
       })
       .catch(() => { /* silent — component hides itself when value stays null */ })
     return () => { cancelled = true }
-  }, [variant, period])
+  }, [variant, period, campaignId])
 
   // Silent hide until Phase D goals endpoint ships (nothing to promise yet).
   if (value === null) return null
