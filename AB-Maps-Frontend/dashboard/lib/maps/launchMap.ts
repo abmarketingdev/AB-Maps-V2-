@@ -60,14 +60,22 @@ export function launchMap(user: LaunchUser | null | undefined, opts: LaunchOptio
   if (isManager) {
     const base = process.env.NEXT_PUBLIC_AB_MAPS_MANAGER_URL;
     url = `${base}/?token=${encodeURIComponent(JSON.stringify(tokens))}`;
-    if (campaignId) url += `&campaign_id=${encodeURIComponent(campaignId)}`;
+    // Explicit sentinel guard — never emit `campaign_id=undefined` (a legacy
+    // localStorage bug in some sessions produced this and 500'd the map API).
+    if (campaignId && campaignId !== "undefined" && campaignId !== "null") {
+      url += `&campaign_id=${encodeURIComponent(campaignId)}`;
+    }
   } else {
     const base = process.env.NEXT_PUBLIC_AB_MAPS_EMPLOYEE_URL;
     const employeeId = user?.user_info?.id;
     url = `${base}/?accessToken=${encodeURIComponent(tokens.access)}`;
     if (tokens.refresh) url += `&refreshToken=${encodeURIComponent(tokens.refresh)}`;
     if (employeeId) url += `&employee_id=${encodeURIComponent(employeeId)}`;
-    if (campaignId) url += `&campaign_id=${encodeURIComponent(campaignId)}`;
+    // Explicit sentinel guard — never emit `campaign_id=undefined` (a legacy
+    // localStorage bug in some sessions produced this and 500'd the map API).
+    if (campaignId && campaignId !== "undefined" && campaignId !== "null") {
+      url += `&campaign_id=${encodeURIComponent(campaignId)}`;
+    }
   }
 
   // Manager opens in a new tab (dashboard stays put); employee navigates in place.
@@ -77,14 +85,21 @@ export function launchMap(user: LaunchUser | null | undefined, opts: LaunchOptio
   return true;
 }
 
-/** Read the currently-selected campaign id from localStorage (`currentCampaign`). */
+/** Read the currently-selected campaign id from localStorage (`currentCampaign`).
+ *  Guards against legacy code that may have written the STRING `"undefined"` /
+ *  `"null"` (produced by `String(undefined)` etc.) — returning those verbatim
+ *  cascades into `?campaign_id=undefined` on the emp map's next API call, which
+ *  the backend tries to cast to UUID and 500s. Fix bug reported 2026-08-05. */
 export function currentCampaignId(): string | null {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem("currentCampaign");
-  if (!raw) return null;
+  if (!raw || raw === "undefined" || raw === "null") return null;
   try {
-    return JSON.parse(raw)?.id ?? null;
+    const parsed = JSON.parse(raw)?.id;
+    if (!parsed || parsed === "undefined" || parsed === "null") return null;
+    return parsed;
   } catch {
-    return raw;
+    // raw is not JSON — treat as a bare id string, but reject sentinels
+    return raw === "undefined" || raw === "null" ? null : raw;
   }
 }
