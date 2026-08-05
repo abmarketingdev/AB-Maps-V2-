@@ -1,43 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import dynamic from "next/dynamic"
 import { motion, useReducedMotion } from "framer-motion"
 import { Plus, Sparkles } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useLang } from "@/lib/i18n"
 import { useSelectedCampaign } from "@/components/campaign/CampaignGuard"
 import { EmployeeTodayProvider } from "./EmployeeTodayContext"
+import { EmbeddedPromoterWidgets } from "./EmbeddedPromoterWidgets"
 import { SectionHeader } from "./SectionHeader"
 import { AuroraBg } from "./AuroraBg"
 import { MagneticButton } from "./MagneticButton"
 import { LivePulseDot } from "./LivePulseDot"
-
-// Below-the-fold Din-dag widgets — dynamically imported to keep initial
-// JS bundle small on mobile (2026-08-06 perf pass).
-const EmbeddedPromoterWidgets = dynamic(
-  () => import("./EmbeddedPromoterWidgets").then((m) => ({ default: m.EmbeddedPromoterWidgets })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-96 w-full rounded-2xl border border-ab-line bg-ab-elevated animate-pulse flex items-center justify-center">
-        <span className="text-xs text-ab-fg-4">Laster din dag…</span>
-      </div>
-    ),
-  }
-)
 import { MonthPicker } from "./MonthPicker"
-const TopplisterRow = dynamic(
-  () => import("./TopplisterRow").then((m) => ({ default: m.TopplisterRow })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-64 w-full rounded-2xl border border-ab-line bg-ab-elevated animate-pulse flex items-center justify-center">
-        <span className="text-xs text-ab-fg-4">Laster topplister…</span>
-      </div>
-    ),
-  }
-)
+import { TopplisterRow } from "./TopplisterRow"
 import { LonnRowPromoter } from "./LonnRowPromoter"
 import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
 
