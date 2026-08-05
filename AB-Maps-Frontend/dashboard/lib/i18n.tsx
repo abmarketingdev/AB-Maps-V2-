@@ -18,7 +18,7 @@ const DICT: Record<string, string> = {
   "God dag": "Good afternoon",
   "God kveld": "Good evening",
   "Promotør": "Promoter",
-  "Salgsleder / Teamleder": "Sales lead / Team lead",
+  "Verving av givere / Teamleder": "Donor recruitment / Team lead",
   "La oss knuse dagen sammen": "Let's crush the day together",
   "Registrer dør": "Register door",
 

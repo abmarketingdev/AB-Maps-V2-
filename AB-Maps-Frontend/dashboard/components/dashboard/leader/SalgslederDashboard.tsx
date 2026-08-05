@@ -200,7 +200,7 @@ export function SalgslederDashboard() {
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-ab-fg-2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-aurora-amber ring-1 ring-inset ring-aurora-amber/25">
                   <Sparkles className="h-3 w-3" />
-                  {t("Salgsleder / Teamleder")}
+                  {t("Verving av givere / Teamleder")}
                 </span>
                 <span className="text-ab-fg-3">·</span>
                 <div className="inline-flex items-center gap-2">
