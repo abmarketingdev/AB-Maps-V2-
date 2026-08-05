@@ -602,3 +602,43 @@ label:has(input:checked) .radio-dot { transform: scale(1); }
   border-color: rgba(255,255,255,0.14);
   box-shadow: 0 20px 50px -25px rgba(0,0,0,0.6);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * SAFARI MOBILE PERF (2026-08-06)
+ * ═══════════════════════════════════════════════════════════════════════
+ * Boss reported the dashboard runs smooth on Brave/Chrome but laggy on
+ * Safari (both mobile + occasionally desktop). Root cause: WebKit's
+ * `backdrop-filter` implementation is 3-5× more expensive than Chromium's
+ * — every card with it forces a full-area blur re-composite on every
+ * scroll frame. The dashboard has ~20 elements using backdrop-blur-*,
+ * turning every scroll on iOS Safari into a paint storm.
+ *
+ * Fix: strip backdrop-filter on mobile widths (≤640px) globally. The
+ * cards keep their solid dark background so the look is preserved; only
+ * the "glass" show-through effect is dropped where the perf cost is
+ * hurting real users. Desktop macOS Safari keeps the full effect.
+ * ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .backdrop-blur-sm, .backdrop-blur, .backdrop-blur-md,
+  .backdrop-blur-lg, .backdrop-blur-xl, .backdrop-blur-2xl,
+  .backdrop-blur-3xl, [class*="backdrop-blur-["] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  /* Ambient blob glows (blur-[100-120px] on large decorative divs) are the
+   * second-biggest Safari perf killer — Safari blurs 400px elements on
+   * every scroll frame. Elements still exist so nothing shifts, they just
+   * render as flat coloured squares (usually hidden by low opacity). */
+  .blur-2xl, .blur-3xl, [class*="blur-\["] {
+    filter: none !important;
+    -webkit-filter: none !important;
+  }
+}
+
+/* Additional Safari perf: hoist repeating cards into their own compositor
+ * layer + isolate paint. Massive win on the LØNN tile row and the
+ * Kampanjestatus grid where each card was invalidating the whole page
+ * on hover. Applied to any element with `contain-paint` utility. */
+.contain-paint {
+  contain: layout paint style;
+}
