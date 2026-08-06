@@ -20,6 +20,17 @@ interface MalRowProps {
   period?: string
 }
 
+/** True when the given YYYY-MM string matches the current calendar month.
+ *  Used to gate the weekly section: weekly actuals only make sense for
+ *  the current month (they count last-7-days activity). For past months
+ *  we hide the cards entirely and show a tiny "kun for inneværende måned"
+ *  hint so leaders don't compare misleading numbers. */
+function isCurrentMonth(period: string): boolean {
+  const d = new Date()
+  const cur = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+  return period === cur
+}
+
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true"
 
 export function MalRow({ period }: MalRowProps) {
@@ -216,8 +227,19 @@ export function MalRow({ period }: MalRowProps) {
         />
       )}
 
-      {/* ═════════════════ MÅL UKE ═════════════════ */}
-      {(anyWeeklyCard || DEMO_MODE) && (
+      {/* ═════════════════ MÅL UKE ═════════════════
+          Only meaningful when viewing the current month — weekly actuals
+          count the last 7 days from today, which would be misleading if the
+          user picks a past month. Past-month view: show a subtle note
+          instead of the cards so leaders don't compare wrong numbers. */}
+      {!isCurrentMonth(activePeriod) ? (
+        <div className="space-y-3">
+          <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål uke")}</p>
+          <div className="rounded-2xl border border-dashed border-ab-line-1 bg-white/[0.02] px-6 py-6 text-center text-xs text-ab-fg-3">
+            {t("Ukesmål vises kun for inneværende måned.")}
+          </div>
+        </div>
+      ) : (anyWeeklyCard || DEMO_MODE) && (
         <div className="space-y-3">
           <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål uke")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">

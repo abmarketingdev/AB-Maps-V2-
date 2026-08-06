@@ -23,6 +23,15 @@ interface PromoterMalRowProps {
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true"
 
+/** True when the given YYYY-MM string matches the current calendar month.
+ *  Weekly actuals count last-7-days activity, so weekly cards only make
+ *  sense for the current month. Past months hide the section entirely. */
+function isCurrentMonth(period: string): boolean {
+  const d = new Date()
+  const cur = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+  return period === cur
+}
+
 export function PromoterMalRow({ period, campaignId }: PromoterMalRowProps) {
   const { t } = useLang()
   const activePeriod = period ?? currentPeriod()
@@ -150,8 +159,18 @@ export function PromoterMalRow({ period, campaignId }: PromoterMalRowProps) {
         </div>
       </div>
 
-      {/* ═════════════════ MÅL UKE ═════════════════ */}
-      {showWeekly && (
+      {/* ═════════════════ MÅL UKE ═════════════════
+          Only meaningful for the current month — weekly actuals count the
+          last 7 days from today. Past-month view: subtle hint instead of
+          misleading numbers. */}
+      {!isCurrentMonth(activePeriod) ? (
+        <div className="space-y-3">
+          <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål uke")}</p>
+          <div className="rounded-2xl border border-dashed border-ab-line-1 bg-white/[0.02] px-6 py-6 text-center text-xs text-ab-fg-3">
+            {t("Ukesmål vises kun for inneværende måned.")}
+          </div>
+        </div>
+      ) : showWeekly && (
         <div className="space-y-3">
           <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål uke")}</p>
           <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3">
