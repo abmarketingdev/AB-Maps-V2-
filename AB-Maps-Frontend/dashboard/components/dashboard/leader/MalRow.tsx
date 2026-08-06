@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Users, DoorOpen, Zap, UserPlus, FolderOpen, Pencil } from "lucide-react"
+import Link from "next/link"
+import { Users, DoorOpen, Zap, UserPlus, FolderOpen, Pencil, ArrowUpRight } from "lucide-react"
 import { useLang } from "@/lib/i18n"
 import { useSelectedCampaign } from "@/components/campaign/CampaignGuard"
 import { fetchGoalsSummary, currentPeriod, type GoalsSummary } from "@/lib/api/salary"
@@ -67,6 +68,18 @@ export function MalRow({ period }: MalRowProps) {
       })
       setDoorsMonth(1640)
       setDoorsToday(273)
+      // Mock a demo campaignGoal too so the per-card pencils show up.
+      setCampaignGoal({
+        campaign_id: campaignId ?? "demo-campaign",
+        period: monthPeriod,
+        doors_goal: 8000,
+        recruited_goal: 2000,
+        doors_weekly_goal: 2000,
+        recruited_weekly_goal: 500,
+        can_edit: true,  // demo user is treated as HR-staff
+        updated_at: null,
+        updated_by_id: null,
+      })
       setStatus("ok")
       return
     }
@@ -110,30 +123,47 @@ export function MalRow({ period }: MalRowProps) {
   // Cards always render now — GoalCard handles null goal / null value as
   // "?", so no conditional-show gymnastics here.
 
+  // ─── Per-card edit affordances ──────────────────────────────────────────
+  // Campaign cards: direct pencil that opens SetCampaignGoalModal for the
+  // currently-selected campaign (server enforces can_edit — pencil hidden
+  // when the caller lacks permission).
+  // Team aggregate cards: "→ /mal-innstillinger" link because aggregate
+  // isn't editable in place; user goes to settings to edit per-team.
+  const campaignEditable = Boolean(campaignGoal?.can_edit && campaignId && selectedCampaign?.name)
+  const campaignPencil = campaignEditable ? (
+    <button
+      type="button"
+      onClick={() => setModalOpen(true)}
+      className="inline-flex h-6 w-6 items-center justify-center rounded-lg border border-ab-line text-ab-fg-3 transition-colors hover:border-aurora-amber/40 hover:text-ab-fg"
+      title={t("Sett prosjekt-mål")}
+      aria-label={t("Sett prosjekt-mål")}
+    >
+      <Pencil className="h-3 w-3" />
+    </button>
+  ) : null
+  const teamSettingsLink = (
+    <Link
+      href="/mal-innstillinger"
+      className="inline-flex h-6 items-center gap-1 rounded-lg border border-ab-line px-1.5 text-[9px] font-semibold uppercase tracking-wider text-ab-fg-3 transition-colors hover:border-aurora-amber/40 hover:text-ab-fg"
+      title={t("Sett team-mål per team")}
+    >
+      <span>{t("Team")}</span>
+      <ArrowUpRight className="h-2.5 w-2.5" />
+    </Link>
+  )
+
   return (
     <div className="space-y-6">
       {/* ═════════════════ MÅL MÅNED ═════════════════ */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between pl-4 pr-1">
-          <p className="text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål måned")}</p>
-          {campaignGoal?.can_edit && campaignId && selectedCampaign?.name && (
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="group inline-flex items-center gap-1.5 rounded-full border border-ab-line px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-ab-fg-3 transition-colors hover:border-aurora-amber/40 hover:text-ab-fg"
-              title={t("Sett prosjekt-mål")}
-            >
-              <Pencil className="h-3 w-3" />
-              {t("Prosjekt-mål")}
-            </button>
-          )}
-        </div>
+        <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål måned")}</p>
         {/* 4-column × 2-row grid on desktop: hero fills cols 1-2 (both rows),
             the 4 small cards fill the remaining 2×2 area on the right. Cards
             always render — where a goal isn't set we pass null to GoalCard so
             it renders "value/?" instead of hiding the slot. */}
         <div className="grid grid-cols-1 sm:grid-cols-4 sm:grid-rows-2 gap-3">
-          {/* Hero — Antall givere team (2×2) */}
+          {/* Hero — Antall givere team (2×2). Aggregate = not directly editable;
+              link to /mal-innstillinger where per-team goals live. */}
           <GoalCard
             label={t("Antall givere team")}
             value={monthly.recruited_actual}
@@ -143,6 +173,7 @@ export function MalRow({ period }: MalRowProps) {
             sparkline={spark(1, 50, 30)}
             hero
             caption={goals.team_count > 0 ? t("Sum for alle") + ` ${goals.team_count} ` + t("teamene — månedens hovedmål") : undefined}
+            action={teamSettingsLink}
           />
           <GoalCard
             label={t("Dører banket")}
@@ -151,8 +182,9 @@ export function MalRow({ period }: MalRowProps) {
             accent="#8B5CF6"
             icon={<DoorOpen className="h-3.5 w-3.5" />}
             sparkline={spark(2, 60, 20)}
+            action={teamSettingsLink}
           />
-          {/* Prosjekt (campaign) monthly recruits */}
+          {/* Prosjekt (campaign) monthly recruits — pencil edits the current campaign */}
           <GoalCard
             label={t("Givere prosjekt")}
             value={campaignMonthly.recruited_actual}
@@ -160,8 +192,8 @@ export function MalRow({ period }: MalRowProps) {
             accent="#F59E0B"
             icon={<FolderOpen className="h-3.5 w-3.5" />}
             sparkline={spark(4, 55, 25)}
+            action={campaignPencil}
           />
-          {/* Prosjekt doors — actuals from analytics not wired yet, so value=null → "?" */}
           <GoalCard
             label={t("Dører prosjekt")}
             value={null}
@@ -169,6 +201,7 @@ export function MalRow({ period }: MalRowProps) {
             accent="#3461FF"
             icon={<UserPlus className="h-3.5 w-3.5" />}
             sparkline={spark(3, 50, 25)}
+            action={campaignPencil}
           />
           {/* Team i dag — pure count, no goal slot (goal=0 hides the /N) */}
           <GoalCard
@@ -211,8 +244,7 @@ export function MalRow({ period }: MalRowProps) {
           <WeekPicker period={activePeriod} value={week} onChange={setWeek} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          {/* Dører banket (team) — doors weekly actual not computed yet
-              (analytics owns knock data); render "?" so it's honest. */}
+          {/* Team weekly — aggregate; link to settings (per-team edit) */}
           <GoalCard
             label={t("Dører banket")}
             value={null}
@@ -220,6 +252,7 @@ export function MalRow({ period }: MalRowProps) {
             accent="#8B5CF6"
             icon={<DoorOpen className="h-3.5 w-3.5" />}
             sparkline={spark(6, 45, 25)}
+            action={teamSettingsLink}
           />
           <GoalCard
             label={t("Givere team")}
@@ -228,7 +261,9 @@ export function MalRow({ period }: MalRowProps) {
             accent="#0E9384"
             icon={<Users className="h-3.5 w-3.5" />}
             sparkline={spark(8, 55, 25)}
+            action={teamSettingsLink}
           />
+          {/* Campaign weekly — pencil edits current campaign's weekly goals */}
           <GoalCard
             label={t("Dører prosjekt")}
             value={null}
@@ -236,6 +271,7 @@ export function MalRow({ period }: MalRowProps) {
             accent="#3461FF"
             icon={<UserPlus className="h-3.5 w-3.5" />}
             sparkline={spark(7, 50, 20)}
+            action={campaignPencil}
           />
           <GoalCard
             label={t("Givere prosjekt")}
@@ -244,6 +280,7 @@ export function MalRow({ period }: MalRowProps) {
             accent="#F59E0B"
             icon={<FolderOpen className="h-3.5 w-3.5" />}
             sparkline={spark(9, 60, 20)}
+            action={campaignPencil}
           />
         </div>
       </div>

@@ -86,6 +86,10 @@ export interface GoalCardProps {
   caption?: string
   /** Small size — used on 4-across grids like PromoterMalRow. */
   compact?: boolean
+  /** Optional top-right action slot — used for pencil / "→" links so leaders
+   *  can jump straight from a KPI card to the goal editor for that row.
+   *  Left undefined = no chrome, card is view-only. */
+  action?: React.ReactNode
 }
 
 function formatNumOrQ(n: number | null | undefined): string {
@@ -93,7 +97,7 @@ function formatNumOrQ(n: number | null | undefined): string {
   return n.toLocaleString("nb-NO")
 }
 
-export function GoalCard({ label, value, goal, suffix, accent, icon, sparkline, hero, caption, compact }: GoalCardProps) {
+export function GoalCard({ label, value, goal, suffix, accent, icon, sparkline, hero, caption, compact, action }: GoalCardProps) {
   const reduced = useReducedMotion()
   const hasGoalSlot = goal !== undefined && goal !== 0
   const hasKnownGoal = typeof goal === "number" && goal > 0
@@ -117,7 +121,7 @@ export function GoalCard({ label, value, goal, suffix, accent, icon, sparkline, 
       {sparkline && sparkline.length > 1 && <AreaWave points={sparkline} color={accent} />}
 
       <div className={`relative ${compact ? "p-4 sm:p-4" : "p-5 sm:p-6"} flex-1 flex flex-col`}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3 flex items-center gap-2">
             <span
               className="inline-flex h-6 w-6 items-center justify-center rounded-lg"
@@ -131,6 +135,11 @@ export function GoalCard({ label, value, goal, suffix, accent, icon, sparkline, 
             </span>
             {label}
           </p>
+          {action && (
+            <div className="flex-shrink-0 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+              {action}
+            </div>
+          )}
         </div>
 
         <div className={`relative mt-3 font-mono ${hero ? "text-5xl sm:text-7xl" : compact ? "text-xl sm:text-3xl" : "text-2xl sm:text-4xl"} sm:leading-none font-bold tracking-tight text-ab-fg`}>
