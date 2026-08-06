@@ -16,6 +16,7 @@ import { MonthPicker } from "./MonthPicker"
 import { TopplisterRow } from "./TopplisterRow"
 import { LonnRowPromoter } from "./LonnRowPromoter"
 import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
+import { PromoterMalRow } from "./PromoterMalRow"
 
 // Promotør dashboard — Aurora Nordic redesign.
 // Route: /employee/dashbord.
@@ -119,6 +120,12 @@ function PromoterDashboardInner() {
             <SectionHeader label={t("Din dag")} accent="teamleder" right={<LivePulseDot label={t("Live")} />} />
             <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Sanntid — oppdateres hvert 20. sekund")}</p>
             <EmbeddedPromoterWidgets />
+          </div>
+
+          {/* ═════════════════ Mål (2026-08-06) — personal + team + campaign view ═════════════════ */}
+          <div className="space-y-3">
+            <SectionHeader label={t("Mål")} accent="teamleder" />
+            <PromoterMalRow period={period} campaignId={campaignId} />
           </div>
 
           {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}

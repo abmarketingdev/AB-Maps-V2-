@@ -14,6 +14,9 @@ interface SetTeamGoalModalProps {
   period?: string
   initialDoorsGoal?: number
   initialRecruitedGoal?: number
+  /** Weekly goals — null when never set. Optional, both default to null. */
+  initialDoorsWeeklyGoal?: number | null
+  initialRecruitedWeeklyGoal?: number | null
   onClose: () => void
   onSaved: () => void
 }
@@ -35,12 +38,19 @@ function periodLabel(period: string, lang: "no" | "en") {
 // PUTs /api/hr/teams/{id}/goals/ and calls onSaved so parent can refetch.
 export function SetTeamGoalModal({
   teamId, teamName, period, initialDoorsGoal = 0, initialRecruitedGoal = 0,
+  initialDoorsWeeklyGoal = null, initialRecruitedWeeklyGoal = null,
   onClose, onSaved,
 }: SetTeamGoalModalProps) {
   const { t, lang } = useLang()
   const [mounted, setMounted] = useState(false)
   const [doorsGoal, setDoorsGoal] = useState(String(initialDoorsGoal || ""))
   const [recruitedGoal, setRecruitedGoal] = useState(String(initialRecruitedGoal || ""))
+  const [doorsWeeklyGoal, setDoorsWeeklyGoal] = useState(
+    initialDoorsWeeklyGoal != null ? String(initialDoorsWeeklyGoal) : "",
+  )
+  const [recruitedWeeklyGoal, setRecruitedWeeklyGoal] = useState(
+    initialRecruitedWeeklyGoal != null ? String(initialRecruitedWeeklyGoal) : "",
+  )
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const targetPeriod = period ?? currentPeriod()
@@ -53,6 +63,13 @@ export function SetTeamGoalModal({
     return () => document.removeEventListener("keydown", onKey)
   }, [onClose])
 
+  function parseOptional(v: string): number | null | "invalid" {
+    if (v.trim() === "") return null  // empty = clear
+    const n = parseInt(v, 10)
+    if (Number.isNaN(n) || n < 0) return "invalid"
+    return n
+  }
+
   async function handleSave() {
     setErr(null)
     const d = parseInt(doorsGoal || "0", 10)
@@ -61,12 +78,20 @@ export function SetTeamGoalModal({
       setErr(t("Mål må være et positivt tall"))
       return
     }
+    const dw = parseOptional(doorsWeeklyGoal)
+    const rw = parseOptional(recruitedWeeklyGoal)
+    if (dw === "invalid" || rw === "invalid") {
+      setErr(t("Ukesmål må være et positivt tall"))
+      return
+    }
     setSaving(true)
     try {
       await saveTeamGoal(teamId, {
         period: targetPeriod,
         doors_goal: d,
         recruited_goal: r,
+        doors_weekly_goal: dw,
+        recruited_weekly_goal: rw,
       })
       onSaved()
     } catch (e: any) {
@@ -134,6 +159,10 @@ export function SetTeamGoalModal({
 
         {/* Body */}
         <div className="space-y-4 px-6 pb-5">
+          {/* MÅNED — required */}
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3">
+            {t("Måned")}
+          </p>
           <label className="block">
             <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">
               <DoorOpen className="h-3 w-3 text-[#8B5CF6]" />
@@ -168,6 +197,50 @@ export function SetTeamGoalModal({
               placeholder="0"
             />
           </label>
+
+          {/* UKE — optional. Leave empty to omit weekly cards from the dashboard. */}
+          <div className="border-t border-ab-line-1 pt-4">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3">
+              {t("Uke")}{" "}
+              <span className="ml-1 font-normal normal-case tracking-normal text-ab-fg-4">
+                {t("(valgfritt)")}
+              </span>
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">
+                  <DoorOpen className="h-3 w-3 text-[#8B5CF6]" />
+                  {t("Dører / uke")}
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
+                  value={doorsWeeklyGoal}
+                  onChange={(e) => setDoorsWeeklyGoal(e.target.value)}
+                  className="w-full rounded-xl border border-ab-line bg-white/[0.03] px-4 py-3 font-mono text-lg text-ab-fg placeholder:text-ab-fg-4 focus:border-aurora-amber/50 focus:outline-none"
+                  placeholder="—"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">
+                  <UserPlus className="h-3 w-3 text-[#0E9384]" />
+                  {t("Rekruttert / uke")}
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
+                  value={recruitedWeeklyGoal}
+                  onChange={(e) => setRecruitedWeeklyGoal(e.target.value)}
+                  className="w-full rounded-xl border border-ab-line bg-white/[0.03] px-4 py-3 font-mono text-lg text-ab-fg placeholder:text-ab-fg-4 focus:border-aurora-amber/50 focus:outline-none"
+                  placeholder="—"
+                />
+              </label>
+            </div>
+          </div>
 
           {err && (
             <div className="rounded-lg border border-rose-500/30 bg-rose-500/[0.08] px-3 py-2 text-xs text-rose-300">

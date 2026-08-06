@@ -253,6 +253,9 @@ export interface TeamGoalPayload {
   period: string | null;
   doors_goal: number;      // 0 when unset
   recruited_goal: number;  // 0 when unset
+  // Weekly fields (2026-08-06). null distinguishes "not set" from 0.
+  doors_weekly_goal: number | null;
+  recruited_weekly_goal: number | null;
   can_edit: boolean;
   updated_at: string | null;
   updated_by_id: string | null;
@@ -287,8 +290,30 @@ export function fetchTeamGoal(
 
 export async function saveTeamGoal(
   teamId: string,
-  body: { period: string; doors_goal: number; recruited_goal: number },
+  body: {
+    period: string;
+    doors_goal: number;
+    recruited_goal: number;
+    // Weekly fields — omit to leave unchanged, pass null to clear.
+    doors_weekly_goal?: number | null;
+    recruited_weekly_goal?: number | null;
+  },
 ): Promise<TeamGoalPayload> {
+  // Demo mode: no backend — fake a successful save so the modal closes
+  // cleanly and the caller's reloadTick re-renders (against demo constants).
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return {
+      team_id: teamId,
+      period: body.period,
+      doors_goal: body.doors_goal,
+      recruited_goal: body.recruited_goal,
+      doors_weekly_goal: body.doors_weekly_goal ?? null,
+      recruited_weekly_goal: body.recruited_weekly_goal ?? null,
+      can_edit: true,
+      updated_at: new Date().toISOString(),
+      updated_by_id: null,
+    };
+  }
   const res = await fetchWithAuth(`/api/hr/teams/${teamId}/goals/`, {
     method: 'PUT',
     body: JSON.stringify(body),

@@ -48,8 +48,12 @@ async function fetchTeamsShallow(campaignId: string | undefined): Promise<TeamNo
     leaderContribution: 0,
     teamDoorsGoal: 0,        // fills in when the card expands
     teamRecruitedGoal: 0,    // fills in when the card expands
+    teamDoorsWeeklyGoal: null,     // fills in when the card expands
+    teamRecruitedWeeklyGoal: null, // fills in when the card expands
     canEditGoals: false,     // fills in when the card expands (from team_goals payload)
     memberCount: t.member_count,  // truthful pre-expansion count from listTeams
+    salesChiefId: t.sales_chief?.id ?? null,
+    salesChiefName: t.sales_chief?.name ?? null,
     promoters: [],           // empty until expanded
   }))
 }
@@ -58,6 +62,8 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
   promoters: TeamNode["promoters"]
   teamDoorsGoal: number
   teamRecruitedGoal: number
+  teamDoorsWeeklyGoal: number | null
+  teamRecruitedWeeklyGoal: number | null
   canEditGoals: boolean
 } | null> {
   const [detail, earnings] = await Promise.all([
@@ -96,6 +102,8 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
   return {
     teamDoorsGoal: tg?.doors_goal ?? 0,
     teamRecruitedGoal: tg?.recruited_goal ?? 0,
+    teamDoorsWeeklyGoal: tg?.doors_weekly_goal ?? null,
+    teamRecruitedWeeklyGoal: tg?.recruited_weekly_goal ?? null,
     canEditGoals: tg?.can_edit ?? false,
     promoters: detail.members
       .filter((m) => m.person_type === "employee")
@@ -119,6 +127,9 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
 // Salgsleder / Teamleder dashboard — Aurora Nordic redesign.
 // Route: /dashbord. Served to ALL non-employee roles (manager / admin /
 // superuser / sales_chief) per boss decision 2026-08-05.
+// Chief / manager / team-lead dashboard. Flat team list — the caller only
+// sees their own team(s) via backend scoping. Admin/superuser gets AdminDashboard
+// instead (2026-08-06 boss decision — 3-dashboard model).
 export function SalgslederDashboard() {
   const { user } = useAuth()
   const { t, lang } = useLang()
@@ -253,7 +264,7 @@ export function SalgslederDashboard() {
             <MalRow period={period} />
           </div>
 
-          {/* ═════════════════ Team ═════════════════ */}
+          {/* ═════════════════ Team — flat list scoped to caller ═════════════════ */}
           <div>
             <SectionHeader label={t("Team")} accent="teamleder" />
             <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Klikk et team for å se promotørene bak tallene")}</p>
@@ -265,6 +276,7 @@ export function SalgslederDashboard() {
               onGoalSaved={(teamId) => { if (teamId) loadTeamDetail(teamId, true) }}
             />
           </div>
+
 
           {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}
           <div className="space-y-3">

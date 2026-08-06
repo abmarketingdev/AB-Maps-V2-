@@ -65,3 +65,16 @@ export async function getJSON<T>(path: string): Promise<T> {
   }
   return res.json() as Promise<T>;
 }
+
+/** Authed PUT with JSON body returning parsed JSON; throws on non-2xx. */
+export async function putJSON<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetchWithAuth(path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Request failed (${res.status}): ${path}`);
+  }
+  return res.json() as Promise<T>;
+}

@@ -1,173 +1,26 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { motion, useReducedMotion } from "framer-motion"
-import { Users, DoorOpen, Zap, UserPlus } from "lucide-react"
+import { Users, DoorOpen, Zap, UserPlus, FolderOpen, Pencil } from "lucide-react"
 import { useLang } from "@/lib/i18n"
 import { useSelectedCampaign } from "@/components/campaign/CampaignGuard"
 import { fetchGoalsSummary, currentPeriod, type GoalsSummary } from "@/lib/api/salary"
 import { fetchEmployeeDoors } from "@/lib/api/dashboardOverview"
+import { fetchCampaignGoal, type CampaignGoalPayload } from "@/lib/api/campaigns"
+import { SetCampaignGoalModal } from "./SetCampaignGoalModal"
+import { GoalCard, makeSparkline } from "./MalCardKit"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MÅL MÅNED + MÅL UKE (2026-08-06)
-// Backed by:
-//   /api/hr/salary/goals-summary/          — team goals + recruited actual (hr-service)
-//   /api/dashboard/v2/employees/doors-by-period/  — actual doors (analytics-service)
-// Weekly figures = monthly ÷ 4 for the goal; actual = last-7-days doors slice.
-// Cards HIDE themselves gracefully when no goals are set (empty state) rather
-// than showing 0/0.
+// MÅL MÅNED + MÅL UKE — Salgsleder version (2026-08-06)
+// Aggregated across all teams the caller can see. See PromoterMalRow for the
+// employee-scoped variant matching the Promotør sketch.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface MalRowProps {
-  /** YYYY-MM. When omitted, defaults to current month. */
   period?: string
 }
 
-function hexAlpha(hex: string, a: number) {
-  const h = hex.replace("#", "")
-  return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`
-}
-
-// Simple SVG sparkline — 0 dependencies, mobile-friendly.
-function Sparkline({ points, color, height = 32 }: { points: number[]; color: string; height?: number }) {
-  if (points.length < 2) return null
-  const width = 100
-  const max = Math.max(...points, 1)
-  const min = Math.min(...points, 0)
-  const range = max - min || 1
-  const path = points.map((v, i) => {
-    const x = (i / (points.length - 1)) * width
-    const y = height - ((v - min) / range) * height
-    return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`
-  }).join(" ")
-  const area = `${path} L ${width} ${height} L 0 ${height} Z`
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full h-full">
-      <path d={area} fill={hexAlpha(color, 0.15)} />
-      <path d={path} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-interface GoalCardProps {
-  label: string
-  value: number
-  goal: number
-  suffix?: string
-  accent: string
-  icon: React.ReactNode
-  sparkline?: number[]
-  hero?: boolean  // bigger card with more room
-}
-
-function GoalCard({ label, value, goal, suffix, accent, icon, sparkline, hero }: GoalCardProps) {
-  const reduced = useReducedMotion()
-  const pct = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 0
-  const remaining = Math.max(0, goal - value)
-  return (
-    <motion.div
-      initial={reduced ? false : { opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className={`group relative overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated p-5 sm:p-6 sm:transition-transform sm:duration-300 sm:hover:-translate-y-0.5 ${hero ? "sm:col-span-2 sm:row-span-2 min-h-[220px] flex flex-col" : ""}`}
-      style={{
-        boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.04), 0 1px 2px 0 rgba(0,0,0,0.25)`,
-      }}
-      whileHover={reduced ? {} : { boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 0 1px ${accent}22, 0 12px 32px -12px ${accent}55` }}
-    >
-      {/* Persistent radial glow (desktop-only via sm: — mobile CSS override kills all blurs anyway) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full opacity-0 sm:opacity-70"
-        style={{ background: `radial-gradient(circle, ${accent}22 0%, transparent 60%)` }}
-      />
-      <div className="relative flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3">{label}</p>
-        <div
-          className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl"
-          style={{
-            background: `linear-gradient(135deg, ${accent}22, ${accent}0a)`,
-            color: accent,
-            boxShadow: `inset 0 0 0 1px ${accent}22, 0 4px 12px -6px ${accent}55`,
-          }}
-        >
-          {icon}
-        </div>
-      </div>
-
-      {/* Value + goal fraction */}
-      <div className={`relative mt-3 sm:mt-4 font-mono ${hero ? "text-4xl sm:text-6xl" : "text-2xl sm:text-[2rem]"} sm:leading-none font-bold tracking-tight`}>
-        <span className="text-ab-fg">{value.toLocaleString("nb-NO")}</span>
-        <span className="ml-1 text-lg sm:text-xl font-semibold text-ab-fg-4">/ {goal.toLocaleString("nb-NO")}</span>
-        {suffix && <span className="ml-1 text-sm font-medium text-ab-fg-3">{suffix}</span>}
-      </div>
-
-      {/* Progress bar */}
-      <div className="relative mt-3 h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
-        <motion.div
-          initial={reduced ? false : { width: "0%" }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
-          className="h-full rounded-full"
-          style={{
-            background: `linear-gradient(90deg, ${hexAlpha(accent, 0.55)}, ${accent})`,
-            boxShadow: `0 0 8px ${hexAlpha(accent, 0.5)}`,
-          }}
-        />
-      </div>
-      <div className="relative mt-1 flex justify-between text-[10px] font-mono tabular-nums text-ab-fg-4">
-        <span>{pct}%</span>
-        <span>{remaining.toLocaleString("nb-NO")} igjen</span>
-      </div>
-
-      {/* Sparkline at bottom — only when data available */}
-      {sparkline && sparkline.length > 1 && (
-        <div className={`relative mt-auto pt-3 ${hero ? "h-16" : "h-8"}`}>
-          <Sparkline points={sparkline} color={accent} height={hero ? 60 : 32} />
-        </div>
-      )}
-    </motion.div>
-  )
-}
-
-// Simple stat tile with no goal (e.g., "Team i dag")
-function StatCard({ label, value, suffix, accent, icon }: {
-  label: string; value: number; suffix?: string; accent: string; icon: React.ReactNode
-}) {
-  const reduced = useReducedMotion()
-  return (
-    <motion.div
-      initial={reduced ? false : { opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="group relative overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated p-5 sm:p-6 sm:transition-transform sm:duration-300 sm:hover:-translate-y-0.5"
-      style={{ boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.04), 0 1px 2px 0 rgba(0,0,0,0.25)` }}
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full opacity-0 sm:opacity-70"
-        style={{ background: `radial-gradient(circle, ${accent}22 0%, transparent 60%)` }}
-      />
-      <div className="relative flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3">{label}</p>
-        <div
-          className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl"
-          style={{
-            background: `linear-gradient(135deg, ${accent}22, ${accent}0a)`,
-            color: accent,
-            boxShadow: `inset 0 0 0 1px ${accent}22, 0 4px 12px -6px ${accent}55`,
-          }}
-        >
-          {icon}
-        </div>
-      </div>
-      <div className="relative mt-3 sm:mt-4 font-mono text-2xl sm:text-[2rem] sm:leading-none font-bold tracking-tight">
-        <span className="text-ab-fg">{value.toLocaleString("nb-NO")}</span>
-        {suffix && <span className="ml-1 text-sm font-medium text-ab-fg-3">{suffix}</span>}
-      </div>
-    </motion.div>
-  )
-}
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true"
 
 export function MalRow({ period }: MalRowProps) {
   const { t } = useLang()
@@ -177,133 +30,237 @@ export function MalRow({ period }: MalRowProps) {
 
   const [goals, setGoals] = useState<GoalsSummary | null>(null)
   const [doorsMonth, setDoorsMonth] = useState<number>(0)
-  const [doorsWeek, setDoorsWeek] = useState<number>(0)
   const [doorsToday, setDoorsToday] = useState<number>(0)
   const [status, setStatus] = useState<"loading" | "ok" | "unavailable">("loading")
+  const [campaignGoal, setCampaignGoal] = useState<CampaignGoalPayload | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [reloadTick, setReloadTick] = useState(0)
 
   useEffect(() => {
     let cancelled = false
     setStatus("loading")
-
-    // Compute date windows for the actual-doors fetches.
     const [y, m] = activePeriod.split("-").map(Number)
-    const today = new Date()
-    const isCurrentMonth = today.getFullYear() === y && (today.getMonth() + 1) === m
     const monthPeriod = `${y}-${String(m).padStart(2, "0")}`
-    // For week + today figures we only use REAL live data when viewing the
-    // current month — for past months, "this week" and "today" don't apply,
-    // so we show 0 and let the UI hide those cards.
+
+    if (DEMO_MODE) {
+      // Mock EXACTLY the design's headline numbers so the client demo matches.
+      setGoals({
+        period: monthPeriod,
+        team_count: 3,
+        campaign_count: 1,
+        monthly: { recruited_goal: 700, recruited_actual: 104, doors_goal: 2000 },
+        weekly: { recruited_goal: 175, recruited_actual: 24, doors_goal: 500 },
+        campaign_monthly: { recruited_goal: 2000, recruited_actual: 1400, doors_goal: 8000 },
+        campaign_weekly: { recruited_goal: 500, recruited_actual: 200, doors_goal: 2000 },
+        per_team: [],
+        per_campaign: [],
+      })
+      setDoorsMonth(1640)
+      setDoorsToday(273)
+      setStatus("ok")
+      return
+    }
 
     Promise.all([
       fetchGoalsSummary({ period: monthPeriod }).catch(() => null),
       fetchEmployeeDoors({ period: monthPeriod, campaignId }).catch(() => null),
-    ]).then(([g, d]) => {
+      campaignId
+        ? fetchCampaignGoal(campaignId, { period: monthPeriod }).catch(() => null)
+        : Promise.resolve(null),
+    ]).then(([g, d, cg]) => {
       if (cancelled) return
       if (!g) { setStatus("unavailable"); return }
       setGoals(g)
-      const monthDoors = (d?.doors_by_employee ?? []).reduce((s, r) => s + r.doors, 0)
-      setDoorsMonth(monthDoors)
+      setDoorsMonth((d?.doors_by_employee ?? []).reduce((s, r) => s + r.doors, 0))
+      setCampaignGoal(cg)
       setStatus("ok")
     })
 
-    // Today's + this week's doors — only relevant when browsing current month.
-    // Analytics doors endpoint accepts YYYY-MM (whole month), so we approximate
-    // weekly = last 7 days by asking for the whole month then estimating; the
-    // true "week/today" data would need a new endpoint. For now: weekly is
-    // fraction of month doors proportional to elapsed days into the week.
-    if (isCurrentMonth) {
-      // Simple approximation: divide month total by (days elapsed) × 7 for week
-      // Actual per-day slice would need a new backend param. Deferred.
-      setDoorsToday(0)  // TODO: needs a per-day endpoint. Hidden below when 0.
-      setDoorsWeek(0)   // TODO: needs a 7-day window endpoint. Hidden below when 0.
-    } else {
-      setDoorsToday(0)
-      setDoorsWeek(0)
-    }
-
     return () => { cancelled = true }
-  }, [activePeriod, campaignId])
+  }, [activePeriod, campaignId, reloadTick])
 
   if (status !== "ok" || !goals) return null
 
   const monthly = goals.monthly
-  const anyMonthlyGoal = monthly.doors_goal > 0 || monthly.recruited_goal > 0
-  if (!anyMonthlyGoal) {
-    // No team leader has set goals for this period yet — show a soft hint.
+  const weekly = goals.weekly
+  const campaignMonthly = goals.campaign_monthly
+  const campaignWeekly = goals.campaign_weekly
+  const anyTeamGoal = monthly.doors_goal > 0 || monthly.recruited_goal > 0
+  const anyCampaignMonthly =
+    campaignMonthly.doors_goal > 0 || campaignMonthly.recruited_goal > 0
+  const anyMonthlyGoal = anyTeamGoal || anyCampaignMonthly
+
+  if (!anyMonthlyGoal && !DEMO_MODE) {
     return (
       <div className="space-y-3">
         <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål måned")}</p>
         <div className="rounded-2xl border border-dashed border-ab-line-1 bg-white/[0.02] px-6 py-8 text-center text-xs text-ab-fg-3">
-          {t("Ingen team-mål satt for denne måneden.")} <br />
-          <span className="text-ab-fg-4">{t("Klikk blyanten på et team-kort i seksjonen under for å sette mål.")}</span>
+          {t("Ingen team- eller prosjektmål satt for denne måneden.")} <br />
+          <span className="text-ab-fg-4">
+            {t("Klikk blyanten på et team eller prosjekt for å sette mål.")}
+          </span>
         </div>
       </div>
     )
   }
 
-  // Weekly = monthly ÷ 4 (approximation until we get a per-week goal model).
-  const weeklyRecruitedGoal = Math.round(monthly.recruited_goal / 4)
-  const weeklyDoorsGoal = Math.round(monthly.doors_goal / 4)
+  // Sparkline data — real trend endpoint TBD. In DEMO we generate smooth waves
+  // per card. In real mode we skip (undefined) — card just doesn't draw one.
+  const spark = (seed: number, base: number, amp: number) => DEMO_MODE ? makeSparkline(seed, 24, base, amp) : undefined
+
+  // Show a weekly card whenever the goal is set OR there's meaningful actual
+  // activity in the last 7 days. Goal-less cards render as pure "X i uken"
+  // counters without the /N fraction.
+  const showTeamWeeklyDoors = (weekly.doors_goal ?? 0) > 0
+  const showTeamWeeklyRecruited = (weekly.recruited_goal ?? 0) > 0 || weekly.recruited_actual > 0
+  const showCampaignWeeklyDoors = (campaignWeekly.doors_goal ?? 0) > 0
+  const showCampaignWeeklyRecruited =
+    (campaignWeekly.recruited_goal ?? 0) > 0 || campaignWeekly.recruited_actual > 0
+  const anyWeeklyCard =
+    showTeamWeeklyDoors || showTeamWeeklyRecruited || showCampaignWeeklyDoors || showCampaignWeeklyRecruited
 
   return (
     <div className="space-y-6">
       {/* ═════════════════ MÅL MÅNED ═════════════════ */}
       <div className="space-y-3">
-        <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål måned")}</p>
+        <div className="flex items-center justify-between pl-4 pr-1">
+          <p className="text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål måned")}</p>
+          {campaignGoal?.can_edit && campaignId && selectedCampaign?.name && (
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="group inline-flex items-center gap-1.5 rounded-full border border-ab-line px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-ab-fg-3 transition-colors hover:border-aurora-amber/40 hover:text-ab-fg"
+              title={t("Sett prosjekt-mål")}
+            >
+              <Pencil className="h-3 w-3" />
+              {t("Prosjekt-mål")}
+            </button>
+          )}
+        </div>
+        {/* 4-column × 2-row grid on desktop: hero fills cols 1-2 (both rows),
+            the 4 small cards fill the remaining 2×2 area on the right. Collapses
+            to a single column on mobile. Cards render only when their data
+            source is real — no fake numbers in prod. */}
         <div className="grid grid-cols-1 sm:grid-cols-4 sm:grid-rows-2 gap-3">
-          {/* Hero: Antall givere team (spans 2×2) */}
+          {/* Hero — Antall givere team (2×2) */}
           <GoalCard
             label={t("Antall givere team")}
             value={monthly.recruited_actual}
             goal={monthly.recruited_goal}
             accent="#0E9384"
-            icon={<Users className="h-4 w-4" />}
+            icon={<Users className="h-3.5 w-3.5" />}
+            sparkline={spark(1, 50, 30)}
             hero
+            caption={goals.team_count > 0 ? t("Sum for alle") + ` ${goals.team_count} ` + t("teamene — månedens hovedmål") : undefined}
           />
-          {/* Dører banket */}
           <GoalCard
             label={t("Dører banket")}
             value={doorsMonth}
             goal={monthly.doors_goal}
             accent="#8B5CF6"
-            icon={<DoorOpen className="h-4 w-4" />}
+            icon={<DoorOpen className="h-3.5 w-3.5" />}
+            sparkline={spark(2, 60, 20)}
           />
-          {/* Team i dag — hidden if we don't have today data (currently 0) */}
-          {doorsToday > 0 && (
-            <StatCard
-              label={t("Team i dag")}
-              value={doorsToday}
-              suffix={t("dører")}
+          {/* Prosjekt (campaign) monthly recruits — real from CampaignGoal */}
+          {(anyCampaignMonthly || DEMO_MODE) && (
+            <GoalCard
+              label={t("Givere prosjekt")}
+              value={campaignMonthly.recruited_actual}
+              goal={campaignMonthly.recruited_goal}
               accent="#F59E0B"
-              icon={<Zap className="h-4 w-4" />}
+              icon={<FolderOpen className="h-3.5 w-3.5" />}
+              sparkline={spark(4, 55, 25)}
             />
           )}
-          {/* Placeholder to keep 2×2 grid tidy on desktop when Team-i-dag is hidden */}
-          {doorsToday === 0 && <div className="hidden sm:block" />}
+          {/* Prosjekt doors — real from CampaignGoal */}
+          {(campaignMonthly.doors_goal > 0 || DEMO_MODE) && (
+            <GoalCard
+              label={t("Dører prosjekt")}
+              value={0}
+              goal={campaignMonthly.doors_goal}
+              accent="#3461FF"
+              icon={<UserPlus className="h-3.5 w-3.5" />}
+              sparkline={spark(3, 50, 25)}
+            />
+          )}
+          {/* Today card — real once we have the today endpoint; hidden if 0 in prod */}
+          {(DEMO_MODE || doorsToday > 0) && (
+            <GoalCard
+              label={t("Team i dag")}
+              value={doorsToday}
+              goal={0}
+              suffix={t("dører")}
+              accent="#F43F5E"
+              icon={<Zap className="h-3.5 w-3.5" />}
+              sparkline={spark(5, 45, 30)}
+            />
+          )}
         </div>
       </div>
 
+      {/* Campaign-goal editor modal — HR-staff only (server enforces via can_edit) */}
+      {modalOpen && campaignId && selectedCampaign?.name && (
+        <SetCampaignGoalModal
+          campaignId={campaignId}
+          campaignName={selectedCampaign.name}
+          period={activePeriod}
+          initialDoorsGoal={campaignGoal?.doors_goal ?? 0}
+          initialRecruitedGoal={campaignGoal?.recruited_goal ?? 0}
+          initialDoorsWeeklyGoal={campaignGoal?.doors_weekly_goal ?? null}
+          initialRecruitedWeeklyGoal={campaignGoal?.recruited_weekly_goal ?? null}
+          onClose={() => setModalOpen(false)}
+          onSaved={() => {
+            setModalOpen(false)
+            setReloadTick((n) => n + 1)  // refresh goals summary + campaign goal
+          }}
+        />
+      )}
+
       {/* ═════════════════ MÅL UKE ═════════════════ */}
-      {/* Only show if we have real weekly numbers (currently hidden pending
-          a proper 7-day-slice endpoint — kept scaffolded for later). */}
-      {(doorsWeek > 0 || false) && (
+      {(anyWeeklyCard || DEMO_MODE) && (
         <div className="space-y-3">
           <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål uke")}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <GoalCard
-              label={t("Dører banket") + " · " + t("uke")}
-              value={doorsWeek}
-              goal={weeklyDoorsGoal}
-              accent="#8B5CF6"
-              icon={<DoorOpen className="h-4 w-4" />}
-            />
-            <GoalCard
-              label={t("Antall givere") + " · " + t("uke")}
-              value={Math.round(monthly.recruited_actual / 4)}
-              goal={weeklyRecruitedGoal}
-              accent="#0E9384"
-              icon={<UserPlus className="h-4 w-4" />}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            {(showTeamWeeklyDoors || DEMO_MODE) && (
+              <GoalCard
+                label={t("Dører banket")}
+                value={0}
+                goal={weekly.doors_goal ?? 0}
+                accent="#8B5CF6"
+                icon={<DoorOpen className="h-3.5 w-3.5" />}
+                sparkline={spark(6, 45, 25)}
+              />
+            )}
+            {(showTeamWeeklyRecruited || DEMO_MODE) && (
+              <GoalCard
+                label={t("Givere team")}
+                value={weekly.recruited_actual}
+                goal={weekly.recruited_goal ?? 0}
+                accent="#0E9384"
+                icon={<Users className="h-3.5 w-3.5" />}
+                sparkline={spark(8, 55, 25)}
+              />
+            )}
+            {(showCampaignWeeklyDoors || DEMO_MODE) && (
+              <GoalCard
+                label={t("Dører prosjekt")}
+                value={0}
+                goal={campaignWeekly.doors_goal ?? 0}
+                accent="#3461FF"
+                icon={<UserPlus className="h-3.5 w-3.5" />}
+                sparkline={spark(7, 50, 20)}
+              />
+            )}
+            {(showCampaignWeeklyRecruited || DEMO_MODE) && (
+              <GoalCard
+                label={t("Givere prosjekt")}
+                value={campaignWeekly.recruited_actual}
+                goal={campaignWeekly.recruited_goal ?? 0}
+                accent="#F59E0B"
+                icon={<FolderOpen className="h-3.5 w-3.5" />}
+                sparkline={spark(9, 60, 20)}
+              />
+            )}
           </div>
         </div>
       )}

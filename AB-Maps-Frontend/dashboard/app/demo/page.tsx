@@ -24,9 +24,26 @@ interface RoleCard {
 
 const ROLES: RoleCard[] = [
   {
+    role: "admin",
+    title: "Admin / Superuser",
+    subtitle: "Hierarchical Salgssjefer view — new 2026-08-06",
+    personName: "Lars Andersen",
+    destination: "/dashbord",
+    color: "#8B5CF6",
+    Icon: Shield,
+    isNew: true,
+    bullets: [
+      "SALGSSJEFER hierarchical grouping (chief → teams → promoters)",
+      "MÅL MÅNED + MÅL UKE — org-wide aggregate",
+      "Aggregate progress bar per chief",
+      "LØNN + TOPPLISTER — global scope",
+      "Live SANNTID widgets across the whole org",
+    ],
+  },
+  {
     role: "chief",
     title: "Salgsleder / Teamleder",
-    subtitle: "Boss's Image #3 — the new view",
+    subtitle: "Boss's Image #3 — flat team list they own",
     personName: "Andreas Rikstad",
     destination: "/dashbord",
     color: "#F59E0B",

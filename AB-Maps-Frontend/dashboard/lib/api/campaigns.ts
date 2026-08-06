@@ -1,6 +1,6 @@
 // Campaigns with stats — live adapter (Module 6, §5.8). Read + status.
 
-import { getJSON, fetchWithAuth } from '@/lib/auth/fetchWithAuth';
+import { getJSON, putJSON, fetchWithAuth } from '@/lib/auth/fetchWithAuth';
 
 export type CampaignStatus = 'active' | 'paused' | 'ended';
 
@@ -80,4 +80,55 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus): 
     method: 'PATCH',
     body: JSON.stringify({ status }),
   });
+}
+
+// ─── CampaignGoal (2026-08-06) ───────────────────────────────────────────────
+// Per-campaign monthly + weekly goals. Backend: hr-service CampaignGoalView
+// at /api/hr/campaigns/{id}/goal/. Writable by HR-staff / admin only.
+
+export interface CampaignGoalPayload {
+  campaign_id: string;
+  period: string | null;
+  doors_goal: number;
+  recruited_goal: number;
+  doors_weekly_goal: number | null;
+  recruited_weekly_goal: number | null;
+  can_edit: boolean;
+  updated_at: string | null;
+  updated_by_id: string | null;
+}
+
+export function fetchCampaignGoal(
+  campaignId: string, opts: { period: string },
+): Promise<CampaignGoalPayload> {
+  return getJSON<CampaignGoalPayload>(
+    `/api/hr/campaigns/${campaignId}/goal/?period=${encodeURIComponent(opts.period)}`,
+  );
+}
+
+export function saveCampaignGoal(
+  campaignId: string,
+  body: {
+    period: string;
+    doors_goal: number;
+    recruited_goal: number;
+    doors_weekly_goal?: number | null;
+    recruited_weekly_goal?: number | null;
+  },
+): Promise<CampaignGoalPayload> {
+  // Demo mode: no backend — fake a successful save so the modal closes cleanly.
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return Promise.resolve({
+      campaign_id: campaignId,
+      period: body.period,
+      doors_goal: body.doors_goal,
+      recruited_goal: body.recruited_goal,
+      doors_weekly_goal: body.doors_weekly_goal ?? null,
+      recruited_weekly_goal: body.recruited_weekly_goal ?? null,
+      can_edit: true,
+      updated_at: new Date().toISOString(),
+      updated_by_id: null,
+    });
+  }
+  return putJSON<CampaignGoalPayload>(`/api/hr/campaigns/${campaignId}/goal/`, body);
 }

@@ -369,6 +369,8 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved }:
           period={period}
           initialDoorsGoal={totalDoorsGoal}
           initialRecruitedGoal={totalRecGoal}
+          initialDoorsWeeklyGoal={team.teamDoorsWeeklyGoal ?? null}
+          initialRecruitedWeeklyGoal={team.teamRecruitedWeeklyGoal ?? null}
           onClose={() => setGoalModalOpen(false)}
           onSaved={() => {
             setGoalModalOpen(false)

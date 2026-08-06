@@ -4,19 +4,17 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ClientLayout from "../ClientLayout";
 import { SalgslederDashboard } from "@/components/dashboard/leader/SalgslederDashboard";
+import { AdminDashboard } from "@/components/dashboard/leader/AdminDashboard";
 import { ProtectedRoute } from "@/lib/auth/ProtectedRoute";
 import { useAuth } from "@/lib/auth/AuthContext";
 
-// Role-branched dashboard entry.
-//   All non-employee roles (manager / admin / superuser / sales_chief) →
-//   SalgslederDashboard (the redesigned team-leader view).
-//   Employees are redirected to /employee below (unchanged behaviour).
-//   The old <Dashboard /> fallback is intentionally NOT wired here anymore
-//   — boss decision 2026-08-05 to collapse all 4 non-employee roles to
-//   the same view. Old import kept OUT of this file so the fallback bundle
-//   isn't shipped; if we ever need it back, re-import "../../dashboard".
+// Role-branched dashboard entry (2026-08-06 — 3-dashboard model).
+//   admin / superuser → AdminDashboard (Salgssjefer hierarchical grouping)
+//   sales chief / manager / team lead → SalgslederDashboard (flat teams they own)
+//   employee → redirect to /employee (PromoterDashboard)
 function DashbordSwitch() {
-  return <SalgslederDashboard />;
+  const { isSuperuser } = useAuth();
+  return isSuperuser ? <AdminDashboard /> : <SalgslederDashboard />;
 }
 
 export default function Page() {
