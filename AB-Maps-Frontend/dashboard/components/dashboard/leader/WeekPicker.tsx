@@ -38,18 +38,25 @@ function mondayOfIsoWeek(weekId: string): Date {
   return mon
 }
 
-/** All ISO weeks whose Monday-through-Sunday range overlaps the given month.
- *  A week is included even if only 1 day of it falls in the month, so the
- *  first/last weeks of any month are always represented. */
-function weeksOverlappingMonth(period: string): { id: string; mon: Date; sun: Date }[] {
+/** All ISO weeks whose **Monday** falls in the given month. Anchor-by-Monday
+ *  rule: a week belongs to whichever month contains its Monday. So Uke 31
+ *  (Mon 28 Jul) belongs to July, not August, even though 5 of its days
+ *  are in August. Keeps the picker unambiguous — every week appears in
+ *  exactly ONE month's list, no duplicates or overlaps. */
+function weeksInMonth(period: string): { id: string; mon: Date; sun: Date }[] {
   const [y, m] = period.split("-").map(Number)
-  const monthStart = new Date(y, (m || 1) - 1, 1)
-  const monthEnd = new Date(y, m || 1, 0)  // last day of month
+  const monthIdx = (m || 1) - 1
+  const monthEnd = new Date(y, monthIdx + 1, 0)  // last day of month
+  // Walk each Monday in the month; anchor rule = a week belongs here iff
+  // its Monday is in [monthStart, monthEnd].
+  const first = new Date(y, monthIdx, 1)
+  const firstDay = first.getDay() || 7  // ISO day: Mon=1..Sun=7
+  // If the 1st is a Monday, start there; else jump to the next Monday.
+  const firstMondayOffset = firstDay === 1 ? 0 : 8 - firstDay
+  const firstMonday = new Date(first)
+  firstMonday.setDate(first.getDate() + firstMondayOffset)
   const out: { id: string; mon: Date; sun: Date }[] = []
-  // Start from the Monday of the week containing monthStart.
-  const startDay = monthStart.getDay() || 7
-  const cur = new Date(monthStart)
-  cur.setDate(monthStart.getDate() - (startDay - 1))
+  const cur = new Date(firstMonday)
   while (cur <= monthEnd) {
     const mon = new Date(cur)
     const sun = new Date(cur)
@@ -94,7 +101,7 @@ export function WeekPicker({ period, value, onChange }: WeekPickerProps) {
   const nowPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   const isCurrentMonth = period === nowPeriod
 
-  const weeks = useMemo(() => weeksOverlappingMonth(period), [period])
+  const weeks = useMemo(() => weeksInMonth(period), [period])
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -237,6 +244,6 @@ export function defaultWeekForPeriod(period: string): string {
   const now = new Date()
   const nowPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   if (period === nowPeriod) return LIVE_WEEK
-  const weeks = weeksOverlappingMonth(period)
+  const weeks = weeksInMonth(period)
   return weeks.length ? weeks[weeks.length - 1].id : LIVE_WEEK
 }
