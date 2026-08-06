@@ -9,6 +9,7 @@ import { fetchEmployeeDoors } from "@/lib/api/dashboardOverview"
 import { fetchCampaignGoal, type CampaignGoalPayload } from "@/lib/api/campaigns"
 import { SetCampaignGoalModal } from "./SetCampaignGoalModal"
 import { GoalCard, makeSparkline } from "./MalCardKit"
+import { WeekPicker, LIVE_WEEK, defaultWeekForPeriod } from "./WeekPicker"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MÅL MÅNED + MÅL UKE — Salgsleder version (2026-08-06)
@@ -18,17 +19,6 @@ import { GoalCard, makeSparkline } from "./MalCardKit"
 
 interface MalRowProps {
   period?: string
-}
-
-/** True when the given YYYY-MM string matches the current calendar month.
- *  Used to gate the weekly section: weekly actuals only make sense for
- *  the current month (they count last-7-days activity). For past months
- *  we hide the cards entirely and show a tiny "kun for inneværende måned"
- *  hint so leaders don't compare misleading numbers. */
-function isCurrentMonth(period: string): boolean {
-  const d = new Date()
-  const cur = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-  return period === cur
 }
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true"
@@ -46,6 +36,15 @@ export function MalRow({ period }: MalRowProps) {
   const [campaignGoal, setCampaignGoal] = useState<CampaignGoalPayload | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [reloadTick, setReloadTick] = useState(0)
+  // Week selection lives with MalRow — it only affects the weekly section,
+  // no need to plumb through the whole dashboard. Defaults to "denne uken"
+  // (rolling last-7-days) for the current month, or the last overlapping ISO
+  // week for past months.
+  const [week, setWeek] = useState<string>(() => defaultWeekForPeriod(activePeriod))
+  // When the period changes (user picks a different month), reset the week
+  // selection so it stays sensible (denne uken for current, last ISO week
+  // for past — see defaultWeekForPeriod).
+  useEffect(() => { setWeek(defaultWeekForPeriod(activePeriod)) }, [activePeriod])
 
   useEffect(() => {
     let cancelled = false
@@ -72,8 +71,12 @@ export function MalRow({ period }: MalRowProps) {
       return
     }
 
+    // Weekly `week` — empty string when LIVE_WEEK so backend falls back to
+    // rolling last-7-days (its existing default), else pass the ISO week id.
+    const weekParam = week === LIVE_WEEK ? undefined : week
+
     Promise.all([
-      fetchGoalsSummary({ period: monthPeriod }).catch(() => null),
+      fetchGoalsSummary({ period: monthPeriod, week: weekParam }).catch(() => null),
       fetchEmployeeDoors({ period: monthPeriod, campaignId }).catch(() => null),
       campaignId
         ? fetchCampaignGoal(campaignId, { period: monthPeriod }).catch(() => null)
@@ -88,7 +91,7 @@ export function MalRow({ period }: MalRowProps) {
     })
 
     return () => { cancelled = true }
-  }, [activePeriod, campaignId, reloadTick])
+  }, [activePeriod, campaignId, week, reloadTick])
 
   if (status !== "ok" || !goals) return null
 
@@ -96,39 +99,16 @@ export function MalRow({ period }: MalRowProps) {
   const weekly = goals.weekly
   const campaignMonthly = goals.campaign_monthly
   const campaignWeekly = goals.campaign_weekly
-  const anyTeamGoal = monthly.doors_goal > 0 || monthly.recruited_goal > 0
-  const anyCampaignMonthly =
-    campaignMonthly.doors_goal > 0 || campaignMonthly.recruited_goal > 0
-  const anyMonthlyGoal = anyTeamGoal || anyCampaignMonthly
-
-  if (!anyMonthlyGoal && !DEMO_MODE) {
-    return (
-      <div className="space-y-3">
-        <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål måned")}</p>
-        <div className="rounded-2xl border border-dashed border-ab-line-1 bg-white/[0.02] px-6 py-8 text-center text-xs text-ab-fg-3">
-          {t("Ingen team- eller prosjektmål satt for denne måneden.")} <br />
-          <span className="text-ab-fg-4">
-            {t("Klikk blyanten på et team eller prosjekt for å sette mål.")}
-          </span>
-        </div>
-      </div>
-    )
-  }
+  // Note: previously we hid the whole section behind an "any goal set" empty
+  // state. Removed 2026-08-06 per user ask — always render cards; "?" fills
+  // any missing goal so leaders see honestly what's known vs. unset.
 
   // Sparkline data — real trend endpoint TBD. In DEMO we generate smooth waves
   // per card. In real mode we skip (undefined) — card just doesn't draw one.
   const spark = (seed: number, base: number, amp: number) => DEMO_MODE ? makeSparkline(seed, 24, base, amp) : undefined
 
-  // Show a weekly card whenever the goal is set OR there's meaningful actual
-  // activity in the last 7 days. Goal-less cards render as pure "X i uken"
-  // counters without the /N fraction.
-  const showTeamWeeklyDoors = (weekly.doors_goal ?? 0) > 0
-  const showTeamWeeklyRecruited = (weekly.recruited_goal ?? 0) > 0 || weekly.recruited_actual > 0
-  const showCampaignWeeklyDoors = (campaignWeekly.doors_goal ?? 0) > 0
-  const showCampaignWeeklyRecruited =
-    (campaignWeekly.recruited_goal ?? 0) > 0 || campaignWeekly.recruited_actual > 0
-  const anyWeeklyCard =
-    showTeamWeeklyDoors || showTeamWeeklyRecruited || showCampaignWeeklyDoors || showCampaignWeeklyRecruited
+  // Cards always render now — GoalCard handles null goal / null value as
+  // "?", so no conditional-show gymnastics here.
 
   return (
     <div className="space-y-6">
@@ -149,15 +129,15 @@ export function MalRow({ period }: MalRowProps) {
           )}
         </div>
         {/* 4-column × 2-row grid on desktop: hero fills cols 1-2 (both rows),
-            the 4 small cards fill the remaining 2×2 area on the right. Collapses
-            to a single column on mobile. Cards render only when their data
-            source is real — no fake numbers in prod. */}
+            the 4 small cards fill the remaining 2×2 area on the right. Cards
+            always render — where a goal isn't set we pass null to GoalCard so
+            it renders "value/?" instead of hiding the slot. */}
         <div className="grid grid-cols-1 sm:grid-cols-4 sm:grid-rows-2 gap-3">
           {/* Hero — Antall givere team (2×2) */}
           <GoalCard
             label={t("Antall givere team")}
             value={monthly.recruited_actual}
-            goal={monthly.recruited_goal}
+            goal={monthly.recruited_goal > 0 ? monthly.recruited_goal : null}
             accent="#0E9384"
             icon={<Users className="h-3.5 w-3.5" />}
             sparkline={spark(1, 50, 30)}
@@ -167,45 +147,39 @@ export function MalRow({ period }: MalRowProps) {
           <GoalCard
             label={t("Dører banket")}
             value={doorsMonth}
-            goal={monthly.doors_goal}
+            goal={monthly.doors_goal > 0 ? monthly.doors_goal : null}
             accent="#8B5CF6"
             icon={<DoorOpen className="h-3.5 w-3.5" />}
             sparkline={spark(2, 60, 20)}
           />
-          {/* Prosjekt (campaign) monthly recruits — real from CampaignGoal */}
-          {(anyCampaignMonthly || DEMO_MODE) && (
-            <GoalCard
-              label={t("Givere prosjekt")}
-              value={campaignMonthly.recruited_actual}
-              goal={campaignMonthly.recruited_goal}
-              accent="#F59E0B"
-              icon={<FolderOpen className="h-3.5 w-3.5" />}
-              sparkline={spark(4, 55, 25)}
-            />
-          )}
-          {/* Prosjekt doors — real from CampaignGoal */}
-          {(campaignMonthly.doors_goal > 0 || DEMO_MODE) && (
-            <GoalCard
-              label={t("Dører prosjekt")}
-              value={0}
-              goal={campaignMonthly.doors_goal}
-              accent="#3461FF"
-              icon={<UserPlus className="h-3.5 w-3.5" />}
-              sparkline={spark(3, 50, 25)}
-            />
-          )}
-          {/* Today card — real once we have the today endpoint; hidden if 0 in prod */}
-          {(DEMO_MODE || doorsToday > 0) && (
-            <GoalCard
-              label={t("Team i dag")}
-              value={doorsToday}
-              goal={0}
-              suffix={t("dører")}
-              accent="#F43F5E"
-              icon={<Zap className="h-3.5 w-3.5" />}
-              sparkline={spark(5, 45, 30)}
-            />
-          )}
+          {/* Prosjekt (campaign) monthly recruits */}
+          <GoalCard
+            label={t("Givere prosjekt")}
+            value={campaignMonthly.recruited_actual}
+            goal={campaignMonthly.recruited_goal > 0 ? campaignMonthly.recruited_goal : null}
+            accent="#F59E0B"
+            icon={<FolderOpen className="h-3.5 w-3.5" />}
+            sparkline={spark(4, 55, 25)}
+          />
+          {/* Prosjekt doors — actuals from analytics not wired yet, so value=null → "?" */}
+          <GoalCard
+            label={t("Dører prosjekt")}
+            value={null}
+            goal={campaignMonthly.doors_goal > 0 ? campaignMonthly.doors_goal : null}
+            accent="#3461FF"
+            icon={<UserPlus className="h-3.5 w-3.5" />}
+            sparkline={spark(3, 50, 25)}
+          />
+          {/* Team i dag — pure count, no goal slot (goal=0 hides the /N) */}
+          <GoalCard
+            label={t("Team i dag")}
+            value={doorsToday}
+            goal={0}
+            suffix={t("dører")}
+            accent="#F43F5E"
+            icon={<Zap className="h-3.5 w-3.5" />}
+            sparkline={spark(5, 45, 30)}
+          />
         </div>
       </div>
 
@@ -228,64 +202,51 @@ export function MalRow({ period }: MalRowProps) {
       )}
 
       {/* ═════════════════ MÅL UKE ═════════════════
-          Only meaningful when viewing the current month — weekly actuals
-          count the last 7 days from today, which would be misleading if the
-          user picks a past month. Past-month view: show a subtle note
-          instead of the cards so leaders don't compare wrong numbers. */}
-      {!isCurrentMonth(activePeriod) ? (
-        <div className="space-y-3">
-          <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål uke")}</p>
-          <div className="rounded-2xl border border-dashed border-ab-line-1 bg-white/[0.02] px-6 py-6 text-center text-xs text-ab-fg-3">
-            {t("Ukesmål vises kun for inneværende måned.")}
-          </div>
+          Now week-selectable via WeekPicker — works for any month, not just
+          current. Cards always render, "?" fills any missing number so
+          leaders see honestly what's known vs. unknown. */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3 pl-4 pr-1 flex-wrap">
+          <p className="text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål uke")}</p>
+          <WeekPicker period={activePeriod} value={week} onChange={setWeek} />
         </div>
-      ) : (anyWeeklyCard || DEMO_MODE) && (
-        <div className="space-y-3">
-          <p className="pl-4 text-[11px] uppercase tracking-widest text-ab-fg-4">{t("Mål uke")}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            {(showTeamWeeklyDoors || DEMO_MODE) && (
-              <GoalCard
-                label={t("Dører banket")}
-                value={0}
-                goal={weekly.doors_goal ?? 0}
-                accent="#8B5CF6"
-                icon={<DoorOpen className="h-3.5 w-3.5" />}
-                sparkline={spark(6, 45, 25)}
-              />
-            )}
-            {(showTeamWeeklyRecruited || DEMO_MODE) && (
-              <GoalCard
-                label={t("Givere team")}
-                value={weekly.recruited_actual}
-                goal={weekly.recruited_goal ?? 0}
-                accent="#0E9384"
-                icon={<Users className="h-3.5 w-3.5" />}
-                sparkline={spark(8, 55, 25)}
-              />
-            )}
-            {(showCampaignWeeklyDoors || DEMO_MODE) && (
-              <GoalCard
-                label={t("Dører prosjekt")}
-                value={0}
-                goal={campaignWeekly.doors_goal ?? 0}
-                accent="#3461FF"
-                icon={<UserPlus className="h-3.5 w-3.5" />}
-                sparkline={spark(7, 50, 20)}
-              />
-            )}
-            {(showCampaignWeeklyRecruited || DEMO_MODE) && (
-              <GoalCard
-                label={t("Givere prosjekt")}
-                value={campaignWeekly.recruited_actual}
-                goal={campaignWeekly.recruited_goal ?? 0}
-                accent="#F59E0B"
-                icon={<FolderOpen className="h-3.5 w-3.5" />}
-                sparkline={spark(9, 60, 20)}
-              />
-            )}
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          {/* Dører banket (team) — doors weekly actual not computed yet
+              (analytics owns knock data); render "?" so it's honest. */}
+          <GoalCard
+            label={t("Dører banket")}
+            value={null}
+            goal={weekly.doors_goal ?? null}
+            accent="#8B5CF6"
+            icon={<DoorOpen className="h-3.5 w-3.5" />}
+            sparkline={spark(6, 45, 25)}
+          />
+          <GoalCard
+            label={t("Givere team")}
+            value={weekly.recruited_actual}
+            goal={weekly.recruited_goal ?? null}
+            accent="#0E9384"
+            icon={<Users className="h-3.5 w-3.5" />}
+            sparkline={spark(8, 55, 25)}
+          />
+          <GoalCard
+            label={t("Dører prosjekt")}
+            value={null}
+            goal={campaignWeekly.doors_goal ?? null}
+            accent="#3461FF"
+            icon={<UserPlus className="h-3.5 w-3.5" />}
+            sparkline={spark(7, 50, 20)}
+          />
+          <GoalCard
+            label={t("Givere prosjekt")}
+            value={campaignWeekly.recruited_actual}
+            goal={campaignWeekly.recruited_goal ?? null}
+            accent="#F59E0B"
+            icon={<FolderOpen className="h-3.5 w-3.5" />}
+            sparkline={spark(9, 60, 20)}
+          />
         </div>
-      )}
+      </div>
     </div>
   )
 }

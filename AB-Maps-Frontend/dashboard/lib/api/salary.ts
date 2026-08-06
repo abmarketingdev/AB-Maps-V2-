@@ -126,8 +126,11 @@ export interface GoalsSummary {
   per_campaign: GoalsPerCampaignRow[];
 }
 
-export function fetchGoalsSummary(opts: { period?: string } = {}): Promise<GoalsSummary> {
-  const q = opts.period ? `?period=${encodeURIComponent(opts.period)}` : '';
+export function fetchGoalsSummary(opts: { period?: string; week?: string } = {}): Promise<GoalsSummary> {
+  const parts: string[] = [];
+  if (opts.period) parts.push(`period=${encodeURIComponent(opts.period)}`);
+  if (opts.week)   parts.push(`week=${encodeURIComponent(opts.week)}`);
+  const q = parts.length ? `?${parts.join('&')}` : '';
   return getJSON<GoalsSummary>(`/api/hr/salary/goals-summary/${q}`);
 }
 
@@ -161,8 +164,11 @@ export interface MyGoalsPayload {
   campaign_goals: MyGoalsBlock;
 }
 
-export function fetchMyGoals(opts: { period?: string } = {}): Promise<MyGoalsPayload> {
-  const q = opts.period ? `?period=${encodeURIComponent(opts.period)}` : '';
+export function fetchMyGoals(opts: { period?: string; week?: string } = {}): Promise<MyGoalsPayload> {
+  const parts: string[] = [];
+  if (opts.period) parts.push(`period=${encodeURIComponent(opts.period)}`);
+  if (opts.week)   parts.push(`week=${encodeURIComponent(opts.week)}`);
+  const q = parts.length ? `?${parts.join('&')}` : '';
   return getJSON<MyGoalsPayload>(`/api/hr/salary/my-goals/${q}`);
 }
 

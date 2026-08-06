@@ -68,8 +68,16 @@ export function AreaWave({ points, color, className = "" }: { points: number[]; 
 
 export interface GoalCardProps {
   label: string
-  value: number
-  goal: number
+  /** null = "data ikke tilgjengelig" — renders "?". Use null (not 0) when the
+   *  metric hasn't been computed yet (e.g. weekly doors before we ship the
+   *  analytics weekly slice). */
+  value: number | null
+  /** Semantics:
+   *   - undefined → no goal slot at all (card is a pure count like "Team i dag")
+   *   - null → goal exists conceptually but wasn't set → render "value/?"
+   *   - number > 0 → normal "value/N"
+   *   - 0 → treated same as undefined (no goal slot) for backward compat */
+  goal?: number | null
   suffix?: string
   accent: string
   icon: React.ReactNode
@@ -80,10 +88,18 @@ export interface GoalCardProps {
   compact?: boolean
 }
 
+function formatNumOrQ(n: number | null | undefined): string {
+  if (n == null) return "?"
+  return n.toLocaleString("nb-NO")
+}
+
 export function GoalCard({ label, value, goal, suffix, accent, icon, sparkline, hero, caption, compact }: GoalCardProps) {
   const reduced = useReducedMotion()
-  const pct = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 0
-  const remaining = Math.max(0, goal - value)
+  const hasGoalSlot = goal !== undefined && goal !== 0
+  const hasKnownGoal = typeof goal === "number" && goal > 0
+  const hasKnownValue = typeof value === "number"
+  const pct = hasKnownGoal && hasKnownValue ? Math.min(100, Math.round((value / goal) * 100)) : 0
+  const remaining = hasKnownGoal && hasKnownValue ? Math.max(0, goal - value) : 0
   const minH = hero ? "min-h-[280px]" : compact ? "min-h-[130px]" : "min-h-[160px]"
   return (
     <motion.div
@@ -118,11 +134,11 @@ export function GoalCard({ label, value, goal, suffix, accent, icon, sparkline, 
         </div>
 
         <div className={`relative mt-3 font-mono ${hero ? "text-5xl sm:text-7xl" : compact ? "text-xl sm:text-3xl" : "text-2xl sm:text-4xl"} sm:leading-none font-bold tracking-tight text-ab-fg`}>
-          <span>{value.toLocaleString("nb-NO")}</span>
-          {goal > 0 && (
+          <span>{formatNumOrQ(value)}</span>
+          {hasGoalSlot && (
             <>
               <span className="mx-1 text-ab-fg-4">/</span>
-              <span>{goal.toLocaleString("nb-NO")}</span>
+              <span>{formatNumOrQ(goal)}</span>
             </>
           )}
           {suffix && <span className="ml-1 text-sm font-medium text-ab-fg-3">{suffix}</span>}
@@ -130,7 +146,11 @@ export function GoalCard({ label, value, goal, suffix, accent, icon, sparkline, 
 
         {caption && <p className="mt-2 text-[11px] text-ab-fg-3">{caption}</p>}
 
-        {goal > 0 && (
+        {/* Progress bar only when we can honestly render one. If the goal is
+            set but the actual is null (or vice versa) we skip the bar rather
+            than show a misleading 0% — the "?" in the fraction already tells
+            the reader the row is incomplete. */}
+        {hasGoalSlot && hasKnownGoal && hasKnownValue && (
           <div className="relative mt-auto pt-4">
             <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
               <motion.div
