@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Lock, User as UserIcon, AlertCircle, Mail, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
@@ -8,6 +8,44 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
 import { StatusPill, Roy } from "@/components/ui-ab";
 import { requestPasswordReset } from "@/lib/api/passwordReset";
+
+// Marketing hero stats — boss request 2026-08-06.
+// Was: OMRÅDER 342 · SELGERE 11 · OPPETID 99.98%.
+// Now: DAGER AKTIV · PÅLOGGET NÅ · OPPETID.
+//
+// SYSTEM_START_DATE is the day the AB Maps V2 system went live in prod.
+// If this moves, update the constant — no backend call needed for days-active.
+// Pålogget nå polls a public unauthenticated endpoint; if the endpoint is
+// missing/errors the card falls back to a subtle "—" so the layout survives.
+const SYSTEM_START_DATE = new Date("2024-11-01T00:00:00Z");
+
+function useDaysActive(): number {
+  return useMemo(() => {
+    const ms = Date.now() - SYSTEM_START_DATE.getTime();
+    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+  }, []);
+}
+
+function useOnlineNow(): number | null {
+  const [count, setCount] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function tick() {
+      try {
+        const res = await fetch("/api/status/live/", { credentials: "omit" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && typeof data?.online_users === "number") {
+          setCount(data.online_users);
+        }
+      } catch { /* silent — card falls back to "—" */ }
+    }
+    tick();
+    const iv = setInterval(tick, 30_000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, []);
+  return count;
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,6 +67,9 @@ const LoginPage: React.FC = () => {
   const router = useRouter();
   const { login, isAuthenticated, isLoading: authLoading, user } = useAuth();
   const targetRef = useRef<string>("/");
+  // Live marketing stats for the hero (2026-08-06 boss request).
+  const daysActive = useDaysActive();
+  const onlineNow = useOnlineNow();
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && user && phase === "login") {
@@ -231,8 +272,8 @@ const LoginPage: React.FC = () => {
 
           <div className="mt-8 grid grid-cols-3 gap-3">
             {[
-              { label: "OMRÅDER", value: "342" },
-              { label: "SELGERE", value: "11" },
+              { label: "DAGER AKTIV", value: daysActive.toLocaleString("nb-NO") },
+              { label: "PÅLOGGET NÅ", value: onlineNow == null ? "—" : onlineNow.toLocaleString("nb-NO") },
               { label: "OPPETID", value: "99.98%" },
             ].map((s) => (
               <div key={s.label} className="ab-card p-3">
