@@ -11,6 +11,7 @@ import { SectionHeader } from "./SectionHeader"
 import { AuroraBg } from "./AuroraBg"
 import { AvatarStack } from "./Avatar"
 import { LivePulseDot } from "./LivePulseDot"
+import { MalRow } from "./MalRow"
 import { MonthPicker } from "./MonthPicker"
 import { TeamPanel } from "./TeamPanel"
 import { TopplisterRow } from "./TopplisterRow"
@@ -241,10 +242,16 @@ export function SalgslederDashboard() {
         </motion.section>
 
         <div className="relative px-4 sm:px-6 py-6 sm:py-8 space-y-8">
-          {/* MÅL MÅNED + MÅL UKE remain hidden until Phase D (Goals endpoint).
-              LØNN + EstimatedSalaryBand were unhidden Phase 2+5 (2026-08-05):
-              components self-hide (render null) when the salary endpoint
-              feature-flag is OFF or returns unavailable — never fake data. */}
+          {/* ═════════════════ MÅL MÅNED + MÅL UKE (2026-08-06 boss request) ═════════════════
+              Renders team-goal aggregate cards at the top of the dashboard,
+              matching the local-demo look. Self-hides gracefully when no team
+              goals are set for the period (empty state prompts user to set
+              goals via the pencil icon on team cards below). Weekly cards are
+              scaffolded but hidden pending a per-day analytics endpoint. */}
+          <div>
+            <SectionHeader label={t("Mål")} accent="teamleder" />
+            <MalRow period={period} />
+          </div>
 
           {/* ═════════════════ Team ═════════════════ */}
           <div>

@@ -67,6 +67,36 @@ export function fetchMySalary(opts: { period?: string; campaignId?: string } = {
   return getJSON<MySalary>(`/api/hr/salary/me/${qs(opts)}`);
 }
 
+// ─── MÅL MÅNED aggregate (2026-08-06) ────────────────────────────────────────
+// Backend: hr-service GoalsSummaryView. Sums Phase D team_goals + actual
+// recruits across all teams the caller can see. Actual doors are fetched
+// separately from analytics-service (fetchEmployeeDoors) — hr-service
+// intentionally does not do cross-service HTTP calls.
+
+export interface GoalsPerTeamRow {
+  team_id: string;
+  team_name: string;
+  doors_goal: number;
+  recruited_goal: number;
+  recruited_actual: number;
+}
+
+export interface GoalsSummary {
+  period: string | null;
+  team_count: number;
+  monthly: {
+    recruited_goal: number;
+    recruited_actual: number;
+    doors_goal: number;
+  };
+  per_team: GoalsPerTeamRow[];
+}
+
+export function fetchGoalsSummary(opts: { period?: string } = {}): Promise<GoalsSummary> {
+  const q = opts.period ? `?period=${encodeURIComponent(opts.period)}` : '';
+  return getJSON<GoalsSummary>(`/api/hr/salary/goals-summary/${q}`);
+}
+
 /** Current period as YYYY-MM string (Oslo month) — helper for callers. */
 export function currentPeriod(): string {
   const now = new Date();
