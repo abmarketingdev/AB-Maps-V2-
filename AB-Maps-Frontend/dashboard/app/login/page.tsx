@@ -262,12 +262,12 @@ const LoginPage: React.FC = () => {
 
         <div className="relative z-10 max-w-md">
           <Roy state="greeting" size={96} className="mb-6 -ml-2" />
-          <div className="eyebrow mb-3">Norsk dør-til-dør</div>
+          <div className="eyebrow mb-3">AB Marketing</div>
           <h2 className="font-display text-[40px] leading-[1.05] font-semibold tracking-tight text-ab-fg">
-            Døren er din arbeidsplass.
+            Alt samlet på ett sted.
           </h2>
           <p className="mt-4 text-[14px] text-ab-fg-2 leading-relaxed">
-            Sanntidsoversikt over salgsteamene dine. Tildel områder, lås ned territorium, og se hvert salg etter hvert som det skjer.
+            Planlegg områder, følg teamene, og hold oversikt over aktiviteten.
           </p>
 
           <div className="mt-8 grid grid-cols-3 gap-3">

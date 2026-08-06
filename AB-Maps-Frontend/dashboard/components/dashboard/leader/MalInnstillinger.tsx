@@ -132,47 +132,59 @@ function TeamRow({ team, goal, loading, onEdit }: TeamRowProps) {
   const dWk = goal?.doors_weekly_goal ?? null
   const rWk = goal?.recruited_weekly_goal ?? null
   const anyMonthly = dGoal > 0 || rGoal > 0
-  // Show Rediger only when the server said the caller can write this row.
-  // We surface the pill "Låst" instead of a dead pencil so the row still
-  // reads clearly for viewers who lack permission.
   const canEdit = goal?.can_edit ?? false
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="grid grid-cols-[minmax(0,1fr)_120px_120px_160px_100px] items-center gap-3 rounded-2xl border border-ab-line bg-ab-elevated px-4 py-3 hover:bg-white/[0.02] transition-colors"
+      className="rounded-2xl border border-ab-line bg-ab-elevated p-4 hover:bg-white/[0.02] transition-colors sm:grid sm:grid-cols-[minmax(0,1fr)_120px_120px_160px_100px] sm:items-center sm:gap-3 sm:py-3"
     >
-      <div className="min-w-0">
+      {/* Title cluster — full-width on mobile, first col on desktop */}
+      <div className="min-w-0 mb-3 sm:mb-0">
         <div className="flex items-center gap-2">
           <span
-            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold text-white"
+            className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white"
             style={{ background: team.color || "#3461FF" }}
           >
             {team.name.slice(0, 2).toUpperCase()}
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-ab-fg">{team.name}</p>
             <p className="truncate text-[10px] text-ab-fg-4">
               {team.campaign?.name ?? <span className="italic">Ingen prosjekt</span>}
             </p>
           </div>
+          {/* Mobile-only status pill in the header row */}
+          <div className="flex-shrink-0 sm:hidden">
+            {loading ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-ab-fg-4">…</span>
+            ) : anyMonthly ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-medium text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
+                <CheckCircle2 className="h-2.5 w-2.5" /> Satt
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-medium text-rose-300 ring-1 ring-inset ring-rose-500/30">
+                Ikke satt
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Dører */}
-      <div>
-        <p className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-widest text-[#8B5CF6]">Dører</p>
-        <GoalCells monthly={dGoal} weekly={dWk} goalTotal={dGoal} weeklyTotal={dWk} />
+      {/* Metric cluster — 2-col grid on mobile, separate cols on desktop */}
+      <div className="grid grid-cols-2 gap-3 sm:contents">
+        <div>
+          <p className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-widest text-[#8B5CF6]">Dører</p>
+          <GoalCells monthly={dGoal} weekly={dWk} goalTotal={dGoal} weeklyTotal={dWk} />
+        </div>
+        <div>
+          <p className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-widest text-[#0E9384]">Rekruttert</p>
+          <GoalCells monthly={rGoal} weekly={rWk} goalTotal={rGoal} weeklyTotal={rWk} />
+        </div>
       </div>
 
-      {/* Rekruttert */}
-      <div>
-        <p className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-widest text-[#0E9384]">Rekruttert</p>
-        <GoalCells monthly={rGoal} weekly={rWk} goalTotal={rGoal} weeklyTotal={rWk} />
-      </div>
-
-      {/* Status pill */}
-      <div>
+      {/* Status pill — desktop only (mobile has it in the header cluster above) */}
+      <div className="hidden sm:block">
         {loading ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.05] px-2 py-1 text-[10px] text-ab-fg-4">Laster…</span>
         ) : anyMonthly ? (
@@ -186,12 +198,13 @@ function TeamRow({ team, goal, loading, onEdit }: TeamRowProps) {
         )}
       </div>
 
-      <div className="text-right">
+      {/* Action — full-width button on mobile, right-aligned on desktop */}
+      <div className="mt-3 sm:mt-0 sm:text-right">
         {canEdit ? (
           <button
             type="button"
             onClick={onEdit}
-            className="inline-flex items-center gap-1.5 rounded-full border border-ab-line px-3 py-1.5 text-[11px] font-semibold text-ab-fg-2 transition-colors hover:border-aurora-amber/40 hover:text-ab-fg"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-full border border-ab-line px-3 py-1.5 text-[11px] font-semibold text-ab-fg-2 transition-colors hover:border-aurora-amber/40 hover:text-ab-fg"
           >
             <Pencil className="h-3 w-3" />
             Rediger
@@ -224,36 +237,50 @@ function CampaignRow({ campaign, goal, loading, onEdit }: CampaignRowProps) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="grid grid-cols-[minmax(0,1fr)_120px_120px_160px_100px] items-center gap-3 rounded-2xl border border-ab-line bg-ab-elevated px-4 py-3 hover:bg-white/[0.02] transition-colors"
+      className="rounded-2xl border border-ab-line bg-ab-elevated p-4 hover:bg-white/[0.02] transition-colors sm:grid sm:grid-cols-[minmax(0,1fr)_120px_120px_160px_100px] sm:items-center sm:gap-3 sm:py-3"
     >
-      <div className="min-w-0">
+      <div className="min-w-0 mb-3 sm:mb-0">
         <div className="flex items-center gap-2">
           <span
-            className="inline-flex h-7 w-7 items-center justify-center rounded-lg"
+            className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
             style={{ background: `linear-gradient(135deg, ${campaign.color}, ${campaign.color}88)` }}
           >
             <FolderOpen className="h-3.5 w-3.5 text-white" />
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-ab-fg">{campaign.name}</p>
             <p className="truncate text-[10px] text-ab-fg-4">
               {campaign.status === "active" ? "Aktiv" : campaign.status === "paused" ? "Pauset" : "Avsluttet"} · {campaign.employeeIds.length} promotør
             </p>
           </div>
+          <div className="flex-shrink-0 sm:hidden">
+            {loading ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-ab-fg-4">…</span>
+            ) : anyMonthly ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-medium text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
+                <CheckCircle2 className="h-2.5 w-2.5" /> Satt
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-medium text-rose-300 ring-1 ring-inset ring-rose-500/30">
+                Ikke satt
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      <div>
-        <p className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-widest text-[#8B5CF6]">Dører</p>
-        <GoalCells monthly={dGoal} weekly={dWk} goalTotal={dGoal} weeklyTotal={dWk} />
+      <div className="grid grid-cols-2 gap-3 sm:contents">
+        <div>
+          <p className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-widest text-[#8B5CF6]">Dører</p>
+          <GoalCells monthly={dGoal} weekly={dWk} goalTotal={dGoal} weeklyTotal={dWk} />
+        </div>
+        <div>
+          <p className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-widest text-[#0E9384]">Rekruttert</p>
+          <GoalCells monthly={rGoal} weekly={rWk} goalTotal={rGoal} weeklyTotal={rWk} />
+        </div>
       </div>
 
-      <div>
-        <p className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-widest text-[#0E9384]">Rekruttert</p>
-        <GoalCells monthly={rGoal} weekly={rWk} goalTotal={rGoal} weeklyTotal={rWk} />
-      </div>
-
-      <div>
+      <div className="hidden sm:block">
         {loading ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.05] px-2 py-1 text-[10px] text-ab-fg-4">Laster…</span>
         ) : anyMonthly ? (
@@ -267,12 +294,12 @@ function CampaignRow({ campaign, goal, loading, onEdit }: CampaignRowProps) {
         )}
       </div>
 
-      <div className="text-right">
+      <div className="mt-3 sm:mt-0 sm:text-right">
         {canEdit ? (
           <button
             type="button"
             onClick={onEdit}
-            className="inline-flex items-center gap-1.5 rounded-full border border-ab-line px-3 py-1.5 text-[11px] font-semibold text-ab-fg-2 transition-colors hover:border-aurora-amber/40 hover:text-ab-fg"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-full border border-ab-line px-3 py-1.5 text-[11px] font-semibold text-ab-fg-2 transition-colors hover:border-aurora-amber/40 hover:text-ab-fg"
           >
             <Pencil className="h-3 w-3" />
             Rediger
