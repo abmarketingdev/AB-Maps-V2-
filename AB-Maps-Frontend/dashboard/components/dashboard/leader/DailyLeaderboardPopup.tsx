@@ -83,7 +83,8 @@ export function DailyLeaderboardPopup({ campaignId, force = false }: DailyLeader
     if (typeof window === "undefined") return
     if (!force) {
       try {
-        if (window.sessionStorage.getItem(SESSION_KEY)) return
+        // Once per calendar day per user (localStorage persists across logout/login).
+        if (window.localStorage.getItem(dayKey(String(user.user_id)))) return
       } catch { /* private mode / disabled — fall through and show */ }
     }
     // Fetch today's data BEFORE opening — no flash of empty modal.
@@ -180,12 +181,10 @@ export function DailyLeaderboardPopup({ campaignId, force = false }: DailyLeader
                     {t("Dagens topplista")}
                   </p>
                   <h3 className="mt-0.5 font-instrument text-2xl leading-tight text-ab-fg">
-                    {t("Hvem leder i dag?")}
+                    {t("Topplister: Rekrutterere & dørbankere")}
                   </h3>
                   <p className="mt-1 text-xs text-ab-fg-3">
-                    {usingYesterday
-                      ? t("Ingen aktivitet registrert i dag ennå — viser gårsdagens topplista.")
-                      : t("Toppene av rekrutterte givere og dører banket akkurat nå.")}
+                    {t("Toppene av rekrutterte givere og dører banket akkurat nå.")}
                   </p>
                 </div>
                 <button
@@ -206,9 +205,7 @@ export function DailyLeaderboardPopup({ campaignId, force = false }: DailyLeader
 
               {/* Footer */}
               <div className="flex items-center justify-between border-t border-ab-line-1 bg-white/[0.02] px-6 py-3">
-                <p className="text-[10px] text-ab-fg-4">
-                  {t("Denne popup vises én gang per dag.")}
-                </p>
+                <span />
                 <button
                   type="button"
                   onClick={dismiss}
