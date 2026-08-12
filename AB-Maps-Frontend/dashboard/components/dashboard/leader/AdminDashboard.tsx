@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
-import { Shield, Users as UsersIcon, Building2 } from "lucide-react"
+import { Shield, Users as UsersIcon, Building2, CalendarRange } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useLang } from "@/lib/i18n"
 import { useSelectedCampaign } from "@/components/campaign/CampaignGuard"
@@ -14,6 +14,8 @@ import { LivePulseDot } from "./LivePulseDot"
 import { MalRow } from "./MalRow"
 import { TodayLeaderboardCard } from "./TodayDoorLeaderboard"
 import { DailyLeaderboardPopup } from "./DailyLeaderboardPopup"
+import { GoalQuickSet } from "./GoalQuickSet"
+import { GoalPrompts } from "./GoalPrompts"
 import { MonthPicker } from "./MonthPicker"
 import { SalesChiefPanel, groupTeamsByChief } from "./SalesChiefPanel"
 import { TopplisterRow } from "./TopplisterRow"
@@ -246,6 +248,8 @@ export function AdminDashboard() {
   const [loadingTeamIds, setLoadingTeamIds] = useState<Set<string>>(new Set())
   const loadedTeamIdsRef = useRef<Set<string>>(new Set())
   const [refreshTick, setRefreshTick] = useState(0)
+  const [quickSet, setQuickSet] = useState<{ open: boolean; focus?: "daily" | "weekly" }>({ open: false })
+  const teamsLite = teams.map((tm) => ({ id: tm.id, name: tm.name }))
 
   useEffect(() => {
     let cancelled = false
@@ -295,6 +299,11 @@ export function AdminDashboard() {
   return (
     <div className="min-h-screen bg-ab-base">
       <DailyLeaderboardPopup campaignId={campaignId} />
+      {quickSet.open && (
+        <GoalQuickSet teams={teamsLite} defaultPeriod={period} focus={quickSet.focus}
+          onClose={() => setQuickSet({ open: false })}
+          onSaved={() => { setQuickSet({ open: false }); setRefreshTick((n) => n + 1) }} />
+      )}
 
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute top-1/2 -right-40 h-96 w-96 rounded-full bg-aurora-amber/[0.05] blur-[120px]" />
@@ -339,12 +348,18 @@ export function AdminDashboard() {
                 </span>
                 <span className="text-ab-fg-3">·</span>
                 <MonthPicker value={period} onChange={setPeriod} />
+                <button type="button" onClick={() => setQuickSet({ open: true })}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-aurora-amber px-3 py-1.5 text-xs font-semibold text-black transition-colors hover:bg-aurora-amber/90">
+                  <CalendarRange className="h-3.5 w-3.5" /> {t("Sett mål")}
+                </button>
               </div>
             </div>
           </div>
         </motion.section>
 
         <div className="relative px-4 sm:px-6 py-6 sm:py-8 space-y-8">
+          <GoalPrompts teams={teamsLite} period={period} refreshTick={refreshTick}
+            onSet={(focus) => setQuickSet({ open: true, focus })} />
           {/* MÅL — org-wide aggregate (already sums across all teams for admin) */}
           <div>
             <SectionHeader label={t("Mål")} accent="teamleder" />

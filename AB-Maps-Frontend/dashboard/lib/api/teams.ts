@@ -266,6 +266,9 @@ export interface TeamGoalPayload {
   // Weekly fields (2026-08-06). null distinguishes "not set" from 0.
   doors_weekly_goal: number | null;
   recruited_weekly_goal: number | null;
+  // Daily fields (2026-08-12). null distinguishes "not set" from 0.
+  doors_daily_goal: number | null;
+  recruited_daily_goal: number | null;
   can_edit: boolean;
   updated_at: string | null;
   updated_by_id: string | null;
@@ -307,6 +310,9 @@ export async function saveTeamGoal(
     // Weekly fields — omit to leave unchanged, pass null to clear.
     doors_weekly_goal?: number | null;
     recruited_weekly_goal?: number | null;
+    // Daily fields — omit to leave unchanged, pass null to clear.
+    doors_daily_goal?: number | null;
+    recruited_daily_goal?: number | null;
   },
 ): Promise<TeamGoalPayload> {
   // Demo mode: no backend — fake a successful save so the modal closes
@@ -319,6 +325,8 @@ export async function saveTeamGoal(
       recruited_goal: body.recruited_goal,
       doors_weekly_goal: body.doors_weekly_goal ?? null,
       recruited_weekly_goal: body.recruited_weekly_goal ?? null,
+      doors_daily_goal: body.doors_daily_goal ?? null,
+      recruited_daily_goal: body.recruited_daily_goal ?? null,
       can_edit: true,
       updated_at: new Date().toISOString(),
       updated_by_id: null,
