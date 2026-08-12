@@ -16,6 +16,7 @@ import { TodayLeaderboardCard } from "./TodayDoorLeaderboard"
 import { DailyLeaderboardPopup } from "./DailyLeaderboardPopup"
 import { GoalQuickSet } from "./GoalQuickSet"
 import { GoalPrompts } from "./GoalPrompts"
+import { TodoCalendar } from "./TodoCalendar"
 import { MonthPicker } from "./MonthPicker"
 import { SalesChiefPanel, groupTeamsByChief } from "./SalesChiefPanel"
 import { TopplisterRow } from "./TopplisterRow"
@@ -364,6 +365,11 @@ export function AdminDashboard() {
           <div>
             <SectionHeader label={t("Mål")} accent="teamleder" />
             <MalRow period={period} />
+          </div>
+
+          <div>
+            <SectionHeader label={t("Min to-do")} accent="teamleder" />
+            <TodoCalendar />
           </div>
 
           {/* SANNTID (TOP HALF only — KPIs + trend + mood). Campaign-per-
