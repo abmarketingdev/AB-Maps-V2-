@@ -67,6 +67,111 @@ export function fetchMySalary(opts: { period?: string; campaignId?: string } = {
   return getJSON<MySalary>(`/api/hr/salary/me/${qs(opts)}`);
 }
 
+// ─── MÅL MÅNED aggregate (2026-08-06) ────────────────────────────────────────
+// Backend: hr-service GoalsSummaryView. Sums Phase D team_goals + actual
+// recruits across all teams the caller can see. Actual doors are fetched
+// separately from analytics-service (fetchEmployeeDoors) — hr-service
+// intentionally does not do cross-service HTTP calls.
+
+export interface GoalsPerTeamRow {
+  team_id: string;
+  team_name: string;
+  doors_goal: number;
+  recruited_goal: number;
+  recruited_actual: number;
+  /** Nullable — null when the team has never set a weekly goal. */
+  doors_weekly_goal: number | null;
+  recruited_weekly_goal: number | null;
+  recruited_weekly_actual: number;
+}
+
+export interface GoalsPerCampaignRow {
+  campaign_id: string;
+  doors_goal: number;
+  recruited_goal: number;
+  recruited_actual: number;
+  doors_weekly_goal: number | null;
+  recruited_weekly_goal: number | null;
+  recruited_weekly_actual: number;
+}
+
+export interface GoalsSummary {
+  period: string | null;
+  team_count: number;
+  campaign_count: number;
+  week_window?: { start: string; end: string };
+  monthly: {
+    recruited_goal: number;
+    recruited_actual: number;
+    doors_goal: number;
+  };
+  /** Weekly goal totals are null when NO team has weekly goals set (frontend
+   * uses null to hide the "/N" fraction on weekly cards). */
+  weekly: {
+    recruited_goal: number | null;
+    recruited_actual: number;
+    doors_goal: number | null;
+  };
+  campaign_monthly: {
+    recruited_goal: number;
+    recruited_actual: number;
+    doors_goal: number;
+  };
+  campaign_weekly: {
+    recruited_goal: number | null;
+    recruited_actual: number;
+    doors_goal: number | null;
+  };
+  per_team: GoalsPerTeamRow[];
+  per_campaign: GoalsPerCampaignRow[];
+}
+
+export function fetchGoalsSummary(opts: { period?: string; week?: string } = {}): Promise<GoalsSummary> {
+  const parts: string[] = [];
+  if (opts.period) parts.push(`period=${encodeURIComponent(opts.period)}`);
+  if (opts.week)   parts.push(`week=${encodeURIComponent(opts.week)}`);
+  const q = parts.length ? `?${parts.join('&')}` : '';
+  return getJSON<GoalsSummary>(`/api/hr/salary/goals-summary/${q}`);
+}
+
+// ─── MY GOALS — employee-scoped (2026-08-06) ─────────────────────────────────
+// Backend: hr-service MyGoalsView. Powers PromoterDashboard's MÅL section.
+// Combines personal counts + their team aggregate + campaign aggregate + a
+// derived "din andel" share (team_goal ÷ active team members, ceil-div).
+
+export interface MyGoalsBlock {
+  recruited_goal: number;
+  recruited_actual: number;
+  doors_goal: number;
+  recruited_weekly_goal: number | null;
+  recruited_weekly_actual: number;
+  doors_weekly_goal: number | null;
+}
+
+export interface MyGoalsPayload {
+  period: string | null;
+  team: { team_id: string; team_name: string; member_count: number } | null;
+  campaign_id: string | null;
+  week_window: { start: string; end: string };
+  personal: {
+    recruited_monthly: number;
+    recruited_weekly: number;
+    /** Derived: team_goal ÷ active member count (ceil). null when team has no goal set. */
+    recruited_goal_share_monthly: number | null;
+    recruited_goal_share_weekly: number | null;
+  };
+  team_goals: MyGoalsBlock;
+  campaign_goals: MyGoalsBlock;
+}
+
+export function fetchMyGoals(opts: { period?: string; week?: string } = {}): Promise<MyGoalsPayload> {
+  const parts: string[] = [];
+  if (opts.period) parts.push(`period=${encodeURIComponent(opts.period)}`);
+  if (opts.week)   parts.push(`week=${encodeURIComponent(opts.week)}`);
+  const q = parts.length ? `?${parts.join('&')}` : '';
+  return getJSON<MyGoalsPayload>(`/api/hr/salary/my-goals/${q}`);
+}
+
 /** Current period as YYYY-MM string (Oslo month) — helper for callers. */
 export function currentPeriod(): string {
   const now = new Date();

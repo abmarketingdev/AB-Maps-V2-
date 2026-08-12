@@ -11,6 +11,9 @@ import { SectionHeader } from "./SectionHeader"
 import { AuroraBg } from "./AuroraBg"
 import { AvatarStack } from "./Avatar"
 import { LivePulseDot } from "./LivePulseDot"
+import { MalRow } from "./MalRow"
+import { TodayLeaderboardCard } from "./TodayDoorLeaderboard"
+import { DailyLeaderboardPopup } from "./DailyLeaderboardPopup"
 import { MonthPicker } from "./MonthPicker"
 import { TeamPanel } from "./TeamPanel"
 import { TopplisterRow } from "./TopplisterRow"
@@ -35,8 +38,8 @@ const TEAM_COLOR_PALETTE = [
   "#8B5CF6", "#10B981", "#EC4899", "#06B6D4",
 ]
 
-async function fetchTeamsShallow(campaignId: string | undefined): Promise<TeamNode[]> {
-  const list = await listTeams({ pageSize: 50, campaignId })
+async function fetchTeamsShallow(campaignId: string | undefined, period: string): Promise<TeamNode[]> {
+  const list = await listTeams({ pageSize: 50, campaignId, period })
   return list.results.map((t, idx) => ({
     id: t.id,
     name: t.name,
@@ -47,8 +50,15 @@ async function fetchTeamsShallow(campaignId: string | undefined): Promise<TeamNo
     leaderContribution: 0,
     teamDoorsGoal: 0,        // fills in when the card expands
     teamRecruitedGoal: 0,    // fills in when the card expands
+    teamDoorsWeeklyGoal: null,     // fills in when the card expands
+    teamRecruitedWeeklyGoal: null, // fills in when the card expands
     canEditGoals: false,     // fills in when the card expands (from team_goals payload)
     memberCount: t.member_count,  // truthful pre-expansion count from listTeams
+    salesChiefId: t.sales_chief?.id ?? null,
+    salesChiefName: t.sales_chief?.name ?? null,
+    // Winning-team badge data, computed backend-side and shipped in the
+    // shallow list so the header chip paints on first load (2026-08-09).
+    recruitedTotal: t.recruited_total,
     promoters: [],           // empty until expanded
   }))
 }
@@ -57,6 +67,8 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
   promoters: TeamNode["promoters"]
   teamDoorsGoal: number
   teamRecruitedGoal: number
+  teamDoorsWeeklyGoal: number | null
+  teamRecruitedWeeklyGoal: number | null
   canEditGoals: boolean
 } | null> {
   const [detail, earnings] = await Promise.all([
@@ -95,6 +107,8 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
   return {
     teamDoorsGoal: tg?.doors_goal ?? 0,
     teamRecruitedGoal: tg?.recruited_goal ?? 0,
+    teamDoorsWeeklyGoal: tg?.doors_weekly_goal ?? null,
+    teamRecruitedWeeklyGoal: tg?.recruited_weekly_goal ?? null,
     canEditGoals: tg?.can_edit ?? false,
     promoters: detail.members
       .filter((m) => m.person_type === "employee")
@@ -118,6 +132,9 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
 // Salgsleder / Teamleder dashboard — Aurora Nordic redesign.
 // Route: /dashbord. Served to ALL non-employee roles (manager / admin /
 // superuser / sales_chief) per boss decision 2026-08-05.
+// Chief / manager / team-lead dashboard. Flat team list — the caller only
+// sees their own team(s) via backend scoping. Admin/superuser gets AdminDashboard
+// instead (2026-08-06 boss decision — 3-dashboard model).
 export function SalgslederDashboard() {
   const { user } = useAuth()
   const { t, lang } = useLang()
@@ -167,7 +184,7 @@ export function SalgslederDashboard() {
     // is period/campaign-specific and stale if the user switches either.
     loadedTeamIdsRef.current = new Set()
     setLoadingTeamIds(new Set())
-    fetchTeamsShallow(campaignId)
+    fetchTeamsShallow(campaignId, period)
       .then((shells) => { if (!cancelled) setTeams(shells) })
       .catch(() => { if (!cancelled) setTeams([]) })
     return () => { cancelled = true }
@@ -196,8 +213,42 @@ export function SalgslederDashboard() {
   const totalPromoters = teams.reduce((s, tm) => s + (tm.memberCount ?? tm.promoters.length), 0)
   const leaderNames = teams.map((tm) => tm.managerName)
 
+  // Winning team = team with the highest recruit count (primary), with doors
+  // as tiebreaker so fresh months where nobody has recruited yet still get a
+  // meaningful winner based on activity. Uses backend `recruitedTotal` (from
+  // the shallow list) OR the sum of loaded promoters, whichever is greater —
+  // both are valid signals and either can go stale/0 in edge cases.
+  // Refuses to declare a winner when literally no activity exists (correct —
+  // nothing to celebrate). 2026-08-10 metric + tiebreaker rewrite.
+  const winningTeamId = (() => {
+    let bestId: string | null = null
+    let bestRec = 0
+    let bestDoors = 0
+    for (const tm of teams) {
+      // Skip lone-chief "teams" (memberCount < 2). Their recruit total is
+      // the chief's personal sales, not team performance, and the card would
+      // show "Ingen promotører" when expanded (2026-08-10 bug).
+      if ((tm.memberCount ?? tm.promoters.length) < 2) continue
+      const rec = Math.max(
+        tm.recruitedTotal ?? 0,
+        tm.promoters.reduce((s, p) => s + p.recruited, 0),
+      )
+      const doors = tm.promoters.reduce((s, p) => s + p.doors, 0)
+      if (rec > bestRec || (rec === bestRec && doors > bestDoors)) {
+        bestId = tm.id
+        bestRec = rec
+        bestDoors = doors
+      }
+    }
+    return bestRec > 0 || bestDoors > 0 ? bestId : null
+  })()
+
   return (
     <div className="min-h-screen bg-ab-base">
+      {/* Daily leaderboard popup (client ask 2026-08-08) — first-load
+          motivational modal, gated to once/day per user via localStorage. */}
+      <DailyLeaderboardPopup campaignId={campaignId} />
+
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute top-1/2 -right-40 h-96 w-96 rounded-full bg-aurora-amber/[0.05] blur-[120px]" />
         <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-aurora-sunrise/[0.05] blur-[100px]" />
@@ -241,12 +292,34 @@ export function SalgslederDashboard() {
         </motion.section>
 
         <div className="relative px-4 sm:px-6 py-6 sm:py-8 space-y-8">
-          {/* MÅL MÅNED + MÅL UKE remain hidden until Phase D (Goals endpoint).
-              LØNN + EstimatedSalaryBand were unhidden Phase 2+5 (2026-08-05):
-              components self-hide (render null) when the salary endpoint
-              feature-flag is OFF or returns unavailable — never fake data. */}
+          {/* ═════════════════ MÅL MÅNED + MÅL UKE (2026-08-06 boss request) ═════════════════
+              Renders team-goal aggregate cards at the top of the dashboard,
+              matching the local-demo look. Self-hides gracefully when no team
+              goals are set for the period (empty state prompts user to set
+              goals via the pencil icon on team cards below). Weekly cards are
+              scaffolded but hidden pending a per-day analytics endpoint. */}
+          <div>
+            <SectionHeader label={t("Mål")} accent="teamleder" />
+            <MalRow period={period} />
+          </div>
 
-          {/* ═════════════════ Team ═════════════════ */}
+          {/* SANNTID (TOP HALF only — KPIs + trend + mood) — moved up
+              2026-08-09. Campaign-per-recruits + live activity split off to
+              the very bottom per client ask. */}
+          <div>
+            <SectionHeader label={t("Sanntid")} accent="teamleder" right={<LivePulseDot label={t("Live")} />} />
+            <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Live tall og trend for hele teamet ditt")}</p>
+            <EmbeddedManagerWidgets part="top" />
+          </div>
+
+          {/* Today's leaderboards — 2-col grid (doors + recruits) between
+              SANNTID and Team drill-down. */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TodayLeaderboardCard campaignId={campaignId} metric="doors" />
+            <TodayLeaderboardCard campaignId={campaignId} metric="recruited" />
+          </div>
+
+          {/* ═════════════════ Team — flat list scoped to caller ═════════════════ */}
           <div>
             <SectionHeader label={t("Team")} accent="teamleder" />
             <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Klikk et team for å se promotørene bak tallene")}</p>
@@ -256,16 +329,15 @@ export function SalgslederDashboard() {
               loadingTeamIds={loadingTeamIds}
               onTeamExpand={loadTeamDetail}
               onGoalSaved={(teamId) => { if (teamId) loadTeamDetail(teamId, true) }}
+              winningTeamId={winningTeamId}
             />
           </div>
 
-          {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}
-          <div className="space-y-3">
-            <SectionHeader label={t("Lønn")} accent="teamleder" />
-            <p className="pl-4 text-[11px] text-ab-fg-3">{t("Klikk Sum vervinger eller Lederprovisjon for team-fordeling")}</p>
-            <LonnRowSalgsleder period={period} campaignId={campaignId} campaignName={selectedCampaign?.name} />
-            <EstimatedSalaryBand period={period} campaignId={campaignId} />
-          </div>
+
+          {/* ═════════════════ Lønn section hidden for now (salary feature not ready to show) ═════════════════
+              Client hasn't asked for LØNN visibility yet — kept commented to match
+              prod. Un-comment when client explicitly requests. All backing endpoints
+              + components exist and are wired (Phase 2+5, feature-flagged). */}
 
           {/* ═════════════════ Topplister ═════════════════ */}
           <div>
@@ -273,11 +345,11 @@ export function SalgslederDashboard() {
             <TopplisterRow campaignId={campaignId} />
           </div>
 
-          {/* ═════════════════ Sanntid — live widgets from prod manager view ═════════════════ */}
+          {/* Rekrutterte per kampanje + Live aktivitet — moved to the very
+              bottom per client ask 2026-08-09. Less time-critical than the
+              KPIs/trend up top, but still useful reference material. */}
           <div>
-            <SectionHeader label={t("Sanntid")} accent="teamleder" right={<LivePulseDot label={t("Live")} />} />
-            <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Live tall og trend for hele teamet ditt")}</p>
-            <EmbeddedManagerWidgets />
+            <EmbeddedManagerWidgets part="bottom" />
           </div>
         </div>
       </div>

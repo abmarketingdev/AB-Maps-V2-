@@ -71,15 +71,17 @@ export const demoMood: MoodCount[] = [
 ]
 
 // ─── Kampanjestatus — 8 active campaigns (real names from prod screenshot) ─
+// 2026-08-08: added ja + jaRate to match the new CampaignHealthBar hero
+// number (recruits instead of doors, per boss request). ja ≈ current * jaRate.
 export const demoCampaigns: CampaignHealthItem[] = [
-  { id: "1", name: "Talkmore",                    target: 10000, current: 8707,   employees: 22, color: "#10b981", daysLeft: 12 },
-  { id: "2", name: "Strømmestiftelsen",           target: 20000, current: 18848,  employees: 29, color: "#ec4899", daysLeft: 5  },
-  { id: "3", name: "Nasjonalforeningen for folkehelsen", target: 70000, current: 62986, employees: 18, color: "#f97316", daysLeft: 22 },
-  { id: "4", name: "Norsk Folkehjelp",            target: 250000,current: 228575, employees: 213,color: "#10b981", daysLeft: 40 },
-  { id: "5", name: "Blå Kors",                    target: 40000, current: 31954,  employees: 50, color: "#3b82f6", daysLeft: 18 },
-  { id: "6", name: "NRC",                         target: 280000,current: 243251, employees: 207,color: "#f97316", daysLeft: 30 },
-  { id: "7", name: "CARE",                        target: 30000, current: 24807,  employees: 10, color: "#f59e0b", daysLeft: 9  },
-  { id: "8", name: "Homely",                      target: 1500,  current: 898,    employees: 4,  color: "#10b981", daysLeft: 6  },
+  { id: "1", name: "Talkmore",                    target: 10000, current: 8707,   employees: 22, color: "#10b981", daysLeft: 12, ja: 384, jaRate: 4.4 },
+  { id: "2", name: "Strømmestiftelsen",           target: 20000, current: 18848,  employees: 29, color: "#ec4899", daysLeft: 5,  ja: 962, jaRate: 5.1 },
+  { id: "3", name: "Nasjonalforeningen for folkehelsen", target: 70000, current: 62986, employees: 18, color: "#f97316", daysLeft: 22, ja: 2202, jaRate: 3.5 },
+  { id: "4", name: "Norsk Folkehjelp",            target: 250000,current: 228575, employees: 213,color: "#10b981", daysLeft: 40, ja: 11429, jaRate: 5.0 },
+  { id: "5", name: "Blå Kors",                    target: 40000, current: 31954,  employees: 50, color: "#3b82f6", daysLeft: 18, ja: 1246, jaRate: 3.9 },
+  { id: "6", name: "NRC",                         target: 280000,current: 243251, employees: 207,color: "#f97316", daysLeft: 30, ja: 13379, jaRate: 5.5 },
+  { id: "7", name: "CARE",                        target: 30000, current: 24807,  employees: 10, color: "#f59e0b", daysLeft: 9,  ja: 1042, jaRate: 4.2 },
+  { id: "8", name: "Homely",                      target: 1500,  current: 898,    employees: 4,  color: "#10b981", daysLeft: 6,  ja: 27,  jaRate: 3.0 },
 ]
 
 // ─── Live aktivitet — recent knock events, style matches prod ───────────

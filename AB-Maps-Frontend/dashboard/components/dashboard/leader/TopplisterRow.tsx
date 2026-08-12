@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
-import { Trophy } from "lucide-react"
+import { Trophy, Medal } from "lucide-react"
 import { RoyMascot, MOOD_TO_ROY } from "@/components/gamification/RoyMascot"
 import { computeMood } from "@/components/gamification/lib/mood"
 import { fetchLeaderboard, type LeaderItem } from "@/lib/api/dashboardOverview"
 import { useLang } from "@/lib/i18n"
 
-const RANK_COLORS = ["#f59e0b", "#94a3b8", "#cd7f32", "rgba(255,255,255,0.3)", "rgba(255,255,255,0.3)"]
+// Gold / silver / bronze / amber / amber for ranks 1-5. Every top-5 row
+// now reads as a badge (client ask 2026-08-08 — "top 5 får en egen badge").
+const RANK_COLORS = ["#f59e0b", "#94a3b8", "#cd7f32", "#f59e0b", "#f59e0b"]
+// Legacy dim colour kept for anything rendering rank 6+ (currently nothing
+// on the dashboard — TopplisterRow always limits to 5 — but future-proof).
+const RANK_DIM = "rgba(255,255,255,0.3)"
 
 // Renders exactly one leaderboard column with a fixed title (no metric switcher).
 // Row rendering is identical to the prod LeaderboardPanel — same RoyMascot,
@@ -51,13 +56,28 @@ function LeaderColumn({
             transition={{ delay: delay + 0.15 + i * 0.06, duration: 0.35 }}
             className="group flex items-center gap-3 rounded-xl border border-transparent p-2 transition-all duration-200 hover:border-ab-line hover:bg-ab-hover"
           >
-            {/* Rank medal */}
-            <span
-              className="w-6 shrink-0 text-center font-mono text-sm font-bold"
-              style={{ color: RANK_COLORS[i] ?? "rgba(255,255,255,0.3)" }}
-            >
-              {entry.rank}
-            </span>
+            {/* Rank medal badge — every top-5 row is now visibly a badge
+                (gold for 1, silver for 2, bronze for 3, amber for 4-5).
+                Medal icon overlays rank 1-3 for extra weight. */}
+            {(() => {
+              const color = RANK_COLORS[i] ?? RANK_DIM
+              const isTop3 = i < 3
+              return (
+                <span
+                  className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold text-black"
+                  style={{
+                    background: color,
+                    boxShadow: isTop3 ? `0 0 12px ${color}66, inset 0 1px 0 rgba(255,255,255,0.3)` : `inset 0 1px 0 rgba(255,255,255,0.15)`,
+                  }}
+                  title={`Top ${entry.rank}`}
+                >
+                  {isTop3 && (
+                    <Medal className="absolute -top-1 -right-1 h-3.5 w-3.5" style={{ color, filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))" }} aria-hidden />
+                  )}
+                  {entry.rank}
+                </span>
+              )
+            })()}
 
             {/* Roy mascot — same size + accent handling as prod LeaderboardPanel */}
             <div className="relative shrink-0">

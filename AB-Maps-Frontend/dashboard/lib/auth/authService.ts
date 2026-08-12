@@ -34,6 +34,10 @@ export interface LoginResponse {
   user_info: UserInfo;
   expires_in: number;
   is_sales_chief?: boolean;
+  // Returned instead of tokens when the user has never set a password (admin-created).
+  must_set_password?: boolean;
+  uid?: string;
+  token?: string;
 }
 
 export interface RefreshResponse {
@@ -90,6 +94,19 @@ class AuthService {
       }
 
       const loginData: LoginResponse = await response.json();
+
+      // New user who never set a password: the backend returns a one-time set-password
+      // token instead of JWTs. Surface it as an error carrying uid/token so the login
+      // page can redirect to /set-password.
+      if (loginData.must_set_password) {
+        const e = new Error("must_set_password") as Error & {
+          mustSetPassword?: boolean; uid?: string; token?: string;
+        };
+        e.mustSetPassword = true;
+        e.uid = loginData.uid;
+        e.token = loginData.token;
+        throw e;
+      }
 
       // Store tokens and user data
       this.storeTokens({

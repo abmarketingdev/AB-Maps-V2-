@@ -58,7 +58,7 @@ const LearningPlatform = () => {
         <div className="text-center">
           <Image
             src="/abmarketing.png"
-            alt="AB Academy Logo"
+            alt="Learning Academy Logo"
             width={180}
             height={48}
             className="object-contain mx-auto mb-6"
@@ -76,7 +76,7 @@ const LearningPlatform = () => {
         <div className="text-center">
           <Image
             src="/abmarketing.png"
-            alt="AB Academy Logo"
+            alt="Learning Academy Logo"
             width={180}
             height={48}
             className="object-contain mx-auto mb-6"

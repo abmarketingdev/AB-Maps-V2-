@@ -2120,14 +2120,14 @@ function DashboardShell({
               {/* Theme toggle — light/dark switch */}
               <ThemeToggle className="h-9 w-9 rounded-lg" />
 
-              {/* Læringsplattform — ghost link with external glyph */}
+              {/* Learning Academy — ghost link with external glyph */}
               <button
                 type="button"
                 onClick={onLearning}
                 className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-ab-fg-2 hover:text-ab-fg hover:bg-ab-hover text-[13px] font-medium transition-all duration-120"
               >
                 <BookOpen className="h-4 w-4" />
-                Læringsplattform
+                Learning Academy
                 <ArrowUpRight className="h-3.5 w-3.5 -translate-y-px text-ab-fg-3" />
               </button>
 

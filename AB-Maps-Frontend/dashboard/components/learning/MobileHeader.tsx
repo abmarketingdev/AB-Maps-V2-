@@ -223,7 +223,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                           ))}
                           
                           <div className="pt-4 border-t mt-4">
-                            <p className="text-xs text-gray-500 mb-2 px-2">Læringsplattform</p>
+                            <p className="text-xs text-gray-500 mb-2 px-2">Learning Academy</p>
                             <div className="text-sm text-gray-700 px-2 font-medium">
                               {title}
                             </div>

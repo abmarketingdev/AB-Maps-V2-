@@ -201,7 +201,7 @@ export function CompletionCheckPopup({
               <div className="flex-1">
                 <p className="text-sm text-blue-900">
                   Du må fullføre alle seksjoner i kurset før du kan få tilgang til alle funksjoner i dashbordet.
-                  Gå til AB Academy for å fullføre de manglende seksjonene.
+                  Gå til Learning Academy for å fullføre de manglende seksjonene.
                 </p>
               </div>
             </div>
@@ -222,7 +222,7 @@ export function CompletionCheckPopup({
             className="w-full sm:w-auto"
           >
             <BookOpen className="h-4 w-4 mr-2" />
-            Gå til AB Academy
+            Gå til Learning Academy
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -28,6 +28,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Sparkles,
+  Target,
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 
@@ -97,13 +98,14 @@ const PAGE_TITLES: Record<string, string> = {
   "/las-opp-las-omrader/unlock-areas": "Lås opp områder",
   "/campaigns": "Kampanje",
   "/employee": "Ansatt",
-  "/learning-platform": "AB Academy",
+  "/learning-platform": "Learning Academy",
   "/learning-dashboard": "Læringsoversikt",
   "/admin-dashboard": "Admin Dashboard",
   "/analytics": "Analytics",
   "/admin/tasks": "Tildel oppgaver",
   "/uploaded-addresses": "Legg til adresse",
   "/teams": "Team",
+  "/mal-innstillinger": "Mål-innstillinger",
 }
 
 export const CampaignContext = createContext({
@@ -391,10 +393,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     // Campaign teams — managers (own teams), sales chiefs + admins (all teams).
     if (isStaff || isSuperuser || isSalesChief) {
       items.push({ href: "/teams", title: "Team", icon: <Users className="h-4 w-4" />, group: "TEAM" })
+      // Goal-settings — same audience as Team management. Server-side per-row
+      // permission still enforces who can actually write (leader/chief/HR-staff).
+      items.push({ href: "/mal-innstillinger", title: "Mål-innstillinger", icon: <Target className="h-4 w-4" />, group: "TEAM" })
     }
     items.push({
       href: "/learning-platform",
-      title: isSuperuser ? "Læringsadminpanel" : "AB Academy",
+      title: isSuperuser ? "AB Academy Learning Panel" : "Learning Academy",
       icon: <BookOpen className="h-4 w-4" />,
       group: "LÆRING",
     })

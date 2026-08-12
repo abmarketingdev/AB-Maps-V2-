@@ -16,6 +16,8 @@ import { MonthPicker } from "./MonthPicker"
 import { TopplisterRow } from "./TopplisterRow"
 import { LonnRowPromoter } from "./LonnRowPromoter"
 import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
+import { PromoterMalRow } from "./PromoterMalRow"
+import { TodayLeaderboardCard } from "./TodayDoorLeaderboard"
 
 // Promotør dashboard — Aurora Nordic redesign.
 // Route: /employee/dashbord.
@@ -61,6 +63,11 @@ function PromoterDashboardInner() {
 
   return (
     <div className="min-h-screen bg-ab-base">
+      {/* Popup intentionally NOT rendered here — client decision 2026-08-09:
+          leaders (chief/admin) get the daily topplista popup at login; the
+          promoter view is quieter, with just the persistent 2-card leaderboard
+          strip mid-page as the "who's leading today" signal. */}
+
       {/* Ambient blob glows for pages without hero */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute top-1/2 -right-40 h-96 w-96 rounded-full bg-aurora-sunrise/[0.05] blur-[120px]" />
@@ -119,6 +126,19 @@ function PromoterDashboardInner() {
             <SectionHeader label={t("Din dag")} accent="teamleder" right={<LivePulseDot label={t("Live")} />} />
             <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Sanntid — oppdateres hvert 20. sekund")}</p>
             <EmbeddedPromoterWidgets />
+          </div>
+
+          {/* Today's leaderboards — 2-col grid (doors + recruits) between
+              Din dag and Mål. Motivational "who's leading today". */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TodayLeaderboardCard campaignId={campaignId} metric="doors" />
+            <TodayLeaderboardCard campaignId={campaignId} metric="recruited" />
+          </div>
+
+          {/* ═════════════════ Mål (2026-08-06) — personal + team + campaign view ═════════════════ */}
+          <div className="space-y-3">
+            <SectionHeader label={t("Mål")} accent="teamleder" />
+            <PromoterMalRow period={period} campaignId={campaignId} />
           </div>
 
           {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}

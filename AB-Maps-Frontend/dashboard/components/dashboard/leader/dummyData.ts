@@ -47,12 +47,25 @@ export type TeamNode = {
   // hides the "/N" fraction on team-total chips + progress bar denominator).
   teamDoorsGoal?: number
   teamRecruitedGoal?: number
+  // Weekly variants (2026-08-06). null = never set (weekly cards hidden).
+  teamDoorsWeeklyGoal?: number | null
+  teamRecruitedWeeklyGoal?: number | null
   // Frontend hint from backend team_goals.can_edit — shows pencil icon when true.
   canEditGoals?: boolean
+  // Sales-chief info from the shallow list (2026-08-06). Powers the admin-view
+  // chief grouping. null when the team has no chief assigned.
+  salesChiefId?: string | null
+  salesChiefName?: string | null
   // Populated from the shallow /api/hr/teams/ list even before the card is
   // expanded (so the "N promotører" header line is truthful pre-expansion).
   // Falls back to promoters.length when not set.
   memberCount?: number
+  // Team-level recruit count for the current period, backend-computed and
+  // returned on the shallow list (2026-08-09). Lets us paint the winning-team
+  // badge on first load WITHOUT waiting for per-team detail expansion.
+  // Undefined when the backend hasn't shipped the field yet — winner calc
+  // falls back to summing loaded promoters.
+  recruitedTotal?: number
 }
 
 export const teams: TeamNode[] = [

@@ -142,10 +142,59 @@ export async function fetchTrends(range: DashRange, campaignId?: string): Promis
   return mapTrends(await getJSON<RawTrends>(`/api/dashboard/v2/trends/${qp({ range, campaign_id: campaignId })}`));
 }
 
-export async function fetchLeaderboard(metric: LeaderMetric, limit = 5, campaignId?: string): Promise<LeaderItem[]> {
+/** `date` = YYYY-MM-DD narrows the leaderboard to that single day (Oslo). Used
+ *  by the "Toppene i dag" tile (2026-08-08 client ask). Omit for the default
+ *  30-day rolling window. Backend rejects malformed date with 400 — caller
+ *  should handle. */
+export async function fetchLeaderboard(metric: LeaderMetric, limit = 5, campaignId?: string, date?: string): Promise<LeaderItem[]> {
+  // DEMO_MODE: return mock top-5 rows so the frontend can preview badges +
+  // layouts without a backend. Real prod (env unset) hits the real endpoint.
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return demoLeaderboard(metric, limit);
+  }
   return mapLeaderboard(await getJSON<RawLeaderboard>(
-    `/api/dashboard/v2/leaderboard/${qp({ metric, limit: String(limit), campaign_id: campaignId })}`,
+    `/api/dashboard/v2/leaderboard/${qp({ metric, limit: String(limit), campaign_id: campaignId, date })}`,
   ));
+}
+
+// ─── DEMO fixtures ────────────────────────────────────────────────────────────
+// Kept in this file so the fetch adapters are the single seam that switches
+// between demo and prod. Client demos see realistic top-5 rows with names,
+// scores, mood — everything the widgets need to render honestly.
+const DEMO_NAMES = [
+  'Kari Nordmann',   'Ida Solberg',     'Erik Hauge',      'Marius Holte',    'Nora Berg',
+  'Selma Nes',       'Kasper Lie',      'Petter Ås',       'Rikke Larsen',    'Line Nilsen',
+];
+const DEMO_REGIONS = ['Oslo Nord', 'Oslo Sør', 'Bergen Vest', 'Stavanger', 'Kristiansand', 'Tromsø'];
+
+function demoLeaderboard(metric: LeaderMetric, limit: number): LeaderItem[] {
+  // Deterministic per metric so the rows don't change between renders. Each
+  // metric orders a different set of promoters at the top so the client sees
+  // "different winners per column" — matches how real leaderboards look.
+  const seed = metric === 'doors' ? 0 : metric === 'recruited' ? 3 : 6;
+  return Array.from({ length: limit }).map((_, i) => {
+    const nameIdx = (seed + i) % DEMO_NAMES.length;
+    const regionIdx = (seed + i) % DEMO_REGIONS.length;
+    const dorerPerDag = 60 - i * 4 - (metric === 'doors' ? 0 : 8);
+    const jaProsent = 42 - i * 2 - (metric === 'recruited' ? 0 : 6);
+    // Realistic ranges so demo mode reflects real display: recruits are
+    // small integer counts (max ~20/day/person); doors are day totals
+    // (typically 100-250). Prevents nonsense demo values like "208 rekrutt".
+    const score = metric === 'recruited' ? Math.max(1, 18 - i * 3) : (200 - i * 22);
+    return {
+      rank: i + 1,
+      name: DEMO_NAMES[nameIdx],
+      region: DEMO_REGIONS[regionIdx],
+      dorerPerDag,
+      jaProsent,
+      minJaProsent: 25,
+      minDorerPerDag: 40,
+      rankPercentile: 100 - i * 15,
+      daysOnPlatform: 120 - i * 8,
+      score,
+      online: i < 3,   // top 3 shown as currently online
+    };
+  });
 }
 
 export async function fetchActivities(limit = 50, campaignId?: string): Promise<ActivityItem[]> {

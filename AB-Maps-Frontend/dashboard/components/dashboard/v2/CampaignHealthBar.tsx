@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, useReducedMotion } from "framer-motion"
-import { Megaphone, Users, DoorOpen } from "lucide-react"
+import { Megaphone, Users, DoorOpen, UserPlus } from "lucide-react"
 import type { CampaignHealthItem } from "@/lib/api/dashboardOverview"
 
 type Campaign = CampaignHealthItem
@@ -27,12 +27,17 @@ interface CampaignHealthBarProps {
 // rows so screen space isn't wasted — 8 campaigns fit in a compact 2-column
 // grid on desktop, one-per-row on mobile. Aesthetic matches TeamPanel on the
 // Salgsleder dashboard: campaign-colored top strip + soft radial glow,
-// prominent hero number (dører), ja-rate pill top-right, employees badge
-// bottom-left. Per-team goals live on the Salgsleder dashboard TeamPanel.
+// prominent hero number, ja-rate pill top-right, employees badge bottom-left.
+//
+// 2026-08-08 (v4): hero number swapped from doors → RECRUITS (ja count) per
+// client ask "Antall rekrutterte istedenfor kampanjestatus" — the "campaign
+// status" concept is retired, this widget now emphasises how many donors
+// each campaign has actually recruited. Doors moved to secondary line.
+// Volume bar scaled against the campaign with the most recruits.
 export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarProps) {
   const reduced = useReducedMotion()
   const CAMPAIGNS = campaigns ?? []
-  const maxDoors = CAMPAIGNS.reduce((m, c) => Math.max(m, c.current), 1)
+  const maxRecruits = CAMPAIGNS.reduce((m, c) => Math.max(m, c.ja ?? 0), 1)
 
   return (
     <motion.div
@@ -44,11 +49,11 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-ab-fg">Kampanjestatus</h3>
-          <p className="mt-0.5 text-xs text-ab-fg-3">Aktivitet per kampanje</p>
+          <h3 className="text-sm font-semibold text-ab-fg">Rekrutterte per kampanje</h3>
+          <p className="mt-0.5 text-xs text-ab-fg-3">Nye givere denne perioden</p>
         </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/15">
-          <Megaphone className="h-4 w-4 text-cyan-400" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15">
+          <UserPlus className="h-4 w-4 text-emerald-400" />
         </div>
       </div>
 
@@ -57,7 +62,8 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
         {CAMPAIGNS.map((c, i) => {
           const jaRate = c.jaRate ?? 0
           const jaColor = jaRateColor(jaRate)
-          const volumePct = Math.round((c.current / maxDoors) * 100)
+          const recruits = c.ja ?? 0
+          const volumePct = maxRecruits > 0 ? Math.round((recruits / maxRecruits) * 100) : 0
           return (
             <motion.div
               key={c.id}
@@ -96,16 +102,16 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
                   </span>
                 </div>
 
-                {/* Hero number */}
+                {/* Hero number — recruits (ja count) per client ask 2026-08-08 */}
                 <div className="mt-3 flex items-baseline gap-1.5">
-                  <DoorOpen className="h-3.5 w-3.5 text-ab-fg-4" />
+                  <UserPlus className="h-3.5 w-3.5 text-emerald-400" />
                   <span className="font-mono text-2xl font-bold tabular-nums text-ab-fg">
-                    {c.current.toLocaleString("nb-NO")}
+                    {recruits.toLocaleString("nb-NO")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-wider text-ab-fg-4">dører</span>
+                  <span className="text-[10px] uppercase tracking-wider text-ab-fg-4">rekruttert</span>
                 </div>
 
-                {/* Relative-volume bar — shows this campaign's doors vs the busiest one */}
+                {/* Relative-volume bar — this campaign's recruits vs the top-recruiter one */}
                 <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.04]">
                   <motion.div
                     initial={reduced ? false : { width: "0%" }}
@@ -119,14 +125,16 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
                   />
                 </div>
 
-                {/* Footer: employees badge */}
+                {/* Footer: employees badge + secondary doors count so the metric
+                    is still visible without dominating */}
                 <div className="mt-3 flex items-center justify-between text-[11px] text-ab-fg-3">
                   <span className="inline-flex items-center gap-1 rounded-full border border-ab-line-1 bg-white/[0.02] px-2 py-0.5 font-mono tabular-nums">
                     <Users className="h-3 w-3 text-ab-fg-4" />
                     {c.employees}
                   </span>
-                  <span className="font-mono text-[10px] text-ab-fg-4 tabular-nums">
-                    {volumePct}% av topp
+                  <span className="inline-flex items-center gap-1 font-mono text-[10px] text-ab-fg-4 tabular-nums" title="Antall dører banket">
+                    <DoorOpen className="h-3 w-3" />
+                    {c.current.toLocaleString("nb-NO")}
                   </span>
                 </div>
               </div>

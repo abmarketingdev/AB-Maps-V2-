@@ -11,7 +11,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
   Plus, Search, Shield, Users, UserCog, MoreHorizontal, Pencil, Trash2,
-  ChevronUp, ChevronDown, X, Mail, Phone, Star, Crown, Eye, EyeOff,
+  ChevronUp, ChevronDown, X, Mail, Phone, Star, Crown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { RoyMascot, type RoyState } from "@/components/gamification/RoyMascot"
@@ -354,15 +354,6 @@ export function AdminDashboardView() {
 
 // ─── Modals ───────────────────────────────────────────────────────────────────
 
-function pwScore(pw: string) {
-  let s = 0
-  if (pw.length >= 8) s++
-  if (/[A-Z]/.test(pw)) s++
-  if (/[0-9]/.test(pw)) s++
-  if (/[^A-Za-z0-9]/.test(pw)) s++
-  return s
-}
-
 function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
   modal: ModalKind; onClose: () => void; onChangeRole: (u: User, to: Role) => void; onDelete: (u: User) => void; onChanged: () => void
 }) {
@@ -378,9 +369,6 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
   const [dept, setDept] = useState<Dept>("maps")
   const [abId, setAbId] = useState("")
   const [salesChief, setSalesChief] = useState(false)
-  const [pw, setPw] = useState("")
-  const [showPw, setShowPw] = useState(false)
-  const [welcome, setWelcome] = useState(true)
   const [reason, setReason] = useState("")
   // Optional team appointment on register (Feature 9).
   const [teamId, setTeamId] = useState("")
@@ -394,7 +382,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
       setFirstName(u.firstName); setLastName(u.lastName); setUsername(u.username); setEmail(u.email); setPhone(u.phone)
       setRole(u.role); setDept(u.dept ?? "maps"); setAbId(u.abId ?? ""); setSalesChief(!!u.isSalesChief)
     } else if (modal.kind === "register") {
-      setFirstName(""); setLastName(""); setUsername(""); setEmail(""); setPhone(""); setRole("employee"); setDept("maps"); setAbId(""); setSalesChief(false); setPw(""); setWelcome(true)
+      setFirstName(""); setLastName(""); setUsername(""); setEmail(""); setPhone(""); setRole("employee"); setDept("maps"); setAbId(""); setSalesChief(false)
       setTeamId(""); setTeamName("")
     } else if (modal.kind === "promote") { setReason("") }
   }, [modal])
@@ -440,8 +428,8 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
 
   // register / edit
   const isReg = modal.kind === "register"
-  const score = pwScore(pw)
-  const valid = firstName.trim() && lastName.trim() && email.trim() && (!isReg || (username.trim() && score === 4))
+  // No password at creation — the user sets their own via the welcome email / set-password flow.
+  const valid = firstName.trim() && lastName.trim() && email.trim() && (!isReg || username.trim())
   const submit = async () => {
     if (!valid || saving) return
     setSaving(true); setErr("")
@@ -451,13 +439,11 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
         // (HR has no admin tier, so an admin's dept is clamped to maps/qc).
         const body: Record<string, unknown> = {
           username: username.trim(), email: email.trim(),
-          password: pw, password_confirm: pw,
           first_name: firstName.trim(), last_name: lastName.trim(), phone: phone.trim(),
           user_type: role === "admin" ? "superuser" : role,
           ab_person_id: abId.trim() || undefined,
           // Only managers can be sales chiefs.
           is_sales_chief: role === "manager" ? salesChief : false,
-          send_welcome_email: welcome,
         }
         if (role === "employee") body.employee_type = `${dept}_emp`
         if (role === "admin") body.admin_type = `${dept === "hr" ? "maps" : dept}_admin`
@@ -523,17 +509,12 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
           <div><Lbl>AB Person-ID</Lbl><input value={abId} onChange={e => setAbId(e.target.value.replace(/\D/g, "").slice(0, 16))} className={inputCls} placeholder="AB Person-ID" /></div>
         )}
 
-        {/* Password (register only) */}
+        {/* Password is NOT set here — the user creates their own via the welcome email
+            (or the set-password redirect on first login). */}
         {isReg && (
-          <div>
-            <Lbl>Passord</Lbl>
-            <div className="relative">
-              <input type={showPw ? "text" : "password"} value={pw} onChange={e => setPw(e.target.value)} className={inputCls + " pr-10"} placeholder="Min. 8 tegn, stor bokstav, tall, symbol" />
-              <button onClick={() => setShowPw(s => !s)} className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-ab-fg-4 hover:text-ab-fg">{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
-            </div>
-            <div className="mt-2 flex gap-1">
-              {[0, 1, 2, 3].map(i => <div key={i} className="h-1 flex-1 rounded-full transition-colors" style={{ background: i < score ? (score <= 2 ? "#f43f5e" : score === 3 ? "#f59e0b" : "#10b981") : "rgba(255,255,255,0.1)" }} />)}
-            </div>
+          <div className="rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 flex items-start gap-2">
+            <Mail className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+            <span className="text-xs text-ab-fg-3">Brukeren får en e-post med lenke for å opprette sitt eget passord. Ingen passord settes her.</span>
           </div>
         )}
 
@@ -590,12 +571,6 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
             <label className="flex items-center justify-between rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 cursor-pointer">
               <span className="flex items-center gap-2 text-sm text-ab-fg-2"><Star className="h-3.5 w-3.5 text-amber-400" /> Salgssjef</span>
               <button onClick={() => setSalesChief(s => !s)} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors", salesChief ? "bg-blue-600" : "bg-ab-active")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", salesChief ? "translate-x-4" : "translate-x-0.5")} /></button>
-            </label>
-          )}
-          {isReg && (
-            <label className="flex items-center justify-between rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 cursor-pointer">
-              <span className="flex items-center gap-2 text-sm text-ab-fg-2"><Mail className="h-3.5 w-3.5 text-blue-400" /> Send velkomst-e-post</span>
-              <button onClick={() => setWelcome(s => !s)} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors", welcome ? "bg-blue-600" : "bg-ab-active")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", welcome ? "translate-x-4" : "translate-x-0.5")} /></button>
             </label>
           )}
         </div>

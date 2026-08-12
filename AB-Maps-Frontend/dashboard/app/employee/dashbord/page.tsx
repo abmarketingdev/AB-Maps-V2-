@@ -2,7 +2,7 @@
 
 /**
  * /employee/dashbord — the gamified daily dashboard inside the employee shell.
- * MOCK DATA. AB Maps + AB Academy in EmployeeLayout are untouched.
+ * MOCK DATA. AB Maps + Learning Academy in EmployeeLayout are untouched.
  */
 
 import { useState, useEffect } from "react";

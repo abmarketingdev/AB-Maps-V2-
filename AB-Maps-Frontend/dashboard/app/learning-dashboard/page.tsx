@@ -315,7 +315,7 @@ const LearningDashboard = () => {
     return <LoadingState message="Laster læringsplattform..." />;
   }
 
-  // Section Detail View – AB Academy (student_lesson_viewer)
+  // Section Detail View – Learning Academy (student_lesson_viewer)
   if (currentSection) {
     const curLessons = currentSection.lessons || [];
     const currentLesson = curLessons[currentLessonIndex];
@@ -332,7 +332,7 @@ const LearningDashboard = () => {
 
     return (
       <div className="flex h-screen w-full flex-col bg-white text-[#141414] antialiased overflow-hidden" style={{ fontFamily: "Inter, sans-serif" }}>
-        {/* AB Academy Header */}
+        {/* Learning Academy Header */}
         <header className="flex h-16 w-full shrink-0 items-center justify-between border-b border-[#E8EBF0] bg-white px-4 md:px-6 z-20">
           <div className="flex items-center gap-4">
             {isMobile && (
@@ -342,7 +342,7 @@ const LearningDashboard = () => {
             )}
             <Image
               src="/abmarketing.png"
-              alt="AB Academy Logo"
+              alt="Learning Academy Logo"
               width={120}
               height={32}
               className="object-contain h-8"
@@ -523,7 +523,7 @@ const LearningDashboard = () => {
     <div className="min-h-screen bg-[#f8f7f7] text-[#141414] flex flex-col overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Mobile: top header */}
       {isMobile && (
-        <MobileHeader title="AB Academy" userData={userData} onLogout={handleLogout} />
+        <MobileHeader title="Learning Academy" userData={userData} onLogout={handleLogout} />
       )}
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -535,7 +535,7 @@ const LearningDashboard = () => {
           <div className="p-6 pb-4 border-b border-[#E8EBF0] flex items-center gap-3">
             <Image
               src="/abmarketing.png"
-              alt="AB Academy Logo"
+              alt="Learning Academy Logo"
               width={140}
               height={36}
               className="object-contain h-9"

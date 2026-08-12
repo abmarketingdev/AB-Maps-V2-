@@ -43,7 +43,16 @@ function demoDashboard(range: DashRange): DashboardOverview {
   }
 }
 
-export function EmbeddedManagerWidgets() {
+interface EmbeddedManagerWidgetsProps {
+  /** "all" (default, back-compat) renders everything.
+   *  "top" renders KPIStrip + TrendChart + MoodRing only.
+   *  "bottom" renders CampaignHealthBar + ActivityFeed only.
+   *  Split (2026-08-09) lets dashboards put the live KPIs up top and push
+   *  campaigns + live activity to the very bottom of the page. */
+  part?: "all" | "top" | "bottom"
+}
+
+export function EmbeddedManagerWidgets({ part = "all" }: EmbeddedManagerWidgetsProps = {}) {
   const { campaignId } = useSelectedCampaign()
   const [range, setRange] = useState<DashRange>("7d")
   const [data, setData] = useState<DashboardOverview | null>(DEMO ? demoDashboard("7d") : null)
@@ -71,18 +80,20 @@ export function EmbeddedManagerWidgets() {
     return () => window.clearInterval(id)
   }, [campaignId])
 
+  const showTop = part === "all" || part === "top"
+  const showBottom = part === "all" || part === "bottom"
+
   return (
     <div className="space-y-6">
-      <KPIStrip stats={data?.kpis} />
-
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
-        <TrendChart points={data?.trends} range={range} onRangeChange={onRangeChange} />
-        <MoodRing segments={data?.mood} />
-      </div>
-
-      <CampaignHealthBar campaigns={data?.campaigns} />
-
-      <ActivityFeed rows={data?.activities} />
+      {showTop && <KPIStrip stats={data?.kpis} />}
+      {showTop && (
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+          <TrendChart points={data?.trends} range={range} onRangeChange={onRangeChange} />
+          <MoodRing segments={data?.mood} />
+        </div>
+      )}
+      {showBottom && <CampaignHealthBar campaigns={data?.campaigns} />}
+      {showBottom && <ActivityFeed rows={data?.activities} />}
     </div>
   )
 }

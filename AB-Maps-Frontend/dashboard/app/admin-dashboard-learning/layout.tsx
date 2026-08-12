@@ -81,10 +81,10 @@ export default function AdminLearningLayout({
         <div className="flex flex-col">
           <div className="flex items-center gap-3 p-6">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <span className="material-symbols-outlined text-[20px]">campaign</span>
+              <span className="material-symbols-outlined text-[20px]">school</span>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-base font-bold leading-none text-[#141414]">AB Marketing</h1>
+              <h1 className="text-base font-bold leading-none text-[#141414]">AB Academy</h1>
               <p className="mt-1 text-xs text-slate-600">Adminpanel v2.4</p>
             </div>
           </div>

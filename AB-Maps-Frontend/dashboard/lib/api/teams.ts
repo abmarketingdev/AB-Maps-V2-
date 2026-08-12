@@ -22,6 +22,12 @@ export interface TeamListItem {
   color: string; icon: string;
   campaign: TeamRef | null; owner: OwnerRef | null; sales_chief: OwnerRef | null;
   member_count: number; created_at: string; updated_at: string;
+  // Backend-computed recruit count for the requested `period` (YYYY-MM,
+  // defaults server-side to current month). Lets the dashboard compute the
+  // winning-team badge on first paint without expanding each team card.
+  // Undefined when the backend hasn't shipped the field yet — callers should
+  // treat undefined as "unknown" and fall back to expanded-detail summing.
+  recruited_total?: number;
 }
 
 export interface TeamMember {
@@ -104,6 +110,7 @@ interface HrTeam {
   sales_chief: HrPerson | null;
   members?: HrMember[];
   created_at: string; updated_at: string;
+  recruited_total?: number;
 }
 
 const mapRef = (p: { id: string; name: string | null } | null): TeamRef | null =>
@@ -131,6 +138,7 @@ const mapListItem = (t: HrTeam): TeamListItem => ({
   member_count: t.members?.length ?? 0,
   created_at: t.created_at,
   updated_at: t.updated_at,
+  recruited_total: t.recruited_total,      // undefined when backend hasn't shipped yet
 });
 
 const mapDetail = (t: HrTeam): TeamDetail => ({
@@ -142,12 +150,14 @@ const mapDetail = (t: HrTeam): TeamDetail => ({
 // ─── List / create ────────────────────────────────────────────────────────────
 export async function listTeams(opts: {
   campaignId?: string; salesChiefId?: string; createdBy?: string; search?: string; page?: number; pageSize?: number;
+  /** YYYY-MM. Backend uses this to compute `recruited_total` per team. Defaults server-side to current month. */
+  period?: string;
 } = {}): Promise<Paginated<TeamListItem>> {
   // The dashboard's "Mine team" toggle sets createdBy=<my id>; HR exposes this as
   // the `mine=true` filter (teams I personally lead), applied on top of scoping.
   // `salesChiefId` (admin only) narrows to one sales chief's teams.
   const raw = await getJSON<any>(
-    `/api/hr/teams/${qp({ campaign_id: opts.campaignId, sales_chief_id: opts.salesChiefId, mine: opts.createdBy ? 'true' : undefined, search: opts.search, page: opts.page, page_size: opts.pageSize })}`,
+    `/api/hr/teams/${qp({ campaign_id: opts.campaignId, sales_chief_id: opts.salesChiefId, mine: opts.createdBy ? 'true' : undefined, search: opts.search, page: opts.page, page_size: opts.pageSize, period: opts.period })}`,
   );
   const results: HrTeam[] = raw?.results ?? (Array.isArray(raw) ? raw : []);
   return {
@@ -253,6 +263,9 @@ export interface TeamGoalPayload {
   period: string | null;
   doors_goal: number;      // 0 when unset
   recruited_goal: number;  // 0 when unset
+  // Weekly fields (2026-08-06). null distinguishes "not set" from 0.
+  doors_weekly_goal: number | null;
+  recruited_weekly_goal: number | null;
   can_edit: boolean;
   updated_at: string | null;
   updated_by_id: string | null;
@@ -287,8 +300,30 @@ export function fetchTeamGoal(
 
 export async function saveTeamGoal(
   teamId: string,
-  body: { period: string; doors_goal: number; recruited_goal: number },
+  body: {
+    period: string;
+    doors_goal: number;
+    recruited_goal: number;
+    // Weekly fields — omit to leave unchanged, pass null to clear.
+    doors_weekly_goal?: number | null;
+    recruited_weekly_goal?: number | null;
+  },
 ): Promise<TeamGoalPayload> {
+  // Demo mode: no backend — fake a successful save so the modal closes
+  // cleanly and the caller's reloadTick re-renders (against demo constants).
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return {
+      team_id: teamId,
+      period: body.period,
+      doors_goal: body.doors_goal,
+      recruited_goal: body.recruited_goal,
+      doors_weekly_goal: body.doors_weekly_goal ?? null,
+      recruited_weekly_goal: body.recruited_weekly_goal ?? null,
+      can_edit: true,
+      updated_at: new Date().toISOString(),
+      updated_by_id: null,
+    };
+  }
   const res = await fetchWithAuth(`/api/hr/teams/${teamId}/goals/`, {
     method: 'PUT',
     body: JSON.stringify(body),

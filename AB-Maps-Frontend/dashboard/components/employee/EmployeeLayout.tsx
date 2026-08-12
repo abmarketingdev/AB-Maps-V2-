@@ -119,12 +119,12 @@ export function EmployeeLayout({
     .toUpperCase()
     .slice(0, 2);
 
-  // Nav groups. AB Maps + AB Academy keep their original behavior (handler/href);
+  // Nav groups. AB Maps + Learning Academy keep their original behavior (handler/href);
   // only their presentation is unified with the rest of the rail.
   const NAV_GROUPS: { group: string; items: EmpNavItem[] }[] = [
     { group: "ARBEIDSFLATE", items: WORK_ITEMS },
     { group: "TERRITORIUM", items: [{ title: "AB Maps", icon: <MapPinned className="h-4 w-4" />, onClick: handleABMapsClick }] },
-    { group: "LÆRING", items: [{ href: "/learning-platform", title: "AB Academy", icon: <GraduationCap className="h-4 w-4" /> }] },
+    { group: "LÆRING", items: [{ href: "/learning-platform", title: "Learning Academy", icon: <GraduationCap className="h-4 w-4" /> }] },
   ];
 
   const renderNav = (item: EmpNavItem, isExpanded: boolean, mobile = false) => {

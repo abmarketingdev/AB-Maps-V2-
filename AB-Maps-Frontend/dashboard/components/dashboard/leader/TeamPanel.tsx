@@ -21,6 +21,10 @@ interface TeamPanelProps {
   /** Called after a successful goal save. teamId lets parent refetch just
    *  that one team instead of the whole page. */
   onGoalSaved?: (teamId?: string) => void
+  /** Team ID that's currently #1 by recruits this period. When set, that
+   *  team's card shows a "Vinnerteam" chip in the header, and each of its
+   *  promoters gets a 🏆 badge next to their name (client ask 2026-08-08). */
+  winningTeamId?: string | null
 }
 
 function hexAlpha(hex: string, a: number) {
@@ -28,7 +32,7 @@ function hexAlpha(hex: string, a: number) {
   return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`
 }
 
-export function TeamPanel({ teams, period, loadingTeamIds, onTeamExpand, onGoalSaved }: TeamPanelProps) {
+export function TeamPanel({ teams, period, loadingTeamIds, onTeamExpand, onGoalSaved, winningTeamId }: TeamPanelProps) {
   return (
     <div className="space-y-3">
       {teams.map((team, i) => (
@@ -40,15 +44,17 @@ export function TeamPanel({ teams, period, loadingTeamIds, onTeamExpand, onGoalS
           loading={loadingTeamIds?.has(team.id) ?? false}
           onExpand={onTeamExpand}
           onGoalSaved={onGoalSaved}
+          isWinning={team.id === winningTeamId}
         />
       ))}
     </div>
   )
 }
 
-function TeamCard({ team, index, period, loading, onExpand, onGoalSaved }:
+function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinning }:
   { team: TeamNode; index: number; period?: string; loading: boolean;
-    onExpand?: (id: string) => void; onGoalSaved?: (id?: string) => void }) {
+    onExpand?: (id: string) => void; onGoalSaved?: (id?: string) => void;
+    isWinning?: boolean }) {
   const { t } = useLang()
   const reduced = useReducedMotion()
   const [open, setOpen] = useState(false)
@@ -71,8 +77,14 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved }:
   const totalRecGoal   = team.teamRecruitedGoal ?? 0
   const doorsPct       = totalDoorsGoal ? Math.min(100, Math.round((totalDoors / totalDoorsGoal) * 100)) : 0
 
-  // Rank promoters by sumVervinger — top 3 get medals
-  const ranked = [...team.promoters].sort((a, b) => b.sumVervinger - a.sumVervinger)
+  // Rank promoters by RECRUITS (primary, matches client's "delivered most"
+  // metric), with DOORS as tiebreaker (fresh period where no one has recruited
+  // yet still gets a meaningful ranking). Was sumVervinger — that's a $ metric,
+  // not the activity the client asked to spotlight (2026-08-10 fix).
+  const ranked = [...team.promoters].sort((a, b) => {
+    if (b.recruited !== a.recruited) return b.recruited - a.recruited
+    return b.doors - a.doors
+  })
   const rankById = new Map(ranked.map((p, i) => [p.id, i + 1]))
 
   return (
@@ -80,9 +92,11 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved }:
       initial={reduced ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="relative overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated transition-[box-shadow] duration-300"
+      className={`relative overflow-hidden rounded-2xl border bg-ab-elevated transition-[box-shadow] duration-300 ${isWinning ? "border-amber-400/60" : "border-ab-line"}`}
       style={{
-        boxShadow: open
+        boxShadow: isWinning
+          ? `0 0 0 2px rgba(245,158,11,0.55), 0 0 40px -8px rgba(245,158,11,0.35), inset 0 24px 48px -32px ${hexAlpha(team.color, 0.22)}`
+          : open
           ? `0 0 0 1px ${hexAlpha(team.color, 0.3)}, 0 24px 60px -24px ${hexAlpha(team.color, 0.5)}`
           : `inset 0 24px 48px -32px ${hexAlpha(team.color, 0.22)}`,
       }}
@@ -115,8 +129,17 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved }:
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="truncate text-sm font-semibold text-ab-fg">{team.name}</h3>
+            {isWinning && (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-black shadow-[0_2px_8px_-2px_rgba(245,158,11,0.6)]"
+                title="Månedens vinnerteam — flest rekrutterte"
+              >
+                <Trophy className="h-3 w-3" />
+                Vinnerteam
+              </span>
+            )}
             <span
               className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
               style={{ background: hexAlpha(team.color, 0.12), color: team.color }}
@@ -225,7 +248,11 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved }:
                   </div>
 
                   <div className="space-y-1">
-                    {team.promoters.map((p, pi) => {
+                    {/* Iterate over `ranked` (sorted DESC by sumVervinger) so
+                        the row order matches the rank badges — was iterating
+                        over team.promoters (insertion order) which meant
+                        rank 1 could appear below rank 4 (2026-08-10 fix). */}
+                    {ranked.map((p, pi) => {
                       const rank        = rankById.get(p.id) ?? 0
                       const isTop3      = rank >= 1 && rank <= 3
                       const isTop1      = rank === 1
@@ -264,10 +291,20 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved }:
                             )}
                           </div>
 
-                          {/* Avatar + name */}
+                          {/* Avatar + name — winning team's promoters get a
+                              🏆 trophy tag (client ask 2026-08-08). */}
                           <div className="flex items-center gap-2.5 min-w-0">
                             <Avatar name={p.name} color={team.color} size={26} />
                             <span className="truncate text-sm text-ab-fg">{p.name}</span>
+                            {isWinning && (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-1 sm:px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-black shrink-0"
+                                title="Promotør på månedens vinnerteam"
+                              >
+                                <Trophy className="h-2.5 w-2.5" />
+                                <span className="hidden sm:inline">Vinner</span>
+                              </span>
+                            )}
                             {p.activePercent >= 90 && (
                               <Flame className="h-3 w-3 shrink-0 text-aurora-amber" />
                             )}
@@ -369,6 +406,8 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved }:
           period={period}
           initialDoorsGoal={totalDoorsGoal}
           initialRecruitedGoal={totalRecGoal}
+          initialDoorsWeeklyGoal={team.teamDoorsWeeklyGoal ?? null}
+          initialRecruitedWeeklyGoal={team.teamRecruitedWeeklyGoal ?? null}
           onClose={() => setGoalModalOpen(false)}
           onSaved={() => {
             setGoalModalOpen(false)
