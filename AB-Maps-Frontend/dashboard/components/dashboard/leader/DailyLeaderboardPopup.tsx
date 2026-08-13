@@ -183,9 +183,6 @@ export function DailyLeaderboardPopup({ campaignId, force = false }: DailyLeader
                   <h3 className="mt-0.5 font-instrument text-2xl leading-tight text-ab-fg">
                     {t("Topplister: Rekrutterere & dørbankere")}
                   </h3>
-                  <p className="mt-1 text-xs text-ab-fg-3">
-                    {t("Toppene av rekrutterte givere og dører banket akkurat nå.")}
-                  </p>
                 </div>
                 <button
                   type="button"
