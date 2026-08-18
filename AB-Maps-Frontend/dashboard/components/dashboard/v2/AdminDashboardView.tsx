@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
   Plus, Search, Shield, Users, UserCog, MoreHorizontal, Pencil, Trash2,
@@ -145,6 +146,9 @@ export function AdminDashboardView() {
   const [page, setPage] = useState(1)
   const [modal, setModal] = useState<ModalKind>(null)
   const [menuFor, setMenuFor] = useState<string | null>(null)
+  // Anchor rect for the row action menu — the menu renders in a portal so it can't be
+  // clipped by the user-list card's overflow-hidden (which hid "Slett" on the last row).
+  const [menuRect, setMenuRect] = useState<DOMRect | null>(null)
 
   const [users, setUsers] = useState<User[]>([])
   const [total, setTotal] = useState(0)
@@ -308,25 +312,30 @@ export function AdminDashboardView() {
                   <RoleBadge role={u.role} dept={u.dept} salesChief={u.isSalesChief} />
                   {/* Row menu */}
                   <div className="relative">
-                    <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)} aria-label="Handlinger"
+                    <button onClick={(e) => { setMenuRect(e.currentTarget.getBoundingClientRect()); setMenuFor(menuFor === u.id ? null : u.id) }} aria-label="Handlinger"
                       className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-ab-fg-4 hover:text-ab-fg hover:bg-ab-hover opacity-60 group-hover:opacity-100 transition-all">
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
-                    <AnimatePresence>
-                      {menuFor === u.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
-                          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.12 }}
-                            className="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl border border-ab-line bg-ab-overlay shadow-2xl py-1">
-                            <button onClick={() => { setModal({ kind: "edit", user: u }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><Pencil className="h-3.5 w-3.5" /> Rediger</button>
-                            {u.role === "employee" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "manager" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><ChevronUp className="h-3.5 w-3.5 text-blue-400" /> Forfrem til Manager</button>}
-                            {u.role === "manager" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "admin" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><Crown className="h-3.5 w-3.5 text-purple-400" /> Forfrem til Admin</button>}
-                            {u.role === "admin" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "manager" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><ChevronDown className="h-3.5 w-3.5 text-amber-400" /> Degrader til Manager</button>}
-                            <button onClick={() => { setModal({ kind: "delete", user: u }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10 text-left"><Trash2 className="h-3.5 w-3.5" /> Slett</button>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
+                    {menuFor === u.id && menuRect && typeof document !== "undefined" && createPortal(
+                      <div className="fixed inset-0 z-[100]" onClick={() => setMenuFor(null)}>
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.12 }}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            position: "fixed",
+                            right: Math.max(8, window.innerWidth - menuRect.right),
+                            top: menuRect.bottom + 200 > window.innerHeight ? undefined : menuRect.bottom + 6,
+                            bottom: menuRect.bottom + 200 > window.innerHeight ? window.innerHeight - menuRect.top + 6 : undefined,
+                          }}
+                          className="w-48 rounded-xl border border-ab-line bg-ab-overlay shadow-2xl py-1">
+                          <button onClick={() => { setModal({ kind: "edit", user: u }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><Pencil className="h-3.5 w-3.5" /> Rediger</button>
+                          {u.role === "employee" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "manager" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><ChevronUp className="h-3.5 w-3.5 text-blue-400" /> Forfrem til Manager</button>}
+                          {u.role === "manager" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "admin" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><Crown className="h-3.5 w-3.5 text-purple-400" /> Forfrem til Admin</button>}
+                          {u.role === "admin" && <button onClick={() => { setModal({ kind: "promote", user: u, to: "manager" }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ab-fg-2 hover:bg-ab-hover text-left"><ChevronDown className="h-3.5 w-3.5 text-amber-400" /> Degrader til Manager</button>}
+                          <button onClick={() => { setModal({ kind: "delete", user: u }); setMenuFor(null) }} className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10 text-left"><Trash2 className="h-3.5 w-3.5" /> Slett</button>
+                        </motion.div>
+                      </div>,
+                      document.body
+                    )}
                   </div>
                 </motion.div>
               ))}
