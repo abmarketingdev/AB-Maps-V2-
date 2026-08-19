@@ -21,6 +21,7 @@ import {
   Plus,
   BookOpen,
   CheckSquare,
+  Calendar,
   Globe,
   Users,
   BarChart3,
@@ -91,6 +92,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/sales": "Statistikk",
   "/rapport": "Rapport",
   "/todo": "Oppgaver",
+  "/kalender": "Vaktplan",
   "/map": "Kart",
   "/areas": "Områder",
   "/las-opp-las-omrader": "Lås opp / lås områder",
@@ -374,6 +376,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       { href: "/sales",     title: "Statistikk",icon: <BarChart3 className="h-4 w-4" />,   group: "ARBEIDSFLATE" },
       { href: "/rapport",   title: "Rapport",   icon: <FileText className="h-4 w-4" />,    group: "ARBEIDSFLATE" },
       { href: "/todo",      title: "Oppgaver",  icon: <CheckSquare className="h-4 w-4" />, group: "ARBEIDSFLATE" },
+      { href: "/kalender",  title: "Vaktplan",  icon: <Calendar className="h-4 w-4" />,    group: "ARBEIDSFLATE" },
     ]
     // Hidden per request — route still exists at /admin/tasks but not surfaced
     // in the sidebar.
