@@ -2079,8 +2079,8 @@ function App() {
         return null;
       })()}
 
-      {/* Campaign Form Popup — disabled: avtalegiro now redirects to https://absystem.no/login.php */}
-      {/* <CampaignFormPopup
+      {/* Campaign Form Popup */}
+      <CampaignFormPopup
         isOpen={showCampaignForm}
         onClose={closeCampaignForm}
         campaignId={campaignFormData.campaignId}
@@ -2088,7 +2088,7 @@ function App() {
         salesRepId={campaignFormData.salesRepId}
         addressData={campaignFormData.addressData}
         token={token}
-      /> */}
+      />
 
       {/* Phase 2: Building Summary Card */}
       <BuildingSummaryCard

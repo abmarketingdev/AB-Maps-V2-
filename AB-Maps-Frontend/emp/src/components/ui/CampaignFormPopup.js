@@ -712,6 +712,13 @@ const CampaignFormPopup = ({
   };
 
   const handleStepSelection = (step) => {
+    if (step === 'avtalegiro') {
+      // Avtalegiro registration is handled by the external system now.
+      // Close the popup and redirect the rep to the external login.
+      onClose();
+      window.location.href = 'https://absystem.no/login.php';
+      return;
+    }
     setCurrentStep(step);
     if (step === 'vipps') {
       handleVippsFlow();
