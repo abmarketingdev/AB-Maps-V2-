@@ -2363,15 +2363,15 @@ function AppContent() {
         onRemoveEmployee={handleRemoveEmployeeFromMap}
       />
 
-      {/* Campaign Form Popup */}
-      <CampaignFormPopup
+      {/* Campaign Form Popup — disabled: avtalegiro now redirects to https://absystem.no/login.php */}
+      {/* <CampaignFormPopup
         isOpen={showCampaignForm}
         onClose={closeCampaignForm}
         campaignId={campaignFormData.campaignId}
         addressId={campaignFormData.addressId}
         salesRepId={campaignFormData.salesRepId}
         addressData={campaignFormData.addressData}
-      />
+      /> */}
 
       {/* Locate-me button appears only if permission is granted */}
       {permissionStatus === 'granted' && (

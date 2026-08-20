@@ -1182,13 +1182,19 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
 
   // Campaign form handlers
   const openCampaignForm = (campaignId, addressId, salesRepId, addressData = null) => {
-    setCampaignFormData({
-      campaignId,
-      addressId,
-      salesRepId,
-      addressData
-    });
-    setShowCampaignForm(true);
+    // Avtalegiro registration is handled by the external system now.
+    // Instead of opening the in-app campaign form, redirect the rep there.
+    window.location.href = 'https://absystem.no/login.php';
+    return;
+    /* eslint-disable no-unreachable */
+    // setCampaignFormData({
+    //   campaignId,
+    //   addressId,
+    //   salesRepId,
+    //   addressData
+    // });
+    // setShowCampaignForm(true);
+    /* eslint-enable no-unreachable */
   };
   
   const closeCampaignForm = () => {
