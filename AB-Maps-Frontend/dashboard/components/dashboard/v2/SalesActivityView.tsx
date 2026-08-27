@@ -561,7 +561,7 @@ function ActivityPanel({
                         <RoyMascot state={state} size={30} />
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-ab-fg truncate leading-tight">{lane.name}</p>
-                          <p className="text-xs text-ab-fg-3">{lane.capped ? `${lane.count}+` : lane.count} reg · {lane.ja} ja</p>
+                          <p className="text-xs text-ab-fg-3">{nbFmt.format(lane.count)} reg · {lane.ja} ja</p>
                         </div>
                       </div>
                     )
@@ -717,7 +717,6 @@ function TopSellers({ lanes }: { lanes: Lane[] }) {
     [lanes],
   )
   const max = Math.max(...ranked.map(r => r.ja), 1)
-  const anyCapped = ranked.some(r => r.capped)
   const RANK_COLORS = ["#f59e0b", "#94a3b8", "#cd7f32"]
 
   return (
@@ -726,7 +725,7 @@ function TopSellers({ lanes }: { lanes: Lane[] }) {
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-ab-fg">Topp promotører</h3>
-          <p className="mt-0.5 text-sm text-ab-fg-3">{anyCapped ? "Etter Ja (siste registreringer)" : "Etter antall Ja"}</p>
+          <p className="mt-0.5 text-sm text-ab-fg-3">Etter antall Ja</p>
         </div>
         <Trophy className="h-5 w-5 text-amber-400" />
       </div>
@@ -746,7 +745,7 @@ function TopSellers({ lanes }: { lanes: Lane[] }) {
               </div>
               <div className="text-right shrink-0">
                 <p className="font-mono text-lg font-bold text-emerald-400">{r.ja}</p>
-                <p className="font-mono text-xs text-ab-fg-3">{rate}% av {r.capped ? `${r.count}+` : r.count}</p>
+                <p className="font-mono text-xs text-ab-fg-3">{rate}% av {nbFmt.format(r.count)}</p>
               </div>
             </div>
           )
@@ -977,8 +976,11 @@ export function SalesActivityView() {
     if (!summary) return []
     return summary.by_employee_lane.map(l => {
       const beads: Bead[] = l.beads.map(b => ({ tsMs: new Date(b.ts).getTime(), status: (isStatus(b.status) ? b.status : "nei") }))
-      const ja = beads.filter(b => b.status === "ja").length
-      return { id: l.employee_id, name: l.employee || "Ukjent", beads, count: beads.length, ja, capped: beads.length >= LANE_BEAD_CAP }
+      // count/ja are the TRUE totals for the period (server COUNT); beads are only the
+      // last ≤200 for the canvas. `capped` = beads truncated, NOT the count.
+      const count = l.total ?? beads.length
+      const ja = l.ja ?? beads.filter(b => b.status === "ja").length
+      return { id: l.employee_id, name: l.employee || "Ukjent", beads, count, ja, capped: beads.length >= LANE_BEAD_CAP }
     }).sort((a, b) => b.count - a.count)
   }, [summary])
 

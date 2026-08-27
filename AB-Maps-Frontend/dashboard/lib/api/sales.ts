@@ -21,7 +21,12 @@ export interface SalesSummary {
   by_status: { ja: number; nei: number; ikke_hjemme: number };
   by_hour: { hour: number; ja: number; nei: number; ikke_hjemme: number }[];
   by_day: { date: string; ja: number; nei: number; ikke_hjemme: number }[];
-  by_employee_lane: { employee_id: string; employee: string; beads: { ts: string; status: SalesStatus }[] }[];
+  by_employee_lane: {
+    employee_id: string; employee: string;
+    // TRUE totals for the selected period (unbounded). beads are capped for the canvas only.
+    total?: number; ja?: number; nei?: number; ikke_hjemme?: number;
+    beads: { ts: string; status: SalesStatus }[];
+  }[];
 }
 
 export interface SalesFilters {
