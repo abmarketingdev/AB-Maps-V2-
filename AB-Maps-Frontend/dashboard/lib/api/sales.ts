@@ -21,6 +21,9 @@ export interface SalesSummary {
   by_status: { ja: number; nei: number; ikke_hjemme: number };
   by_hour: { hour: number; ja: number; nei: number; ikke_hjemme: number }[];
   by_day: { date: string; ja: number; nei: number; ikke_hjemme: number }[];
+  /** Heatmap grid, aggregated server-side. Optional: a backend that predates this
+   *  field simply omits it and the client falls back to counting raw rows. */
+  by_day_hour?: { date: string; hour: number; n: number }[];
   by_employee_lane: {
     employee_id: string; employee: string;
     // TRUE totals for the selected period (unbounded). beads are capped for the canvas only.
@@ -28,6 +31,11 @@ export interface SalesSummary {
     beads: { ts: string; status: SalesStatus }[];
   }[];
 }
+
+/** Sentinel for "every campaign". Kept out of `SalesFilters` on purpose — the
+ *  wire format for all-campaigns is the ABSENCE of `campaign_id`, which is what
+ *  the backend already treats as unfiltered. */
+export const ALL_CAMPAIGNS = '__all__';
 
 export interface SalesFilters {
   campaignId?: string;
@@ -43,7 +51,10 @@ export interface SalesFilters {
 const qp = (f: SalesFilters): string => {
   const qs = new URLSearchParams();
   const map: Record<string, string | number | undefined> = {
-    campaign_id: f.campaignId, employee_id: f.employeeId, status: f.status,
+    // the sentinel must never reach the wire: `_base_queryset` filters on any
+    // truthy campaign_id, so sending "__all__" would match zero rows
+    campaign_id: f.campaignId === ALL_CAMPAIGNS ? undefined : f.campaignId,
+    employee_id: f.employeeId, status: f.status,
     start_date: f.startDate, end_date: f.endDate, search: f.search,
     page: f.page, page_size: f.pageSize,
   };

@@ -37,6 +37,7 @@ import {
   type Reg as SaleReg, type SalesSummary,
 } from "@/lib/api/sales"
 import { fetchCampaignsWithStats } from "@/lib/api/campaigns"
+import { ALL_CAMPAIGNS } from "@/lib/api/sales"
 import { useSelectedCampaign } from "@/lib/hooks/useSelectedCampaign"
 import { PanelLoading, PanelEmpty, PanelError } from "./_states"
 
@@ -421,10 +422,10 @@ function CanvasTimeline({ lanes, windowStart, windowEnd, rowH, onHover }: {
 type PanelView = "tidslinje" | "liste"
 
 function ActivityPanel({
-  lanes, mode, windowStart, windowEnd,
+  lanes, lanesHidden = 0, mode, windowStart, windowEnd,
   listRegs, listLoading, listTotal, listHasMore, onLoadList, onLoadMore,
 }: {
-  lanes: Lane[]; mode: DateMode; windowStart: Date; windowEnd: Date
+  lanes: Lane[]; lanesHidden?: number; mode: DateMode; windowStart: Date; windowEnd: Date
   listRegs: Reg[]; listLoading: boolean; listTotal: number; listHasMore: boolean
   onLoadList: () => void; onLoadMore: () => void
 }) {
@@ -573,6 +574,13 @@ function ActivityPanel({
                 </div>
               </div>
             </div>
+
+            {lanesHidden > 0 && (
+              <p className="mt-3 ml-[150px] text-xs text-ab-fg-4">
+                Viser {nbFmt.format(lanes.length)} mest aktive · {nbFmt.format(lanesHidden)} flere skjult.
+                Bytt til <span className="text-ab-fg-3">Liste</span> for alle.
+              </p>
+            )}
 
             {/* Axis */}
             <div className="relative mt-2 ml-[150px] h-5">
@@ -757,24 +765,37 @@ function TopSellers({ lanes }: { lanes: Lane[] }) {
 
 // ─── Heatmap (7 days × hour, from a scoped raw slice) ────────────────────────
 
-function Heatmap({ regs, anchorDate, loading }: { regs: Reg[]; anchorDate: Date; loading: boolean }) {
+function Heatmap({ regs, grid: serverGrid, anchorDate, loading }: {
+  regs: Reg[]; grid: { date: string; hour: number; n: number }[] | null
+  anchorDate: Date; loading: boolean
+}) {
   const reduced = useReducedMotion()
   const HOURS = Array.from({ length: 13 }, (_, i) => i + 9)
   const DAYS = 7
   const { grid, globalMax, labels } = useMemo(() => {
     const out: number[][] = []; const lbls: string[] = []; let gMax = 1
     const anchorOffset = dayOffsetFromDate(anchorDate)
+    // server grid → O(rows); raw rows → O(days x hours x rows), which is why the
+    // old path got slow long before the network did
+    const counts = new Map<string, number>()
+    if (serverGrid) for (const c of serverGrid) counts.set(`${c.date}|${c.hour}`, c.n)
+
     for (let d = 0; d < DAYS; d++) {
       const offset = anchorOffset + (DAYS - 1 - d)
       const dt = new Date(); dt.setDate(dt.getDate() - offset)
       const dayKey = ymd(startOfDay(dt))
-      const dayRegs = regs.filter(r => ymd(startOfDay(r.ts)) === dayKey)
-      const row = HOURS.map(h => { const c = dayRegs.filter(s => s.ts.getHours() === h).length; if (c > gMax) gMax = c; return c })
+      let row: number[]
+      if (serverGrid) {
+        row = HOURS.map(h => { const c = counts.get(`${dayKey}|${h}`) ?? 0; if (c > gMax) gMax = c; return c })
+      } else {
+        const dayRegs = regs.filter(r => ymd(startOfDay(r.ts)) === dayKey)
+        row = HOURS.map(h => { const c = dayRegs.filter(s => s.ts.getHours() === h).length; if (c > gMax) gMax = c; return c })
+      }
       out.push(row)
       lbls.push(dt.toLocaleDateString("nb-NO", { weekday: "short" }))
     }
     return { grid: out, globalMax: gMax, labels: lbls }
-  }, [regs, anchorDate]) // eslint-disable-line
+  }, [regs, serverGrid, anchorDate]) // eslint-disable-line
 
   const cellColor = (v: number) => {
     if (v === 0) return "rgba(255,255,255,0.04)"
@@ -822,7 +843,7 @@ export function SalesActivityView() {
   const reduced = useReducedMotion()
   const { campaignId: globalCampaignId } = useSelectedCampaign()
   const [campaigns, setCampaigns] = useState<{ id: string; name: string; color: string }[]>([])
-  const [campaignId, setCampaignId] = useState<string>("")
+  const [campaignId, setCampaignId] = useState<string>(ALL_CAMPAIGNS)
   const [ds, setDs] = useState<DateState>(() => {
     const today = startOfDay(new Date())
     const s = new Date(today); s.setDate(s.getDate() - 6)
@@ -836,9 +857,14 @@ export function SalesActivityView() {
       .catch(() => { /* empty */ })
     return () => { cancelled = true }
   }, [])
+  // the global picker still wins when it has a selection; otherwise stay aggregate
   useEffect(() => { if (globalCampaignId) setCampaignId(globalCampaignId) }, [globalCampaignId])
+  const isAll = campaignId === ALL_CAMPAIGNS
 
-  const campaign = campaigns.find(c => c.id === campaignId) ?? { id: "", name: "", color: "#8b5cf6" }
+  const ALL_COLOR = "#22c55e"
+  const campaign = isAll
+    ? { id: ALL_CAMPAIGNS, name: "Alle kampanjer", color: ALL_COLOR }
+    : campaigns.find(c => c.id === campaignId) ?? { id: "", name: "", color: "#8b5cf6" }
 
   const { windowStart, windowEnd } = useMemo(() => {
     if (ds.mode === "dag") {
@@ -858,6 +884,7 @@ export function SalesActivityView() {
 
   // ── Heatmap raw slice (7 days), background ──
   const [heatRegs, setHeatRegs] = useState<Reg[]>([])
+  const [heatGrid, setHeatGrid] = useState<{ date: string; hour: number; n: number }[] | null>(null)
   const [heatLoading, setHeatLoading] = useState(false)
 
   // ── Lazy raw list ──
@@ -880,6 +907,7 @@ export function SalesActivityView() {
 
   // Main load: summary (range) + prev-window summary + 7-day heatmap slice.
   const load = useCallback(() => {
+    // aggregate mode deliberately has no campaign — only an unresolved selection blocks
     if (!campaignId) return
     // previous comparison window (same length, immediately before)
     const spanDays = ds.mode === "dag" ? 1
@@ -904,11 +932,21 @@ export function SalesActivityView() {
       .then(s => setPrevTotal((s.by_status?.ja ?? 0) + (s.by_status?.nei ?? 0) + (s.by_status?.ikke_hjemme ?? 0)))
       .catch(() => setPrevTotal(0))
 
+    // Heatmap: one aggregated call. `by_day_hour` is 7x13 numbers; the old path
+    // walked up to 200 pages of raw rows to count the same grid, which across all
+    // campaigns is the single slowest thing on this page. Older backends omit the
+    // field, so fall back rather than render an empty heatmap.
     setHeatLoading(true)
-    fetchAllSales({ campaignId, startDate: ymd(heatStart), endDate: ymd(heatEnd) }, { maxPages: 200 })
-      .then(p => setHeatRegs(p.results.map(mapReg)))
-      .catch(() => setHeatRegs([]))
-      .finally(() => setHeatLoading(false))
+    setHeatGrid(null); setHeatRegs([])
+    fetchSalesSummary({ campaignId, startDate: ymd(heatStart), endDate: ymd(heatEnd) })
+      .then(sum => {
+        if (sum.by_day_hour) { setHeatGrid(sum.by_day_hour); setHeatLoading(false); return }
+        return fetchAllSales(
+          { campaignId, startDate: ymd(heatStart), endDate: ymd(heatEnd) },
+          { maxPages: campaignId === ALL_CAMPAIGNS ? 60 : 200 },
+        ).then(p => { setHeatRegs(p.results.map(mapReg)); setHeatLoading(false) })
+      })
+      .catch(() => { setHeatRegs([]); setHeatGrid(null); setHeatLoading(false) })
   }, [campaignId, ds, startDate, endDate, mapReg])
 
   // Debounced (date range touches two inputs in quick succession).
@@ -972,6 +1010,7 @@ export function SalesActivityView() {
     return { peakLabel: best ? new Date(best).toLocaleDateString("nb-NO", { weekday: "short", day: "numeric" }) : "—", peakIcon: "Travleste dag" }
   }, [summary, ds.mode])
 
+  const LANE_RENDER_CAP = 40
   const lanes: Lane[] = useMemo(() => {
     if (!summary) return []
     return summary.by_employee_lane.map(l => {
@@ -983,6 +1022,12 @@ export function SalesActivityView() {
       return { id: l.employee_id, name: l.employee || "Ukjent", beads, count, ja, capped: beads.length >= LANE_BEAD_CAP }
     }).sort((a, b) => b.count - a.count)
   }, [summary])
+
+  // One lane per seller across every campaign is a canvas thousands of pixels tall
+  // and tens of thousands of beads. Cap the render, and say so rather than
+  // silently dropping people off the bottom.
+  const shownLanesCapped = useMemo(() => lanes.slice(0, LANE_RENDER_CAP), [lanes])
+  const lanesHidden = lanes.length - shownLanesCapped.length
 
   return (
     <div className="min-h-screen bg-ab-base">
@@ -1000,6 +1045,15 @@ export function SalesActivityView() {
           </div>
           <div className="flex flex-wrap gap-2 items-center">
             <span className="text-sm text-ab-fg-4 font-medium mr-1">Kampanje:</span>
+            {/* Aggregate first — it is the default view, and reads as the parent of
+                the per-campaign chips rather than one more sibling. */}
+            <button onClick={() => setCampaignId(ALL_CAMPAIGNS)}
+              className={cn("cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150",
+                isAll ? "text-white shadow-sm" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}
+              style={isAll ? { background: ALL_COLOR, boxShadow: `0 0 14px ${ALL_COLOR}60` } : {}}>
+              Alle kampanjer
+            </button>
+            <span className="mx-1 h-5 w-px bg-ab-line" />
             {campaigns.map(c => (
               <button key={c.id} onClick={() => setCampaignId(c.id)}
                 className={cn("cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150", campaignId === c.id ? "text-white shadow-sm" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}
@@ -1028,7 +1082,8 @@ export function SalesActivityView() {
             <ResponsePulse data={chartData} mode={ds.mode} />
 
             <ActivityPanel
-              lanes={lanes} mode={ds.mode} windowStart={windowStart} windowEnd={windowEnd}
+              lanes={shownLanesCapped} lanesHidden={lanesHidden}
+              mode={ds.mode} windowStart={windowStart} windowEnd={windowEnd}
               listRegs={listRegs} listLoading={listLoading} listTotal={listTotal}
               listHasMore={listPage > 0 && listPage < listPages}
               onLoadList={onLoadList} onLoadMore={onLoadMore}
@@ -1036,7 +1091,7 @@ export function SalesActivityView() {
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
               <TopSellers lanes={lanes} />
-              <Heatmap regs={heatRegs} anchorDate={anchorDate} loading={heatLoading} />
+              <Heatmap regs={heatRegs} grid={heatGrid} anchorDate={anchorDate} loading={heatLoading} />
             </div>
           </>
         )}
