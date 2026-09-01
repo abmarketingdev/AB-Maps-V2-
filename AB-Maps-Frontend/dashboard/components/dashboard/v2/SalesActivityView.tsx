@@ -65,7 +65,7 @@ interface Reg {
 
 // A timeline bead from summary.by_employee_lane (status + timestamp only).
 interface Bead { tsMs: number; status: Status }
-interface Lane { id: string; name: string; beads: Bead[]; count: number; ja: number; capped: boolean }
+interface Lane { id: string; name: string; role?: "employee" | "manager"; beads: Bead[]; count: number; ja: number; capped: boolean }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -561,7 +561,12 @@ function ActivityPanel({
                       <div key={lane.id} className="flex items-center gap-2.5 pr-2" style={{ height: ROW_H }}>
                         <RoyMascot state={state} size={30} />
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-ab-fg truncate leading-tight">{lane.name}</p>
+                          <p className="flex items-center gap-1.5 text-sm font-semibold text-ab-fg leading-tight">
+                            <span className="truncate">{lane.name}</span>
+                            {lane.role === "manager" && (
+                              <span className="shrink-0 rounded bg-violet-500/15 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-violet-300">Leder</span>
+                            )}
+                          </p>
                           <p className="text-xs text-ab-fg-3">{nbFmt.format(lane.count)} reg · {lane.ja} ja</p>
                         </div>
                       </div>
@@ -1019,7 +1024,7 @@ export function SalesActivityView() {
       // last ≤200 for the canvas. `capped` = beads truncated, NOT the count.
       const count = l.total ?? beads.length
       const ja = l.ja ?? beads.filter(b => b.status === "ja").length
-      return { id: l.employee_id, name: l.employee || "Ukjent", beads, count, ja, capped: beads.length >= LANE_BEAD_CAP }
+      return { id: l.employee_id, name: l.employee || "Ukjent", role: l.role, beads, count, ja, capped: beads.length >= LANE_BEAD_CAP }
     }).sort((a, b) => b.count - a.count)
   }, [summary])
 

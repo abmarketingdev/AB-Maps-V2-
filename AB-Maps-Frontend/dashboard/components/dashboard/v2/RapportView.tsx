@@ -247,7 +247,7 @@ function EntryState({
 }) {
   const reduced = useReducedMotion()
   const PERIODS = [
-    { key: "1D", label: "I dag" }, { key: "1W", label: "7 dager" },
+    { key: "1D", label: "I dag" }, { key: "1DY", label: "I går" }, { key: "1W", label: "7 dager" },
     { key: "1M", label: "30 dager" }, { key: "YTD", label: "I år" },
     { key: "CUSTOM", label: "Egendefinert" },
   ]
@@ -850,6 +850,7 @@ export function RapportView() {
     const today = todayISO()
     let start = startDate, end = endDate
     if      (key === "1D")  { start = daysAgoISO(1);  end = today }
+    else if (key === "1DY") { start = daysAgoISO(1);  end = daysAgoISO(1) }   // I går — kun gårsdagen
     else if (key === "1W")  { start = daysAgoISO(7);  end = today }
     else if (key === "1M")  { start = daysAgoISO(30); end = today }
     else if (key === "YTD") { start = `${new Date().getFullYear()}-01-01`; end = today }
@@ -929,7 +930,7 @@ export function RapportView() {
   }, [tableData, searchQuery, minDoors])
 
   const PERIODS = [
-    { key: "1D", label: "I dag" }, { key: "1W", label: "7 dager" },
+    { key: "1D", label: "I dag" }, { key: "1DY", label: "I går" }, { key: "1W", label: "7 dager" },
     { key: "1M", label: "30 dager" }, { key: "YTD", label: "I år" },
     { key: "CUSTOM", label: "Egendefinert" },
   ]

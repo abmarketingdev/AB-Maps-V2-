@@ -26,6 +26,8 @@ export interface SalesSummary {
   by_day_hour?: { date: string; hour: number; n: number }[];
   by_employee_lane: {
     employee_id: string; employee: string;
+    /** "manager" for a leader knocking in the field, else "employee". */
+    role?: "employee" | "manager";
     // TRUE totals for the selected period (unbounded). beads are capped for the canvas only.
     total?: number; ja?: number; nei?: number; ikke_hjemme?: number;
     beads: { ts: string; status: SalesStatus }[];
