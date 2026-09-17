@@ -81,8 +81,9 @@ export default function useMapLongPress(map, opts) {
       if (!timerRef.current || !startRef.current) return;
       const dx = Math.abs(e.clientX - startRef.current.x);
       const dy = Math.abs(e.clientY - startRef.current.y);
-      const armMoveTolerancePx = 2; // be strict while arming to favor pan
-      if (dx > armMoveTolerancePx || dy > armMoveTolerancePx) clear();
+      // Honour the caller's tolerance. This used to be hardcoded to 2px, which
+      // no finger holds for the full threshold, so the hook never fired on touch.
+      if (dx > moveTolerancePx || dy > moveTolerancePx) clear();
     };
 
     const onPointerUpGlobal = () => clear();
@@ -123,8 +124,7 @@ export default function useMapLongPress(map, opts) {
       const t = e.touches[0];
       const dx = Math.abs(t.clientX - startRef.current.x);
       const dy = Math.abs(t.clientY - startRef.current.y);
-      const armMoveTolerancePx = 2;
-      if (dx > armMoveTolerancePx || dy > armMoveTolerancePx) clear();
+      if (dx > moveTolerancePx || dy > moveTolerancePx) clear();
     };
 
     const onTouchEnd = () => { clear(); };

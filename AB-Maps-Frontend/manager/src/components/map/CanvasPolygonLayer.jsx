@@ -134,8 +134,12 @@ export default function CanvasPolygonLayer({ polygons, styleFor, onPolygonClick,
                 movementMode: isMovementMode
               });
               
-              e.originalEvent.stopPropagation();
-              e.originalEvent.preventDefault();
+              // NOTE: pass the LEAFLET event to stopPropagation (not
+              // e.originalEvent) — that is the overload which sets the
+              // `_stopped` flag Leaflet's own dispatch loop checks. Without it
+              // MapEvents.contextmenu also fired and handleAreaEdit ran twice.
+              L.DomEvent.preventDefault(e.originalEvent);
+              L.DomEvent.stopPropagation(e);
               onPolygonClick(feature.properties, e.latlng, 'contextmenu');
             });
             // Note: Do NOT implement touchstart-based long-press here.

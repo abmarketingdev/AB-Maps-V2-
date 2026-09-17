@@ -54,7 +54,6 @@ import UndoButton from './components/ui/UndoButton';
 import ManagerSummaryDropdown from './components/ui/ManagerToolbar';
 import EmployeeListPopup from './components/ui/EmployeeListPopup';
 import RotationControl from './components/ui/RotationControl';
-import TouchRotationHint from './components/ui/TouchRotationHint';
 import MapUIControl from './components/ui/MapUIControl';
 // import WebSocketTest from './components/ui/WebSocketTest';
 import EmployeeLocationMarker from './components/EmployeeLocationMarker';
@@ -417,7 +416,6 @@ function AppContent() {
   
   // Removed noisy feature flag console logs
   const { heading, direction, hasPermission: hasCompassPermission, requestPermission: requestCompassPermission } = useCompassHeading();
-  const [showTouchHint, setShowTouchHint] = useState(false);
 
   const toolbarRef = useRef(null);
   const pressTimerRef = useRef(null);
@@ -1275,8 +1273,11 @@ function AppContent() {
 
   // Robust long-press using pointer events; only arm when starting inside an area
   const { suppressLongPress } = useMapLongPress(mapRef, {
-    thresholdMs: 650,
-    moveTolerancePx: 8,
+    // Leaflet's own TapHold fires contextmenu at 600ms now (see tapHold on
+    // MapContainer). Keep this as a fallback only, well clear of that, so the
+    // two can't both open the dialog.
+    thresholdMs: 1000,
+    moveTolerancePx: 10,
     shouldArm: (latlng) => {
       // DON'T arm long press if movement mode is enabled
       if (isMovementMode) {
@@ -1763,14 +1764,23 @@ function AppContent() {
         maxZoomAnimation={!isMobile}
         fadeAnimation={!isMobile}
         markerZoomAnimation={!isMobile}
-        style={{ height: '100vh', width: '100%' }}
+        style={{ height: 'var(--app-vh, 100vh)', width: '100%' }}
         ref={setMapRef}
         updateWhenZooming={false}
         updateWhenIdle={true}
         rotate={isRotationEnabled && !isMobile}
         touchRotate={isTouchRotationEnabled && !isMobile}
-        // let Leaflet handle mobile tap/long-press → contextmenu
-        tap={false}
+        // Long-press → `contextmenu` is the ONLY gesture that opens the area
+        // dialog (CanvasPolygonLayer deliberately has no click handler), so it
+        // has to fire everywhere. Leaflet's `tapHold` default is
+        //   touchNative && safari && mobile
+        // i.e. iOS only — every Android browser was left relying on the OS's
+        // own long-press, which a stray pan swallows. Forcing it on makes the
+        // gesture uniform; if the native contextmenu fires first, Leaflet's
+        // TapHold cancels itself on it, so there is no double-fire.
+        // (`tap` was removed in Leaflet 1.8 — `tap={false}` was a no-op.)
+        tapHold={true}
+        tapTolerance={15}
         preferCanvas={false}
         bearing={isMobile ? 0 : bearing}
       >
@@ -1959,7 +1969,7 @@ function AppContent() {
         
         {/* Manual completion button when drawing */}
         {isDrawingEnabled && currentArea.length >= 3 && (
-          <div style={{
+          <div className="complete-area-btn map-ui-control" style={{
             position: 'absolute',
             top: '20px',
             right: '20px',
@@ -1974,10 +1984,10 @@ function AppContent() {
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
             border: '2px solid #2ecc71'
           }}
-          onClick={completeDrawingManually}
-          title="Click to complete the area (or press Enter)"
+          onClick={(e) => { e.stopPropagation(); completeDrawingManually(); }}
+          title="Fullfør området (eller trykk Enter)"
           >
-            ✓ Complete Area ({currentArea.length} points)
+            ✓ Fullfør område ({currentArea.length} punkter)
           </div>
         )}
 
@@ -2414,13 +2424,9 @@ function AppContent() {
         </button>
       )}
 
-      {/* Touch Rotation Hint for Mobile */}
-      {isMobile && (
-        <TouchRotationHint
-          isVisible={showTouchHint}
-          onClose={() => setShowTouchHint(false)}
-        />
-      )}
+      {/* Touch rotation hint intentionally NOT rendered: rotation is disabled on
+          mobile (see `rotate`/`touchRotate` on MapContainer), so the hint told
+          users to perform a gesture that does nothing while covering the map. */}
 
       {/* Phase 7: Enrichment Job Popup */}
       <EnrichmentJobPopup

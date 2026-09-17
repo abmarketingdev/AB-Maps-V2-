@@ -1,0 +1,238 @@
+/* ============================================================================
+   mobile.css — every mobile-only override for the manager app, in one file.
+
+   WHY ONE FILE: it is imported LAST (see index.js), so it wins ties in the
+   cascade without editing any existing stylesheet. Reverting the whole mobile
+   pass is deleting one import line.
+
+   RULE: everything except the --app-vh block below is inside a
+   `max-width: 768px` media query, so desktop rendering is unchanged.
+   ============================================================================ */
+
+
+/* ---------------------------------------------------------------------------
+   1. Viewport height
+   ---------------------------------------------------------------------------
+   `100vh` on a mobile browser is TALLER than the visible viewport (the URL bar
+   is excluded), so anything anchored to the bottom fell below the fold. Three
+   tiers, best first:
+     100dvh               — modern browsers, tracks the URL bar live
+     calc(var(--vh)*100)  — App.js keeps --vh in sync on resize/orientationchange
+     100vh                — nothing else available
+   Harmless on desktop, where all three are equal.
+--------------------------------------------------------------------------- */
+:root { --app-vh: calc(var(--vh, 1vh) * 100); }
+@supports (height: 100dvh) { :root { --app-vh: 100dvh; } }
+
+.leaflet-container { height: var(--app-vh, 100vh); }
+#root            { height: var(--app-vh, 100vh); }
+
+
+@media (max-width: 768px) {
+
+  /* -------------------------------------------------------------------------
+     2. Map chrome — free the top-left, put everything in thumb reach.
+
+     Before: zoom (2x32px + 15px margins) + the 4-button toolbar column + the
+     undo control all stacked at topleft, eating ~400px of a ~640px screen.
+
+     After, measured up from the bottom edge (+ safe-area inset):
+       band A  ~14px   search bar (left)      | locate button (right)
+       band B  ~74px   toolbar rail (left)    | zoom buttons (right)
+       band C ~140px   "fullfør område" pill (centred, only while drawing)
+     Top-left keeps only the undo control; top-right keeps the avatar FAB.
+
+     These are position:fixed, which is safe here: Leaflet's control container
+     is a sibling of .leaflet-map-pane, so it has no transformed ancestor to
+     trap a fixed child.
+  ------------------------------------------------------------------------- */
+
+  /* Toolbar: vertical column at topleft -> horizontal rail near the thumb */
+  .toolbar-container {
+    position: fixed !important;
+    top: auto !important;
+    left: 12px !important;
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
+    margin: 0 !important;
+    z-index: 1200;
+    /* Hug the buttons, but never grow into the zoom control on the right.
+       The rail gains a 5th button + divider whenever an enrichment job is
+       running, which on a 320px screen would otherwise overlap it. */
+    width: max-content;
+    max-width: calc(100vw - 70px);
+  }
+
+  .toolbar-controls {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+    border-radius: 999px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .toolbar-controls::-webkit-scrollbar { display: none; }
+
+  /* Buttons must not be squeezed by the flex container when it scrolls */
+  .toolbar-controls > .circular-toggle,
+  .toolbar-controls > button { flex: 0 0 auto; }
+
+  /* The danger divider was a full-width horizontal rule in a column layout */
+  .delete-toggle-separator {
+    width: 1px !important;
+    height: 26px !important;
+    margin: 0 2px !important;
+    background: rgba(231, 76, 60, 0.28);
+  }
+
+  /* Zoom: keep the buttons (precision matters when drawing) but move them out
+     of the top-left and stack them above the locate button. */
+  .leaflet-control-zoom {
+    position: fixed !important;
+    top: auto !important;
+    left: auto !important;
+    right: 12px !important;
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
+    margin: 0 !important;
+    z-index: 1200;
+  }
+
+  /* Undo keeps the now-empty top-left, clear of the notch */
+  .undo-control {
+    margin-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  /* -------------------------------------------------------------------------
+     3. Bottom band A — search + locate, above the home indicator
+  ------------------------------------------------------------------------- */
+  .search-container {
+    left: 12px !important;
+    right: 76px !important;      /* clear of the 48px locate button */
+    width: auto !important;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* .locate-btn is positioned by an inline style in App.js; !important wins */
+  .locate-btn {
+    right: 12px !important;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* -------------------------------------------------------------------------
+     4. "Fullfør område" pill — was top:20/right:20 at z-index 1000, i.e.
+     underneath the avatar FAB (top:16/right:16, z-index 3100), so its right
+     edge opened the menu instead of closing the polygon.
+  ------------------------------------------------------------------------- */
+  .complete-area-btn {
+    top: auto !important;
+    right: auto !important;
+    left: 50% !important;
+    bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+    transform: translateX(-50%);
+    z-index: 3200 !important;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+  }
+
+  /* Avatar FAB clear of the notch */
+  .mobile-manager-toolbar {
+    top: calc(14px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  /* -------------------------------------------------------------------------
+     5. Popups: never wider than the screen.
+     Each of these had a hardcoded min-width that beat its own max-width on
+     narrow devices (320px-class phones, and 380px here up to 768px).
+  ------------------------------------------------------------------------- */
+  .area-dialog,
+  .employee-list-modal,
+  .employee-list-modal.improved,
+  .employee-list-modal.dark,
+  .floating-forbidden-popup,
+  .forbidden-area-popup,
+  .floating-address-popup,
+  .floating-address-marker-popup,
+  .floating-uploaded-address-popup {
+    min-width: 0 !important;
+  }
+
+  .employee-list-modal,
+  .employee-list-modal.improved,
+  .employee-list-modal.dark,
+  .floating-forbidden-popup,
+  .forbidden-area-popup {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* -------------------------------------------------------------------------
+     6. iOS zooms the whole page when a focused input is under 16px, which
+     shoves the dialog off-centre mid-edit. AssignEmployeesModal already got
+     this right; area-dialog dropped to 14-15px below 480px.
+  ------------------------------------------------------------------------- */
+  .area-dialog input,
+  .area-dialog select,
+  .area-dialog textarea,
+  .area-dialog .area-input,
+  .area-dialog input[type="text"],
+  .area-dialog input[type="date"],
+  .area-dialog input[type="datetime-local"] {
+    font-size: 16px !important;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   7. The address popup (tap inside an area) only had a 480px rule, so between
+   481px and 768px it kept min-width:380px AND stayed anchored to the tap point
+   with translate(-50%,-100%) — it hung off the top/side on foldables, Surface
+   Duo and small tablets. Centre it like every other popup does at that size.
+   The two sibling popups already centre at 768px; this one was the odd one out.
+--------------------------------------------------------------------------- */
+@media (min-width: 481px) and (max-width: 768px) {
+  .floating-address-popup {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-width: calc(100vw - 32px) !important;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   8. Landscape phones (short viewports). AssignEmployeesModal has landscape
+   rules; the area dialog had none, so its stacked full-width buttons ran off
+   a ~360px-tall viewport. Lay the buttons out two-up and tighten the padding.
+--------------------------------------------------------------------------- */
+@media (max-width: 950px) and (orientation: landscape) and (max-height: 520px) {
+  .area-dialog {
+    max-height: calc(var(--app-vh, 100vh) - 16px) !important;
+    padding: 14px !important;
+  }
+
+  .area-dialog h2 {
+    font-size: 17px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .area-form { gap: 8px !important; }
+
+  .area-buttons {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+  }
+
+  .area-confirm-button,
+  .area-delete-button,
+  .area-add-employee-button,
+  .area-talkmore-results-button {
+    flex: 1 1 45% !important;
+    width: auto !important;
+    min-height: 40px !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+}
