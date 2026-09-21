@@ -10,6 +10,7 @@ import { areaService } from '../services/areaService';
 import { isPointInPolygon } from '../utils/addressUtils';
 // NRC Campaign URL helper
 import { isNRCCampaign, openNRCUrl } from '../utils/nrcUrlHelper';
+import { isCareCampaign, handleCareJa } from '../utils/careUrlHelper';
 // Phase 2: Import for Discovery Flow (Backend local-lookup API for apartment detection)
 import { fetchLocalLookupForAddress, fetchGeonorgeForAddress } from '../services/apartmentService';
 import buildingService from '../services/buildingService';
@@ -850,6 +851,12 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
     if (status === 'ja' && isNRCCampaign()) {
       console.log('[useMapState] NRC campaign detected, opening external URL BEFORE async operations');
       openNRCUrl(addressText);
+    }
+
+    // 🔑 CARE CAMPAIGN: copy the address + open the CARE portal, also before any await
+    // (copy must happen while this document still has focus, open before the first await).
+    if (status === 'ja' && isCareCampaign()) {
+      handleCareJa(addressText, { showToast });
     }
     
     try {

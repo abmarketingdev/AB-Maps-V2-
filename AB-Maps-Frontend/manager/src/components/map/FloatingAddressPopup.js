@@ -6,6 +6,7 @@ import authService from '../../services/authService';
 import locationService from '../../services/locationService';
 import { useAuth } from '../../contexts/AuthContext';
 import { isNRCCampaignAsync, openNRCUrl } from '../../utils/nrcUrlHelper';
+import { isCareCampaign, handleCareJa } from '../../utils/careUrlHelper';
 import './FloatingAddressPopup.css';
 import NeiSubcategoryInlineStep from './NeiSubcategoryInlineStep';
 import {
@@ -30,7 +31,8 @@ const FloatingAddressPopup = ({
   onOpenCampaignForm,
   isTalkmoreCampaign = false,
   isCheckingApartments = false,
-  onGeonorgeFallback // Handler for Geonorge fallback button
+  onGeonorgeFallback, // Handler for Geonorge fallback button
+  showToast          // (message, type) — used by the CARE "Ja" clipboard toast
 }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -208,6 +210,13 @@ const FloatingAddressPopup = ({
     if (statusValue === 'ja' && isNRCCampaignState) {
       console.log('[FloatingAddressPopup] NRC campaign detected, opening external URL BEFORE async operations');
       openNRCUrl(address);
+    }
+
+    // 🔑 CARE CAMPAIGN: copy the address + open the CARE portal, also before any await.
+    // Detection is synchronous here (we match on the campaign id), so unlike NRC this
+    // needs no pre-fetched state.
+    if (statusValue === 'ja' && isCareCampaign()) {
+      handleCareJa(address, { showToast });
     }
     
     setLoading(true);

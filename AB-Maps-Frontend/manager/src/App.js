@@ -2166,6 +2166,7 @@ function AppContent() {
                   employeeId: clickedInfo.employee_id  // Also include camelCase for compatibility
                 })}
                 onCopyAddress={handleCopyAddressToSearch}
+                showToast={showToast}
                 onAddressUpdated={(u) => {
                   applyAddressMarkerUpdate(u);
                   setClickedInfo((prev) =>
@@ -2192,6 +2193,7 @@ function AppContent() {
                 isCheckingApartments={isGeonorgeLoading}
                 onGeonorgeFallback={handleGeonorgeFallback}
                 isTalkmoreCampaign={isTalkmoreNeiCampaign}
+                showToast={showToast}
                 onAddMarker={(markerFromPopup) => {
                   /**
                    * Normalize the marker for vector tiles:
@@ -2255,6 +2257,7 @@ function AppContent() {
             onClose={() => handleMarkerClick(null)}
             canDelete={canDeleteMarker(selectedMarker)}
             onAddressUpdated={applyAddressMarkerUpdate}
+            showToast={showToast}
           />
         )}
 
@@ -2473,6 +2476,7 @@ function AppContent() {
         baseAddress={apartmentDrawer.baseAddress}
         onTileRefresh={handleApartmentStatusChange}
         onOpenCampaignForm={openCampaignForm}
+        showToast={showToast}
       />
 
       {/* DEPRECATED: Age Statistics Popup - feature temporarily disabled */}

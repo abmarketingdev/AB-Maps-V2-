@@ -5,6 +5,7 @@ import { faCheck, faClock, faTimes, faTrash, faSpinner, faRedo, faCopy } from '@
 import './FloatingAddressMarkerPopup.css';
 import useMobileOptimization from '../../hooks/useMobileOptimization';
 import addressService from '../../services/addressService';
+import { isCareCampaign, handleCareJa } from '../../utils/careUrlHelper';
 import { labelForNeiSubcategory } from '../../constants/neiSubcategory';
 import NeiSubcategoryInlineStep from './NeiSubcategoryInlineStep';
 
@@ -22,6 +23,7 @@ const FloatingAddressMarkerPopup = ({
   token,          // Authentication token
   employee,       // Employee/user object for permission checking
   onAddressUpdated, // (updatedAddress) => sync map marker state
+  showToast,      // (message, type) — used by the CARE "Ja" clipboard toast
 }) => {
   // 🔵 DEBUGGING: Log at the VERY TOP to track popup rendering
   console.log('🔵🔵🔵 [FloatingAddressMarkerPopup] ===== POPUP RENDERING =====', {
@@ -134,6 +136,13 @@ const FloatingAddressMarkerPopup = ({
   const patchVisitStatus = useCallback(
     async (newStatus, neiSub = undefined) => {
       if (!marker?.addressId || !token) return;
+
+      // 🔑 CARE CAMPAIGN: copy the address + open the CARE portal BEFORE the await
+      // (copy needs focus; window.open needs the still-live user gesture).
+      if (newStatus === 'ja' && isCareCampaign()) {
+        handleCareJa(marker.address, { showToast });
+      }
+
       setSavingStatus(true);
       setStatusError(null);
       try {
@@ -164,7 +173,7 @@ const FloatingAddressMarkerPopup = ({
         setSavingStatus(false);
       }
     },
-    [marker?.addressId, token, fullAddressData, onAddressUpdated]
+    [marker?.addressId, marker?.address, token, fullAddressData, onAddressUpdated, showToast]
   );
 
   // MOBILE OPTIMIZED: Memoize computed values to prevent re-calculations

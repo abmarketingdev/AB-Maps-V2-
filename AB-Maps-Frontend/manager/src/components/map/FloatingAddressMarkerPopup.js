@@ -5,6 +5,7 @@ import addressService from '../../services/addressService';
 import { useAuth } from '../../contexts/AuthContext';
 import { labelForNeiSubcategory } from '../../constants/neiSubcategory';
 import NeiSubcategoryInlineStep from './NeiSubcategoryInlineStep';
+import { isCareCampaign, handleCareJa } from '../../utils/careUrlHelper';
 import './FloatingAddressMarkerPopup.css';
 
 const FloatingAddressMarkerPopup = ({ 
@@ -14,6 +15,7 @@ const FloatingAddressMarkerPopup = ({
   canDelete,
   onCopyAddress,
   onAddressUpdated,
+  showToast,      // (message, type) — used by the CARE "Ja" clipboard toast
 }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -169,6 +171,13 @@ const FloatingAddressMarkerPopup = ({
 
   const patchVisitStatus = async (newStatus, neiSub = undefined) => {
     if (!marker?.addressId) return;
+
+    // 🔑 CARE CAMPAIGN: copy the address + open the CARE portal BEFORE the await
+    // (copy needs focus; window.open needs the still-live user gesture).
+    if (newStatus === 'ja' && isCareCampaign()) {
+      handleCareJa(marker.address, { showToast });
+    }
+
     setSavingStatus(true);
     setStatusError(null);
     try {

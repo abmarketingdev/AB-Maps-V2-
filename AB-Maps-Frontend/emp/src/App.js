@@ -2071,6 +2071,7 @@ function App() {
                 mapRef={mapRef}
                 token={token}
                 employee={employee}
+                showToast={showToast}
               />
             </>
           );
@@ -2119,6 +2120,7 @@ function App() {
         baseAddress={apartmentDrawer.baseAddress}
         onTileRefresh={handleApartmentStatusChange}
         onOpenCampaignForm={openCampaignForm}
+        showToast={showToast}
       />
 
     </div>

@@ -16,6 +16,7 @@ import buildingService from '../../services/buildingService';
 import locationService from '../../services/locationService';
 import ApartmentListItem from './ApartmentListItem';
 import { isNRCCampaign, openNRCUrlForApartment } from '../../utils/nrcUrlHelper';
+import { isCareCampaign, handleCareJa } from '../../utils/careUrlHelper';
 import { isNeiSubcategory } from '../../constants/neiSubcategory';
 import './ApartmentListDrawer.css';
 
@@ -38,6 +39,7 @@ const ApartmentListDrawer = ({
   onTileRefresh,    // Callback to refresh map tiles after updates
   initialStats,     // Optional: { totalUnits, visitedUnits } from tile
   onOpenCampaignForm, // Callback to open campaign form when 'Ja' is selected
+  showToast,        // (message, type) — used by the CARE "Ja" clipboard toast
 }) => {
   // State
   const [apartments, setApartments] = useState([]);
@@ -206,6 +208,15 @@ const ApartmentListDrawer = ({
     if (newStatus === 'ja' && apartment && isNRCCampaign()) {
       console.log('[ApartmentListDrawer] NRC campaign detected, opening external URL BEFORE async operations');
       openNRCUrlForApartment(baseAddress, apartment.apartment_number);
+    }
+
+    // 🔑 CARE CAMPAIGN: copy the address (incl. apartment) + open the CARE portal,
+    // also before any await so the copy keeps focus and the tab keeps the gesture.
+    if (newStatus === 'ja' && apartment && isCareCampaign()) {
+      handleCareJa(baseAddress, {
+        apartmentNumber: apartment.apartment_number,
+        showToast,
+      });
     }
     
     // Optimistic update
