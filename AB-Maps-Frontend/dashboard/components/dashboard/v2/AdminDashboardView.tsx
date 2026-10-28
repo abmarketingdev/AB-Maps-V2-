@@ -28,7 +28,7 @@ import { PanelLoading, PanelEmpty, PanelError } from "./_states"
 // ─── Types & mock data ────────────────────────────────────────────────────────
 
 type Role = "admin" | "manager" | "employee"
-type Dept = "maps" | "qc" | "hr"
+type Dept = "maps" | "qc" | "hr" | "rek"
 
 interface User {
   id: string
@@ -60,6 +60,7 @@ function flatToUser(f: FlatUser): User {
   const dept: Dept | undefined =
     (f.employee_type === "qc_emp" || f.admin_type === "qc_admin") ? "qc"
       : f.employee_type === "hr_emp" ? "hr"
+      : f.employee_type === "rek_emp" ? "rek"
         : (f.employee_type === "maps_emp" || f.admin_type === "maps_admin") ? "maps"
           : undefined
   const parts = (f.name || f.username || "").trim().split(/\s+/)
@@ -108,6 +109,8 @@ const DEPT_STYLE: Record<Dept, { label: string; color: string; bg: string }> = {
   maps: { label: "MAPS", color: "#3b82f6", bg: "bg-blue-500/15" },
   qc: { label: "QC", color: "#06b6d4", bg: "bg-cyan-500/15" },
   hr: { label: "HR", color: "#f59e0b", bg: "bg-amber-500/15" },
+  // Rekrutterer: logs into rekruttering.abmarketing.no only (auth employee_type rek_emp).
+  rek: { label: "Rekruttering", color: "#8b5cf6", bg: "bg-violet-500/15" },
 }
 function RoleBadge({ role, dept, salesChief }: { role: Role; dept?: Dept; salesChief?: boolean }) {
   const m = ROLE_META[role]
@@ -455,7 +458,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
           is_sales_chief: role === "manager" ? salesChief : false,
         }
         if (role === "employee") body.employee_type = `${dept}_emp`
-        if (role === "admin") body.admin_type = `${dept === "hr" ? "maps" : dept}_admin`
+        if (role === "admin") body.admin_type = `${dept === "hr" || dept === "rek" ? "maps" : dept}_admin`
         // Team appointment: auth names the team in the welcome email; the actual HR
         // membership (which auto-assigns the campaign) is done right after create.
         if (teamId) { body.team_id = teamId; body.team_name = teamName }
@@ -535,7 +538,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
               const m = ROLE_META[r]; const on = role === r
               const disabled = !isReg // role change only via promote in edit
               return (
-                <button key={r} disabled={disabled} onClick={() => { setRole(r); if (r === "admin" && dept === "hr") setDept("maps") }}
+                <button key={r} disabled={disabled} onClick={() => { setRole(r); if (r === "admin" && (dept === "hr" || dept === "rek")) setDept("maps") }}
                   className={cn("flex-1 flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-sm font-semibold transition-all", on ? m.bg : "bg-ab-elevated text-ab-fg-3", !disabled && "cursor-pointer hover:text-ab-fg-2", disabled && "opacity-50 cursor-not-allowed")}
                   style={on ? { color: m.color } : undefined}>
                   <m.Icon className="h-3.5 w-3.5" />{m.label}
@@ -546,13 +549,15 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
           {!isReg && <p className="mt-1.5 text-[11px] text-ab-fg-4">Endre rolle via "Forfrem / Degrader" i radmenyen.</p>}
         </div>
 
-        {/* Dept — employees: maps/qc/hr; admins: maps/qc (no HR admin tier). Managers have no platform. */}
+        {/* Dept — employees: maps/qc/hr/rekruttering; admins: maps/qc (no HR/recruitment admin tier).
+            Managers have no platform. «Rekruttering» = a recruiter (rek_emp): recruitment ERP only;
+            what they see there is granted in rekruttering.abmarketing.no → Tilganger. */}
         {isReg && role !== "manager" && (
           <div>
             <Lbl>Avdeling</Lbl>
             <div className="flex gap-1.5">
-              {((role === "employee" ? ["maps", "qc", "hr"] : ["maps", "qc"]) as Dept[]).map(d => (
-                <button key={d} onClick={() => setDept(d)} className={cn("cursor-pointer flex-1 rounded-xl px-2 py-2 text-sm font-semibold transition-all", dept === d ? "bg-ab-active text-ab-fg" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}>{d.toUpperCase()}</button>
+              {((role === "employee" ? ["maps", "qc", "hr", "rek"] : ["maps", "qc"]) as Dept[]).map(d => (
+                <button key={d} onClick={() => setDept(d)} className={cn("cursor-pointer flex-1 rounded-xl px-2 py-2 text-sm font-semibold transition-all", dept === d ? "bg-ab-active text-ab-fg" : "bg-ab-elevated text-ab-fg-3 hover:text-ab-fg-2")}>{d === "rek" ? "Rekruttering" : d.toUpperCase()}</button>
               ))}
             </div>
           </div>
