@@ -16,6 +16,24 @@ import './DeletionConfirmDialog.css';
  * DeletionConfirmDialog - Confirmation dialog for bulk polygon deletion
  * Shows preview of what will be deleted and allows entity type selection
  */
+/*
+ * Uploaded addresses start UNTICKED, the other two ticked.
+ *
+ * They are not the same kind of data. Addresses and areas are work product —
+ * knocks our own people recorded, and polygons somebody drew; both can be
+ * produced again. Uploaded addresses are the imported existing-donor list.
+ * Delete those and the undo is not "knock the street again", it is "find
+ * whoever has the original file and import it a second time".
+ *
+ * Pre-ticking all three treated those two risks as equal, and donor lists
+ * were being deleted by accident as a result.
+ */
+const DEFAULT_ENTITY_TYPES = {
+  addresses: true,
+  uploaded_addresses: false,
+  areas: true
+};
+
 const DeletionConfirmDialog = ({
   isOpen,
   onClose,
@@ -28,11 +46,7 @@ const DeletionConfirmDialog = ({
   const [isExecuting, setIsExecuting] = useState(false);
   const [error, setError] = useState(null);
   const [previewData, setPreviewData] = useState(null);
-  const [selectedEntityTypes, setSelectedEntityTypes] = useState({
-    addresses: true,
-    uploaded_addresses: true,
-    areas: true
-  });
+  const [selectedEntityTypes, setSelectedEntityTypes] = useState(DEFAULT_ENTITY_TYPES);
 
   // Load preview when dialog opens with a polygon
   useEffect(() => {
@@ -44,6 +58,12 @@ const DeletionConfirmDialog = ({
       setError(null);
       setIsLoading(false);
       setIsExecuting(false);
+      /*
+       * The ticks reset too. They did not before, so ticking donors once for a
+       * deliberate cleanup left them ticked for every delete afterwards in that
+       * session — the opt-in default would have been undone by the second use.
+       */
+      setSelectedEntityTypes(DEFAULT_ENTITY_TYPES);
     }
   }, [isOpen, polygon]);
 
@@ -56,11 +76,16 @@ const DeletionConfirmDialog = ({
 
     try {
       const geoJSON = convertToGeoJSON(polygon);
-      const entityTypes = Object.entries(selectedEntityTypes)
-        .filter(([_, selected]) => selected)
-        .map(([type]) => type);
-
-      const data = await polygonDeletionService.previewDeletion(geoJSON, entityTypes);
+      /*
+       * Ask for every category, not just the ticked ones.
+       *
+       * The preview used to request only what was selected, so an unticked
+       * category showed no count — and the only way to learn how many donors a
+       * polygon contained was to tick the box that deletes them. Counting is
+       * now unconditional; the checkbox decides what is deleted, nothing else.
+       */
+      const data = await polygonDeletionService.previewDeletion(
+        geoJSON, ['addresses', 'uploaded_addresses', 'areas']);
       setPreviewData(data);
     } catch (err) {
       console.error('[DeletionConfirmDialog] Preview error:', err);
@@ -70,15 +95,12 @@ const DeletionConfirmDialog = ({
     }
   }, [polygon, selectedEntityTypes]);
 
-  // Reload preview when entity types change
-  useEffect(() => {
-    if (isOpen && polygon && polygon.length >= 3 && !isLoading && !isExecuting) {
-      const debounceTimer = setTimeout(() => {
-        loadPreview();
-      }, 300);
-      return () => clearTimeout(debounceTimer);
-    }
-  }, [selectedEntityTypes]);
+  /*
+   * No reload when the ticks change — the preview already counts every
+   * category, so the numbers cannot move. This used to fire a debounced
+   * request on every click, which both cost a round-trip and raced the
+   * in-flight preview it was replacing.
+   */
 
   // Handle entity type checkbox change
   const handleEntityTypeChange = (entityType) => {
@@ -131,7 +153,18 @@ const DeletionConfirmDialog = ({
   // Don't render if not open
   if (!isOpen) return null;
 
-  const totalCount = previewData?.total_will_delete || 0;
+  /*
+   * Counted from the ticked categories, not from `total_will_delete`.
+   *
+   * The preview now returns every category, so the server's total covers all
+   * three. Using it would make the button promise a number larger than what it
+   * deletes — "Delete 7438 Items" while removing 7425 — which is exactly the
+   * kind of mismatch that makes people stop reading the dialog.
+   */
+  const totalCount = Object.entries(selectedEntityTypes)
+    .filter(([, selected]) => selected)
+    .reduce((n, [type]) => n + (previewData?.will_delete?.[type]?.count || 0), 0);
+  const uploadedCount = previewData?.will_delete?.uploaded_addresses?.count || 0;
   const polygonArea = previewData?.polygon_area_km2 || 0;
 
   return (
@@ -242,8 +275,21 @@ const DeletionConfirmDialog = ({
                         ({previewData.will_delete.uploaded_addresses.count})
                       </span>
                     )}
+                    {/* "Uploaded Addresses" did not read as "donors" to anyone —
+                        the request to change this had to spell that out. */}
+                    <span className="entity-hint">
+                      eksisterende givere · importert liste, kan ikke gjenskapes herfra
+                    </span>
                   </span>
                 </label>
+
+                {/* Armed: say so plainly, with the number, while it can still be undone. */}
+                {selectedEntityTypes.uploaded_addresses && uploadedCount > 0 && (
+                  <div className="entity-warning">
+                    Sletter {uploadedCount} eksisterende giver{uploadedCount === 1 ? '' : 'e'}.
+                    Disse må importeres på nytt hvis de slettes ved et uhell.
+                  </div>
+                )}
 
                 {/* Uploaded addresses breakdown */}
                 {selectedEntityTypes.uploaded_addresses && previewData.will_delete?.uploaded_addresses && (
