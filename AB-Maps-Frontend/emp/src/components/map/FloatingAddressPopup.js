@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import NeiSubcategoryInlineStep from './NeiSubcategoryInlineStep';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEye, faBan, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEye, faBan, faSpinner, faCopy } from '@fortawesome/free-solid-svg-icons';
 import L from 'leaflet';
 import {
   isTalkmoreCampaign as detectTalkmoreCampaign,
@@ -34,6 +34,35 @@ const FloatingAddressPopup = ({
   const popupRef = useRef(null);
   const [neiFlowAddress, setNeiFlowAddress] = useState(null);
   const [neiFlowError, setNeiFlowError] = useState(null);
+  // «Kopier»: the address of a single house could not be copied (the popup disables text
+  // selection so taps do not drag the map). Same clipboard path + fallback as the marker popup.
+  const [copiedAddress, setCopiedAddress] = useState(null);
+  const copyAddress = async (e, text) => {
+    if (e) {
+      e.stopPropagation();
+      if (e.nativeEvent) e.nativeEvent.stopImmediatePropagation();
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      } catch (err2) {
+        console.error('Kunne ikke kopiere adressen:', err2);
+        return;
+      }
+    }
+    setCopiedAddress(text);
+    setTimeout(() => setCopiedAddress((cur) => (cur === text ? null : cur)), 2000);
+  };
   const storageCampaign = readCampaignFromStorage();
   const talkmoreNeiEnabled =
     Boolean(isTalkmoreCampaign) || detectTalkmoreCampaign(storageCampaign);
@@ -286,6 +315,15 @@ const FloatingAddressPopup = ({
                         <span className="address-number">#{addressIndex + 1}</span>
                         <div className="address-text-wrapper">
                           <h4 className="address-text">{address}</h4>
+                          <button
+                            type="button"
+                            className="fap-copy-btn"
+                            onClick={(e) => copyAddress(e, address)}
+                            aria-label={`Kopier adressen ${address}`}
+                          >
+                            <FontAwesomeIcon icon={faCopy} />
+                            <span>{copiedAddress === address ? 'Kopiert!' : 'Kopier'}</span>
+                          </button>
                         </div>
                       </div>
                     </div>
