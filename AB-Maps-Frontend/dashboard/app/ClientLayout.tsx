@@ -403,11 +403,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       icon: <BookOpen className="h-4 w-4" />,
       group: "LÆRING",
     })
-    // Analytics — admins/superusers + sales-chiefs only (plain managers excluded).
-    // Sales chiefs get a team-only Analytics view (enforced inside AnalyticsView).
-    if (isSuperuser || isSalesChief) {
-      items.push({ href: "/analytics", title: "Analytics", icon: <BarChart3 className="h-4 w-4" />, group: "ADMIN" })
-    }
     // Admin Dashboard — superusers/admins ONLY (sales chiefs must not see it).
     if (isSuperuser) {
       items.push({ href: "/admin-dashboard", title: "Admin Dashboard", icon: <Shield className="h-4 w-4" />, group: "ADMIN" })
