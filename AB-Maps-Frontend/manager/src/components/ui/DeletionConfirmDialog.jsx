@@ -7,6 +7,7 @@ import {
   faMapMarkerAlt,
   faUpload,
   faDrawPolygon,
+  faBuilding,
   faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import polygonDeletionService, { convertToGeoJSON } from '../../services/polygonDeletionService';
@@ -31,7 +32,13 @@ import './DeletionConfirmDialog.css';
 const DEFAULT_ENTITY_TYPES = {
   addresses: true,
   uploaded_addresses: false,
-  areas: true
+  areas: true,
+  /*
+   * Blocks (building rows) are deleted as their own category. Before this, a
+   * block went only when one of its knocks lay inside the polygon, so blocks
+   * nobody had knocked yet (or only partly filled in) survived the delete.
+   */
+  buildings: true
 };
 
 const DeletionConfirmDialog = ({
@@ -85,7 +92,7 @@ const DeletionConfirmDialog = ({
        * now unconditional; the checkbox decides what is deleted, nothing else.
        */
       const data = await polygonDeletionService.previewDeletion(
-        geoJSON, ['addresses', 'uploaded_addresses', 'areas']);
+        geoJSON, ['addresses', 'uploaded_addresses', 'areas', 'buildings']);
       setPreviewData(data);
     } catch (err) {
       console.error('[DeletionConfirmDialog] Preview error:', err);
@@ -327,6 +334,35 @@ const DeletionConfirmDialog = ({
                     {previewData.will_delete.areas.names.map((name, idx) => (
                       <span key={idx} className="area-name">{name || 'Unnamed Area'}</span>
                     ))}
+                  </div>
+                )}
+
+                <label className="entity-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedEntityTypes.buildings}
+                    onChange={() => handleEntityTypeChange('buildings')}
+                    disabled={isExecuting}
+                  />
+                  <FontAwesomeIcon icon={faBuilding} className="entity-icon buildings" />
+                  <span className="entity-label">
+                    Blokker
+                    {previewData.will_delete?.buildings && (
+                      <span className="entity-count">
+                        ({previewData.will_delete.buildings.count})
+                      </span>
+                    )}
+                    <span className="entity-hint">
+                      leiligheter og besøk i blokkene slettes også
+                    </span>
+                  </span>
+                </label>
+
+                {selectedEntityTypes.buildings && previewData.will_delete?.buildings && (
+                  <div className="entity-details">
+                    <span className="status-item">
+                      Leiligheter: {previewData.will_delete.buildings.apartments_affected || 0}
+                    </span>
                   </div>
                 )}
               </div>

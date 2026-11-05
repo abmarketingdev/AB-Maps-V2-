@@ -241,6 +241,10 @@
   color: #9b59b6;
 }
 
+.entity-icon.buildings {
+  color: #e67e22;
+}
+
 .entity-label {
   flex: 1;
   font-weight: 500;

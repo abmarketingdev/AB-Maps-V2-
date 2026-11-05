@@ -87,11 +87,11 @@ class PolygonDeletionService {
   /**
    * Preview what will be deleted (dry run)
    * @param {Object} polygon - GeoJSON Polygon object
-   * @param {Array<string>} entityTypes - Entity types to delete ['addresses', 'uploaded_addresses', 'areas']
+   * @param {Array<string>} entityTypes - Entity types to count ['addresses', 'uploaded_addresses', 'areas', 'buildings']
    * @param {boolean} includePartialAreas - Include areas that partially overlap (default: false)
    * @returns {Promise<DeletionPreview>} Preview of what will be deleted
    */
-  async previewDeletion(polygon, entityTypes = ['addresses', 'uploaded_addresses', 'areas'], includePartialAreas = false) {
+  async previewDeletion(polygon, entityTypes = ['addresses', 'uploaded_addresses', 'areas', 'buildings'], includePartialAreas = false) {
     try {
       console.log('[PolygonDeletionService] Previewing deletion...', { entityTypes, includePartialAreas });
       
