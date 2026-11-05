@@ -12,6 +12,7 @@
  * this only builds the correct launch URL.
  */
 import { isManagerLevel, type UserType } from "@/lib/auth/authService";
+import { courseUrl, fetchCourseGate, getCachedCourseGate } from "@/services/courseGateService";
 
 interface LaunchUser {
   user_type?: UserType;
@@ -35,6 +36,16 @@ function bail(message: string) {
 /** Open the correct AB Maps app for the given user. Returns true if a URL was launched. */
 export function launchMap(user: LaunchUser | null | undefined, opts: LaunchOptions = {}): boolean {
   if (typeof window === "undefined") return false;
+
+  // Course gate: a person with an unfinished assigned course goes to the course, not the map.
+  // Decided from the last known state (sync, so window.open is not popup-blocked); refreshed in
+  // the background. The map apps and the Maps API enforce it too, so a stale cache is harmless.
+  const gate = getCachedCourseGate();
+  void fetchCourseGate();
+  if (gate?.blocked) {
+    window.location.href = courseUrl(gate);
+    return false;
+  }
 
   const raw = localStorage.getItem("auth_tokens");
   if (!raw) {

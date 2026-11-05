@@ -1,6 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import CourseGate from './components/CourseGate';
+import authService from './services/authService';
 import './index.css';
 import './style.css';
 import './App.css';
@@ -10,10 +12,14 @@ import 'leaflet/dist/leaflet.css';
 // revert the entire mobile pass.
 import './mobile.css';
 
+
+const getManagerToken = () => authService.getAccessToken() || localStorage.getItem('accessToken');
 const container = document.getElementById('root');
 const root = createRoot(container);
 root.render(
   <React.StrictMode>
-    <App />
+    <CourseGate getToken={getManagerToken} baseUrl={process.env.REACT_APP_API_URL || process.env.REACT_APP_BACKEND_URL}>
+      <App />
+    </CourseGate>
   </React.StrictMode>
 );

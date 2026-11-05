@@ -45,6 +45,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/ui-ab";
+import { CourseGateNotice } from "@/components/learning/CourseGateNotice";
 
 interface EmployeeLayoutProps {
   children: React.ReactNode;
@@ -171,6 +172,7 @@ export function EmployeeLayout({
 
   return (
     <div className="flex min-h-screen bg-[#0a0f1e] text-white">
+      <CourseGateNotice />
       {/* Desktop Sidebar — slim rail that expands on hover (floats over content) */}
       <aside
         onMouseEnter={() => setSidebarHovered(true)}

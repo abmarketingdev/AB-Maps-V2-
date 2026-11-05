@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Users, RefreshCw, Edit, Eye, Calendar, ChevronRight, FolderOpen, FileText, Video, HelpCircle, Search, AlertCircle } from "lucide-react";
+import { ArrowLeft, Users, RefreshCw, Edit, Eye, BookOpen, Calendar, ChevronRight, FolderOpen, FileText, Video, HelpCircle, Search, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileHeader from "@/components/learning/MobileHeader";
@@ -18,6 +18,7 @@ import LoadingState from "@/components/learning/LoadingState";
 import ErrorState from "@/components/learning/ErrorState";
 import { MobileDialog, MobileFormField, MobileSelect } from "@/components/admin";
 import { cn } from "@/lib/utils";
+import { CourseAssignmentDialog } from "@/components/learning/CourseAssignmentDialog";
 import type { UserProgressData, AllUsersProgressResponse, IndividualUserProgressResponse, LearningSection, LearningLesson } from "@/services/learningTypes";
 
 // =============================================================================
@@ -209,6 +210,7 @@ const UserProgressManagement = () => {
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [isOverrideDialogOpen, setIsOverrideDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isCourseDialogOpen, setIsCourseDialogOpen] = useState(false);
   
   // Reset dialog state
   const [resetType, setResetType] = useState<"section" | "lesson">("section");
@@ -645,6 +647,18 @@ const UserProgressManagement = () => {
                       <Eye className="w-4 h-4 mr-1.5" />
                       Detaljer
                     </Button>
+                    <Button
+                      variant="outline"
+                      size={isMobile ? "default" : "sm"}
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setIsCourseDialogOpen(true);
+                      }}
+                      className={cn(isMobile && "h-11")}
+                    >
+                      <BookOpen className="w-4 h-4 mr-1.5" />
+                      Tildel kurs
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -784,6 +798,14 @@ const UserProgressManagement = () => {
           </div>
         </div>
       </MobileDialog>
+
+      <CourseAssignmentDialog
+        open={isCourseDialogOpen}
+        onOpenChange={setIsCourseDialogOpen}
+        userId={selectedUser?.user.id ?? null}
+        userName={selectedUser ? (`${selectedUser.user.first_name} ${selectedUser.user.last_name}`.trim() || selectedUser.user.username) : ""}
+        sections={sectionsWithLessons}
+      />
 
       {/* ================================================================== */}
       {/* OVERRIDE DIALOG */}

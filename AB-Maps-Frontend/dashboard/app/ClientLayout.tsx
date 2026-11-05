@@ -67,6 +67,7 @@ import {
 } from "@/services/learningCompletionService"
 import { LockedNavItem } from "@/components/navbar/LockedNavItem"
 import { CompletionCheckPopup } from "@/components/learning/CompletionCheckPopup"
+import { CourseGateNotice } from "@/components/learning/CourseGateNotice"
 import { useToast } from "@/hooks/use-toast"
 import { StatusPill, ThemeToggle } from "@/components/ui-ab"
 
@@ -831,6 +832,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         onOpenChange={setShowCompletionPopup}
         completionStatus={completionStatus}
       />
+      <CourseGateNotice />
     </CampaignContext.Provider>
   )
 }
