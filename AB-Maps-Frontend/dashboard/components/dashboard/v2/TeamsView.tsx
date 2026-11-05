@@ -14,7 +14,6 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { Users, Search, X, ChevronDown, Crown, Check, MapPin, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchCampaignsWithStats } from "@/lib/api/campaigns"
-import { useSelectedCampaign } from "@/lib/hooks/useSelectedCampaign"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 import { listTeams, getTeam, TEAM_CITIES, type TeamListItem, type TeamDetail } from "@/lib/api/teams"
@@ -58,7 +57,6 @@ export function TeamsView() {
   const reduced = useReducedMotion()
   const { toast } = useToast()
   const { user, isAdmin } = useAuth()
-  const { campaignId: globalCampaignId } = useSelectedCampaign()
   // Only admin sees ALL teams; a sales-chief / team-lead is scoped to their own
   // team(s) by HR (no "Mine team" / chief filter for them).
   const seesAll = isAdmin
@@ -83,7 +81,8 @@ export function TeamsView() {
   useEffect(() => {
     fetchCampaignsWithStats().then(l => setCampaigns(l.map(c => ({ id: c.id, name: c.name, color: c.color })))).catch(() => {})
   }, [])
-  useEffect(() => { if (globalCampaignId) setCampaignFilter(globalCampaignId) }, [globalCampaignId])
+  // Teams are not campaign-based (Dana, 2026-11-05): most have no campaign, so the page
+  // starts on «Alle kampanjer» and does NOT follow the globally selected campaign.
 
   const load = useCallback(() => {
     setLoading(true); setErrored(false)
