@@ -153,15 +153,15 @@ const mapDetail = (t: HrTeam): TeamDetail => ({
 
 // ─── List ────────────────────────────────────────────────────────────
 export async function listTeams(opts: {
-  campaignId?: string; salesChiefId?: string; createdBy?: string; search?: string; page?: number; pageSize?: number;
+  campaignId?: string; salesChiefId?: string; search?: string; page?: number; pageSize?: number;
   /** YYYY-MM. Backend uses this to compute `recruited_total` per team. Defaults server-side to current month. */
   period?: string;
-} = {}): Promise<Paginated<TeamListItem>> {
-  // The dashboard's "Mine team" toggle sets createdBy=<my id>; HR exposes this as
-  // the `mine=true` filter (teams I personally lead), applied on top of scoping.
-  // `salesChiefId` (admin only) narrows to one sales chief's teams.
+} = {}): Promise<Paginated<TeamListItem> & { sees_all: boolean }> {
+  // HR scopes the list (Dana 05.11): only the allow-list sees every team, everyone else
+  // the teams they chief/lead. `sees_all` says which — the client never guesses.
+  // `salesChiefId` (sees_all only) narrows to one sales chief's teams.
   const raw = await getJSON<any>(
-    `/api/hr/teams/${qp({ campaign_id: opts.campaignId, sales_chief_id: opts.salesChiefId, mine: opts.createdBy ? 'true' : undefined, search: opts.search, page: opts.page, page_size: opts.pageSize, period: opts.period })}`,
+    `/api/hr/teams/${qp({ campaign_id: opts.campaignId, sales_chief_id: opts.salesChiefId, search: opts.search, page: opts.page, page_size: opts.pageSize, period: opts.period })}`,
   );
   const results: HrTeam[] = raw?.results ?? (Array.isArray(raw) ? raw : []);
   return {
@@ -170,6 +170,7 @@ export async function listTeams(opts: {
     page: raw?.page ?? 1,
     page_size: raw?.page_size ?? results.length,
     total_pages: raw?.total_pages ?? 1,
+    sees_all: raw?.sees_all === true,
   };
 }
 

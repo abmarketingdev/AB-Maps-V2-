@@ -4,7 +4,8 @@
  * Team — VIEW-ONLY team overview, read from the HR microservice (/api/hr/teams/).
  * HR is the only place teams are created or edited (2026-11-05); Maps shows them
  * grouped by City → Sales chief → Teams. Access is role-scoped server-side:
- * team-leads see only the team(s) they lead, sales-chiefs their own, admins all;
+ * team-leads see only the team(s) they lead, sales-chiefs their own; only the
+ * allow-list (admin_lars, ole_sormbråten, Joseph) sees all (HR `sees_all`);
  * employees never reach this (nav-hidden + backend 403).
  * No provisjon/rates are shown here. Team goals are set elsewhere (Mål).
  */
@@ -14,7 +15,6 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { Users, Search, X, ChevronDown, Crown, Check, MapPin, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fetchCampaignsWithStats } from "@/lib/api/campaigns"
-import { useAuth } from "@/lib/auth/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 import { listTeams, getTeam, TEAM_CITIES, type TeamListItem, type TeamDetail } from "@/lib/api/teams"
 import { PanelLoading, PanelEmpty, PanelError } from "./_states"
@@ -56,18 +56,15 @@ function groupTeams(teams: TeamListItem[]): CityGroup[] {
 export function TeamsView() {
   const reduced = useReducedMotion()
   const { toast } = useToast()
-  const { user, isAdmin } = useAuth()
-  // Only admin sees ALL teams; a sales-chief / team-lead is scoped to their own
-  // team(s) by HR (no "Mine team" / chief filter for them).
-  const seesAll = isAdmin
-  const myId = user?.user_info?.id || user?.user_id || ""
+  // HR decides who sees ALL teams (allow-list, Dana 05.11) and says so in `sees_all`;
+  // everyone else gets only the team(s) they chief/lead, with no chief filter.
+  const [seesAll, setSeesAll] = useState(false)
 
   const [campaigns, setCampaigns] = useState<CampaignVM[]>([])
   const [campaignFilter, setCampaignFilter] = useState<string>("")
   const [campOpen, setCampOpen] = useState(false)
   const [search, setSearch] = useState("")
-  const [mineOnly, setMineOnly] = useState(false)
-  // Admin-only: filter by sales chief.
+  // Sees-all only: filter by sales chief.
   const [salesChiefFilter, setSalesChiefFilter] = useState<string>("")
   const [chiefOpen, setChiefOpen] = useState(false)
   const [chiefOptions, setChiefOptions] = useState<{ id: string; name: string }[]>([])
@@ -88,16 +85,16 @@ export function TeamsView() {
     setLoading(true); setErrored(false)
     return listTeams({
       campaignId: campaignFilter || undefined,
-      salesChiefId: isAdmin ? (salesChiefFilter || undefined) : undefined,
-      createdBy: mineOnly && seesAll ? myId : undefined,
+      salesChiefId: salesChiefFilter || undefined,
       search: search || undefined,
       pageSize: 200,
     })
       .then(res => {
         setTeams(res.results)
+        setSeesAll(res.sees_all)
         // Populate the sales-chief filter from the full (chief-unfiltered) set so
         // picking one chief doesn't shrink the dropdown.
-        if (isAdmin && !salesChiefFilter) {
+        if (res.sees_all && !salesChiefFilter) {
           const seen = new Map<string, string>()
           res.results.forEach(t => { if (t.sales_chief) seen.set(t.sales_chief.id, t.sales_chief.name) })
           setChiefOptions([...seen].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "nb", { numeric: true })))
@@ -105,7 +102,7 @@ export function TeamsView() {
       })
       .catch(() => setErrored(true))
       .finally(() => setLoading(false))
-  }, [campaignFilter, salesChiefFilter, mineOnly, seesAll, isAdmin, myId, search])
+  }, [campaignFilter, salesChiefFilter, search])
   useEffect(() => { const t = setTimeout(() => { void load() }, 250); return () => clearTimeout(t) }, [load])
 
   const openDetail = async (id: string) => {
@@ -180,8 +177,8 @@ export function TeamsView() {
                 )}
               </AnimatePresence>
             </div>
-            {/* Sales-chief filter (admin only) */}
-            {isAdmin && chiefOptions.length > 0 && (
+            {/* Sales-chief filter (only for callers who see every team) */}
+            {seesAll && chiefOptions.length > 0 && (
               <div className="relative">
                 <button onClick={() => setChiefOpen(o => !o)} className="cursor-pointer flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 text-sm font-medium text-ab-fg-2 hover:text-ab-fg transition-all">
                   {salesChiefFilter ? chiefName(salesChiefFilter) : "Alle salgssjefer"} <ChevronDown className="h-3.5 w-3.5 text-ab-fg-3" />
@@ -202,11 +199,6 @@ export function TeamsView() {
                   )}
                 </AnimatePresence>
               </div>
-            )}
-            {seesAll && (
-              <button onClick={() => setMineOnly(m => !m)} className={cn("cursor-pointer rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all", mineOnly ? "border-blue-500/40 bg-blue-600/15 text-blue-200" : "border-ab-line bg-ab-elevated text-ab-fg-2 hover:text-ab-fg")}>
-                Mine team
-              </button>
             )}
           </div>
         </motion.div>
