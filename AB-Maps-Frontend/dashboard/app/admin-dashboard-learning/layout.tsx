@@ -75,7 +75,7 @@ export default function AdminLearningLayout({
   const isKurs = pathname.startsWith("/admin-dashboard-learning/courses");
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#f7f7f7] text-[#141414]">
+    <div className="academy-light flex h-screen w-full overflow-hidden bg-[#f7f7f7] text-[#141414]">
       {/* Sidebar - desktop */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col justify-between border-r border-[#E0E0E0] bg-white overflow-y-auto">
         <div className="flex flex-col">

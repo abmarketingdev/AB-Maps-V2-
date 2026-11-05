@@ -608,8 +608,8 @@ const UserProgressManagement = () => {
                     </span>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className={cn("flex gap-2", isMobile && "flex-col")}>
+                  {/* Action Buttons — 2×2 grid so «Tildel kurs» never spills out of the card */}
+                  <div className={cn("grid grid-cols-2 gap-2", isMobile && "grid-cols-1")}>
                     <Button
                       variant="outline"
                       size={isMobile ? "default" : "sm"}
