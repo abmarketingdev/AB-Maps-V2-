@@ -21,6 +21,8 @@ function hexAlpha(hex: string, a: number) {
 interface CampaignHealthBarProps {
   className?: string
   campaigns?: Campaign[]
+  /** Under the title; says which month the numbers cover when the dashboard has a month picker. */
+  subtitle?: string
 }
 
 // Redesigned 2026-08-06 (v3, boss request). Card grid instead of full-width
@@ -34,7 +36,7 @@ interface CampaignHealthBarProps {
 // status" concept is retired, this widget now emphasises how many donors
 // each campaign has actually recruited. Doors moved to secondary line.
 // Volume bar scaled against the campaign with the most recruits.
-export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarProps) {
+export function CampaignHealthBar({ className, campaigns, subtitle }: CampaignHealthBarProps) {
   const reduced = useReducedMotion()
   const CAMPAIGNS = campaigns ?? []
   const maxRecruits = CAMPAIGNS.reduce((m, c) => Math.max(m, c.ja ?? 0), 1)
@@ -50,7 +52,7 @@ export function CampaignHealthBar({ className, campaigns }: CampaignHealthBarPro
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-ab-fg">Rekrutterte per kampanje</h3>
-          <p className="mt-0.5 text-xs text-ab-fg-3">Nye givere denne perioden</p>
+          <p className="mt-0.5 text-xs text-ab-fg-3">{subtitle ?? "Nye givere denne perioden"}</p>
         </div>
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15">
           <UserPlus className="h-4 w-4 text-emerald-400" />

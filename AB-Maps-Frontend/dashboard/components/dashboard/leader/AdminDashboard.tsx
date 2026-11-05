@@ -406,7 +406,7 @@ export function AdminDashboard() {
           {/* Rekrutterte per kampanje + Live aktivitet — moved to the very
               bottom per client ask 2026-08-09. */}
           <div>
-            <EmbeddedManagerWidgets part="bottom" />
+            <EmbeddedManagerWidgets part="bottom" period={period} />
           </div>
         </div>
       </div>
