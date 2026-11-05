@@ -9,7 +9,7 @@
 import React, { useState } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Check, DoorClosed, Home, Clock } from "lucide-react"
+import { X, Check, DoorClosed, Home } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   postRegistration,
@@ -21,7 +21,6 @@ const OUTCOMES: { status: RegistrationStatus; label: string; color: string; icon
   { status: "ja",          label: "Ja",          color: "#10b981", icon: Check },
   { status: "nei",         label: "Nei",         color: "#f43f5e", icon: X },
   { status: "ikke_hjemme", label: "Ikke hjemme", color: "#64748b", icon: Home },
-  { status: "folg_opp",    label: "Følg opp",    color: "#f59e0b", icon: Clock },
 ]
 
 const NEI_REASONS: { value: NeiSubcategory; label: string }[] = [

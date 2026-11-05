@@ -94,7 +94,7 @@ const DICT: Record<string, string> = {
 
   // Embedded promoter widgets
   "Registrer en dør nå": "Register a door now",
-  "Ja / Nei / Ikke hjemme / Følg opp — samme som før": "Yes / No / Not home / Follow up — same as before",
+  "Ja / Nei / Ikke hjemme — samme som før": "Yes / No / Not home — same as before",
   "Laster dagen din …": "Loading your day …",
   "Kunne ikke laste dagsdata (backend forsøkt kontaktet). Registrer-knapp fortsatt tilgjengelig via dør-appen.":
     "Could not load today's data (backend was contacted). Register button still available via the door app.",

@@ -681,7 +681,7 @@ const FloatingAddressPopup = ({
                         />
                       ) : (
                       <div className="status-buttons">
-                        {enhancedStatusOptions.map((option, i) => {
+                        {enhancedStatusOptions.filter(opt => opt.value !== 'folg_opp').map((option, i) => {
                           const isDisabled = loading || isCheckingApartments;
                           return (
                           <button

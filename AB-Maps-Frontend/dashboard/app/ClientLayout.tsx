@@ -12,7 +12,6 @@ import {
   X,
   FileText,
   Map as MapIcon,
-  Lock,
   MapPinned,
   User,
   Settings,
@@ -93,9 +92,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/todo": "Oppgaver",
   "/map": "Kart",
   "/areas": "Områder",
-  "/las-opp-las-omrader": "Lås opp / lås områder",
-  "/las-opp-las-omrader/lock-areas": "Lås områder",
-  "/las-opp-las-omrader/unlock-areas": "Lås opp områder",
   "/campaigns": "Kampanje",
   "/employee": "Ansatt",
   "/learning-platform": "Learning Academy",
@@ -386,10 +382,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       { href: "/areas",                title: "Områder",              icon: <MapIcon className="h-4 w-4" />,   group: "TERRITORIUM" },
       { href: "/campaigns",            title: "Kampanje",             icon: <MapPinned className="h-4 w-4" />, group: "TERRITORIUM" },
     )
-    // Lås opp/lås områder — oversight page, superusers/admins + sales-chiefs only.
-    if (isSuperuser || isSalesChief) {
-      items.push({ href: "/las-opp-las-omrader", title: "Lås opp/lås områder", icon: <Lock className="h-4 w-4" />, group: "TERRITORIUM" })
-    }
     // Campaign teams — managers (own teams), sales chiefs + admins (all teams).
     if (isStaff || isSuperuser || isSalesChief) {
       items.push({ href: "/teams", title: "Team", icon: <Users className="h-4 w-4" />, group: "TEAM" })

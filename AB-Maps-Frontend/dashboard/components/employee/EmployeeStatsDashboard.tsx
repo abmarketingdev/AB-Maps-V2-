@@ -12,7 +12,6 @@
  *   - stats.calculated_metrics.hit_rate
  *   - trends.trends.{ja, nei, ikke_hjemme, folg_opp}[{date, count}]
  *   - trends.date_range.{start, end, periods}
- *   - followUps.results[]
  *   - activities.results[]
  */
 
@@ -27,7 +26,6 @@ import {
   AlertCircle,
   CheckCircle,
   MapPin,
-  Clock,
   Sparkles,
   Trophy,
   BarChart3,
@@ -160,7 +158,6 @@ export default function EmployeeStatsDashboard() {
   const {
     stats,
     trends,
-    followUps,
     activities,
     loading,
     error,
@@ -1010,89 +1007,7 @@ export default function EmployeeStatsDashboard() {
 
       {/* ───── STEP 6: BOTTOM SECTIONS — RESTYLED LISTS ───────────── */}
       {!campaignsLoading && assignedCampaigns.length > 0 && (
-        <section className="grid gap-4 md:grid-cols-2">
-          {/* Følg opp */}
-          <div className="rounded-2xl border border-ab-line bg-ab-elevated p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[18px] font-semibold text-foreground">Følg opp</h3>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-ab-line bg-ab-subtle px-2.5 py-1 text-[11px] text-muted-foreground tabular-nums">
-                {followUps?.results?.length ?? 0} venter
-              </span>
-            </div>
-            {loading ? (
-              <div className="space-y-2">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-20 rounded-xl bg-ab-subtle/40 animate-pulse" />
-                ))}
-              </div>
-            ) : (followUps?.results?.length ?? 0) === 0 ? (
-              <p className="text-[13px] text-muted-foreground text-center py-8">
-                Ingen oppfølginger i valgt periode.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {(followUps?.results ?? []).slice(0, 6).map((f) => {
-                  const recorded = new Date(f.recorded_at);
-                  const ageDays = (Date.now() - recorded.getTime()) / 86400000;
-                  const leftBorder = ageDays < 3 ? '#3b82f6' : '#f59e0b';
-                  const coords = f.position?.coordinates ?? [];
-                  return (
-                    <div
-                      key={f.id}
-                      className="rounded-xl border border-ab-line bg-ab-canvas p-4 hover:bg-ab-subtle/60 transition-colors"
-                      style={{ borderLeftWidth: 2, borderLeftColor: leftBorder }}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border"
-                          style={{
-                            background: `${leftBorder}1f`,
-                            borderColor: `${leftBorder}66`,
-                            color: leftBorder,
-                          }}
-                        >
-                          Følg opp
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {recorded.toLocaleDateString('nb-NO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex items-start gap-1.5 text-[14px] font-medium text-foreground">
-                        <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{f.address_text}</span>
-                      </div>
-                      {f.campaign?.name && (
-                        <div className="mt-0.5 text-[11px] text-muted-foreground">
-                          {f.campaign.name}
-                        </div>
-                      )}
-                      {f.notes && (
-                        <p className="mt-1 text-[12px] text-muted-foreground line-clamp-2">
-                          {f.notes}
-                        </p>
-                      )}
-                      <div className="mt-2 flex items-center justify-between">
-                        {coords.length === 2 && (
-                          <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
-                            {coords[1].toFixed(4)}, {coords[0].toFixed(4)}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          className="ml-auto inline-flex items-center gap-1 text-[12px] text-ab-accent hover:text-ab-accent-2 transition"
-                        >
-                          Marker som fulgt opp
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
+        <section className="grid gap-4">
           {/* Nylige registreringer */}
           <div className="rounded-2xl border border-ab-line bg-ab-elevated p-5">
             <div className="flex items-center justify-between mb-3">

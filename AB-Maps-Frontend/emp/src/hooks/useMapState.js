@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import L from 'leaflet';
-import { faPlus, faEye, faBan, faCheck, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEye, faBan, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { saveData, loadData, addToSyncQueue, getSyncQueue, clearSyncQueue } from '../services/persistenceService';
 import useAddressLookup from './useAddressLookup';
 import { getAllAddressMarkers, createAddressMarker, deleteAddressMarker, getCampaignAreas } from '../services/apiService';
@@ -82,7 +82,6 @@ const useMapState = (token, employee, selectedAreaId, setToast, permissionStatus
     { value: 'ja', label: 'Ja', color: '#2ecc71', icon: faPlus },
     { value: 'ikke_hjemme', label: 'Ikke hjemme', color: '#f1c40f', icon: faEye },
     { value: 'nei', label: 'Nei', color: '#e74c3c', icon: faBan },
-    { value: 'folg_opp', label: 'Følg opp', color: '#9b59b6', icon: faRedo },
   ];
 
   // Helper to convert uploaded addresses to marker objects

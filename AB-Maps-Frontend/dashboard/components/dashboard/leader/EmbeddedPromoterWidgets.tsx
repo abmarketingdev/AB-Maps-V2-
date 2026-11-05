@@ -73,7 +73,7 @@ export function EmbeddedPromoterWidgets() {
       <motion.div {...fade(0)} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-ab-line bg-ab-elevated px-5 py-4">
         <div>
           <p className="text-sm font-semibold text-ab-fg">{t("Registrer en dør nå")}</p>
-          <p className="mt-0.5 text-xs text-ab-fg-3">{t("Ja / Nei / Ikke hjemme / Følg opp — samme som før")}</p>
+          <p className="mt-0.5 text-xs text-ab-fg-3">{t("Ja / Nei / Ikke hjemme — samme som før")}</p>
         </div>
         {/* Redirects to /emp/ map app — the real knock-registration endpoint.
             The inline modal formerly opened by setRegisterOpen(true) POSTs to a

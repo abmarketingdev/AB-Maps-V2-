@@ -26,7 +26,6 @@ import {
   CheckCircle2,
   CalendarDays,
   Plus,
-  Phone,
   Mail,
   Users,
   FileText,
@@ -240,12 +239,6 @@ export function CreateTodoForm({ isOpen, onClose, onSuccess }: CreateTodoFormPro
     description: string;
     icon: React.ComponentType<{ className?: string }>;
   }> = [
-    {
-      label: 'Følg opp kunde',
-      title: 'Følg opp kunde',
-      description: 'Follow up with customer',
-      icon: Phone,
-    },
     {
       label: 'Send e-post',
       title: 'Send e-post',

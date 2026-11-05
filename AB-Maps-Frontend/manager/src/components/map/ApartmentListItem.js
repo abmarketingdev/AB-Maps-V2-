@@ -222,7 +222,7 @@ const ApartmentListItem = ({
             </div>
           ) : (
           <div className="apartment-status-buttons">
-            {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+            {Object.entries(STATUS_CONFIG).filter(([key]) => key !== 'folg_opp').map(([key, config]) => (
               <button
                 key={key}
                 className="status-btn"

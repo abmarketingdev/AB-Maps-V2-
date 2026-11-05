@@ -575,11 +575,6 @@ const FloatingAddressMarkerPopup = ({
                               color: '#f39c12',
                             },
                             { value: 'nei', label: 'Nei', color: '#e74c3c' },
-                            {
-                              value: 'folg_opp',
-                              label: 'Følg opp',
-                              color: '#9b59b6',
-                            },
                           ].map((opt) => (
                             <button
                               key={opt.value}

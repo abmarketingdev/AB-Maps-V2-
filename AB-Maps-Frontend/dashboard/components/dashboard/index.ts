@@ -20,10 +20,6 @@ export { DashboardLineChart } from './LineChart';
 
 export { DonutChart } from './DonutChart';
 
-export { FollowUpItem } from './FollowUpItem';
-
-export { FollowUpsList } from './FollowUpsList';
-
 export { ActivityItem } from './ActivityItem';
 
 export { RecentActivitiesList } from './RecentActivitiesList';
