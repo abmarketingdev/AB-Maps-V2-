@@ -146,7 +146,9 @@ function demoTeamsFlat(): TeamNode[] {
 // ─── Real-data helpers (identical shape to SalgslederDashboard) ─────────────
 
 async function fetchTeamsShallow(campaignId: string | undefined, period: string): Promise<TeamNode[]> {
-  const list = await listTeams({ pageSize: 100, campaignId, period })
+  // Teams are not campaign-based (Dana 05.11): always every team the server lets this user see
+  // (admins all, sales chiefs their own) — the selected campaign does not narrow the list.
+  const list = await listTeams({ pageSize: 100, period })
   return list.results.map((t, idx) => ({
     id: t.id,
     name: t.name,
@@ -175,14 +177,13 @@ async function fetchTeamDetail(teamId: string, period: string) {
     fetchTeamMemberEarnings(teamId, { period }).catch(() => null),
   ])
   if (!detail) return null
-  const teamCampaignId = detail.campaign?.id
   const abIds = (earnings?.members ?? [])
     .map((m) => m.ab_person_id)
     .filter((x): x is string => Boolean(x))
   const doorsByAb = new Map<string, number>()
-  if (teamCampaignId && abIds.length) {
+  if (abIds.length) {
     try {
-      const resp = await fetchEmployeeDoors({ campaignId: teamCampaignId, period, abPersonIds: abIds })
+      const resp = await fetchEmployeeDoors({ period, abPersonIds: abIds })  // all campaigns
       for (const r of resp.doors_by_employee) doorsByAb.set(r.ab_person_id, r.doors)
     } catch { /* silent */ }
   }

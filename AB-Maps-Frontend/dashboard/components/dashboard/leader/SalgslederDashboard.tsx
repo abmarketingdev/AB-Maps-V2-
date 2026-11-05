@@ -39,7 +39,9 @@ const TEAM_COLOR_PALETTE = [
 ]
 
 async function fetchTeamsShallow(campaignId: string | undefined, period: string): Promise<TeamNode[]> {
-  const list = await listTeams({ pageSize: 50, campaignId, period })
+  // Teams are not campaign-based (Dana 05.11): always every team the server lets this user see
+  // (admins all, sales chiefs their own) — the selected campaign does not narrow the list.
+  const list = await listTeams({ pageSize: 50, period })
   return list.results.map((t, idx) => ({
     id: t.id,
     name: t.name,
@@ -78,15 +80,14 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
   if (!detail) return null
 
   // Fetch doors AFTER earnings resolves (we need earnings.members to know the ab_ids).
-  const teamCampaignId = detail.campaign?.id
   const abIds = (earnings?.members ?? [])
     .map((m) => m.ab_person_id)
     .filter((x): x is string => Boolean(x))
   const doorsByAb = new Map<string, number>()
-  if (teamCampaignId && abIds.length) {
+  if (abIds.length) {
     try {
       const resp = await fetchEmployeeDoors({
-        campaignId: teamCampaignId, period, abPersonIds: abIds,
+        period, abPersonIds: abIds,  // all campaigns (teams are not campaign-based)
       })
       for (const r of resp.doors_by_employee) doorsByAb.set(r.ab_person_id, r.doors)
     } catch { /* silent — doors falls back to 0 per promoter below */ }
