@@ -4,13 +4,19 @@
 //   - team-lead (manager) → only the team(s) they lead;
 //   - sales-chief / admin  → all teams;
 //   - plain employee       → 403 (no team access).
-// Provisjon (rate) fields are stripped from responses for non-HR-staff, and
-// create/edit/delete/rates/assign-chief are HR-staff/admin only (403 otherwise).
+// Provisjon (rate) fields are stripped from responses for non-HR-staff.
+//
+// READ-ONLY in Maps (2026-11-05): teams are created and edited only in the HR
+// system. The only team write left here is `saveTeamGoal` (PUT goals/), which
+// HR keeps open for maps tokens.
 //
 // HR returns a richer shape than the old monolith `/api/teams/`; this adapter
 // maps it back onto the dashboard's existing DTOs so the UI is unchanged.
 
 import { getJSON, fetchWithAuth } from '@/lib/auth/fetchWithAuth';
+
+/** HR team cities (Team.city); "" = no city set yet. */
+export const TEAM_CITIES = ['Oslo', 'Bergen', 'Stavanger', 'Kristiansand', 'Trondheim', 'Tromsø'] as const;
 
 export type PersonType = 'employee' | 'manager';
 
@@ -21,6 +27,10 @@ export interface TeamListItem {
   id: string; name: string; description: string;
   color: string; icon: string;
   campaign: TeamRef | null; owner: OwnerRef | null; sales_chief: OwnerRef | null;
+  /** Nestleder (HR co_leader). */
+  co_leader?: OwnerRef | null;
+  /** HR Team.city, "" when not set. */
+  city?: string;
   member_count: number; created_at: string; updated_at: string;
   // Backend-computed recruit count for the requested `period` (YYYY-MM,
   // defaults server-side to current month). Lets the dashboard compute the
@@ -39,10 +49,6 @@ export interface TeamMember {
 export interface TeamDetail extends TeamListItem {
   members: TeamMember[];
   can_edit: boolean;
-}
-
-export interface AssignableMember {
-  id: string; name: string; email: string; person_type: PersonType; online: boolean;
 }
 
 export interface TeamAnalyticsMember {
@@ -92,12 +98,6 @@ const qp = (params: Record<string, string | number | undefined>): string => {
   return s ? `?${s}` : '';
 };
 
-// Raised by member ops so the UI can show the right message.
-export class TeamMemberError extends Error {
-  status: number;
-  constructor(status: number, message: string) { super(message); this.status = status; this.name = 'TeamMemberError'; }
-}
-
 // ─── HR → dashboard DTO mappers ────────────────────────────────────────────────
 // HR TeamSerializer person label: { id, name, email, ab_person_id, user_id, resolved }.
 interface HrPerson { id: string; name: string | null; email?: string | null; ab_person_id?: string | null }
@@ -106,7 +106,9 @@ interface HrMember { id: number | string; person_id: string | null; role: Person
 interface HrTeam {
   id: string; name: string; description: string | null; color: string | null; icon: string | null;
   campaign: { id: string; name: string | null } | null;
+  city?: string | null;
   leader: HrPerson | null;
+  co_leader?: HrPerson | null;
   sales_chief: HrPerson | null;
   members?: HrMember[];
   created_at: string; updated_at: string;
@@ -135,6 +137,8 @@ const mapListItem = (t: HrTeam): TeamListItem => ({
   campaign: mapRef(t.campaign),
   owner: mapRef(t.leader),                 // HR "leader" is the dashboard's "owner"
   sales_chief: mapRef(t.sales_chief ?? null),
+  co_leader: mapRef(t.co_leader ?? null),
+  city: t.city ?? '',
   member_count: t.members?.length ?? 0,
   created_at: t.created_at,
   updated_at: t.updated_at,
@@ -144,10 +148,10 @@ const mapListItem = (t: HrTeam): TeamListItem => ({
 const mapDetail = (t: HrTeam): TeamDetail => ({
   ...mapListItem(t),
   members: (t.members ?? []).map(mapMember),
-  can_edit: true,              // real write access is enforced by HR (403 otherwise)
+  can_edit: false,             // Maps is read-only for teams; edit in HR
 });
 
-// ─── List / create ────────────────────────────────────────────────────────────
+// ─── List ────────────────────────────────────────────────────────────
 export async function listTeams(opts: {
   campaignId?: string; salesChiefId?: string; createdBy?: string; search?: string; page?: number; pageSize?: number;
   /** YYYY-MM. Backend uses this to compute `recruited_total` per team. Defaults server-side to current month. */
@@ -169,61 +173,10 @@ export async function listTeams(opts: {
   };
 }
 
-export async function createTeam(body: { name: string; campaign_id: string; description?: string; color?: string; icon?: string }): Promise<TeamDetail> {
-  const res = await fetchWithAuth('/api/hr/teams/', { method: 'POST', body: JSON.stringify(body) });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new TeamMemberError(res.status, errMsg(data, `Kunne ikke opprette team (${res.status})`));
-  return mapDetail(data as HrTeam);
-}
-
-// ─── Detail / edit / delete ─────────────────────────────────────────────────
+// ─── Detail ───────────────────────────────────────────────────────────────────
 export async function getTeam(id: string): Promise<TeamDetail> {
   const raw = await getJSON<HrTeam>(`/api/hr/teams/${id}/`);
   return mapDetail(raw);
-}
-
-export async function updateTeam(id: string, body: { name?: string; description?: string; color?: string; icon?: string }): Promise<TeamDetail> {
-  const res = await fetchWithAuth(`/api/hr/teams/${id}/`, { method: 'PATCH', body: JSON.stringify(body) });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new TeamMemberError(res.status, errMsg(data, `Kunne ikke lagre (${res.status})`));
-  return mapDetail(data as HrTeam);
-}
-
-export async function deleteTeam(id: string): Promise<void> {
-  const res = await fetchWithAuth(`/api/hr/teams/${id}/`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 204) throw new TeamMemberError(res.status, `Kunne ikke slette (${res.status})`);
-}
-
-// ─── Members ──────────────────────────────────────────────────────────────────
-export async function addTeamMember(id: string, person: { id: string; person_type: PersonType }): Promise<TeamDetail> {
-  // HR expects { person_id, role }; the write is idempotent (re-adding is a no-op).
-  const res = await fetchWithAuth(`/api/hr/teams/${id}/members/`, {
-    method: 'POST', body: JSON.stringify({ person_id: person.id, role: person.person_type }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const fallback = res.status === 403 ? 'Du har ikke tilgang til å endre dette teamet.'
-      : `Kunne ikke legge til (${res.status})`;
-    throw new TeamMemberError(res.status, errMsg(data, fallback));
-  }
-  return mapDetail(data as HrTeam);
-}
-
-export async function removeTeamMember(id: string, person: { id: string; person_type: PersonType }): Promise<void> {
-  // HR removes by person domain id in the path; the delete is idempotent.
-  const res = await fetchWithAuth(`/api/hr/teams/${id}/members/${person.id}/`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 204) throw new TeamMemberError(res.status, `Kunne ikke fjerne (${res.status})`);
-}
-
-export async function fetchAssignableMembers(id: string): Promise<{ count: number; results: AssignableMember[] }> {
-  // HR returns a bare list [{ id, type, name, ab_person_id, user_id }]; wrap + remap.
-  const raw = await getJSON<any>(`/api/hr/teams/${id}/assignable-members/`);
-  const rows: Array<{ id: string; type: PersonType; name: string | null }> =
-    Array.isArray(raw) ? raw : (raw?.results ?? []);
-  const results: AssignableMember[] = rows.map((r) => ({
-    id: r.id, name: r.name ?? '', email: '', person_type: r.type, online: false,
-  }));
-  return { count: results.length, results };
 }
 
 // ─── Analytics / leaderboard ──────────────────────────────────────────────────
