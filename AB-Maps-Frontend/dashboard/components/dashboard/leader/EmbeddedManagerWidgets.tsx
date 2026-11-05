@@ -50,9 +50,18 @@ interface EmbeddedManagerWidgetsProps {
    *  Split (2026-08-09) lets dashboards put the live KPIs up top and push
    *  campaigns + live activity to the very bottom of the page. */
   part?: "all" | "top" | "bottom"
+  /** YYYY-MM from the dashboard's month picker. «Rekrutterte per kampanje» then counts
+   *  only that month (client 2026-11-06); without it, all time as before. */
+  period?: string
 }
 
-export function EmbeddedManagerWidgets({ part = "all" }: EmbeddedManagerWidgetsProps = {}) {
+const monthLabel = (period: string) => {
+  const [y, m] = period.split("-").map(Number)
+  return new Intl.DateTimeFormat("nb-NO", { month: "long", year: "numeric", timeZone: "UTC" })
+    .format(new Date(Date.UTC(y, m - 1, 15)))
+}
+
+export function EmbeddedManagerWidgets({ part = "all", period }: EmbeddedManagerWidgetsProps = {}) {
   const { campaignId } = useSelectedCampaign()
   const [range, setRange] = useState<DashRange>("7d")
   const [data, setData] = useState<DashboardOverview | null>(DEMO ? demoDashboard("7d") : null)
@@ -60,11 +69,12 @@ export function EmbeddedManagerWidgets({ part = "all" }: EmbeddedManagerWidgetsP
   useEffect(() => {
     if (DEMO) { setData(demoDashboard(range)); return }
     let cancelled = false
-    fetchOverview(range, campaignId)
+    fetchOverview(range, campaignId, period)
       .then(d => { if (!cancelled) setData(d) })
       .catch(() => {})
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [campaignId])
+  }, [campaignId, period])
 
   const onRangeChange = useCallback((r: DashRange) => {
     setRange(r)
@@ -92,7 +102,7 @@ export function EmbeddedManagerWidgets({ part = "all" }: EmbeddedManagerWidgetsP
           <MoodRing segments={data?.mood} />
         </div>
       )}
-      {showBottom && <CampaignHealthBar campaigns={data?.campaigns} />}
+      {showBottom && <CampaignHealthBar campaigns={data?.campaigns} subtitle={period ? `Nye givere i ${monthLabel(period)}` : undefined} />}
       {showBottom && <ActivityFeed rows={data?.activities} />}
     </div>
   )

@@ -352,7 +352,7 @@ export function SalgslederDashboard() {
               bottom per client ask 2026-08-09. Less time-critical than the
               KPIs/trend up top, but still useful reference material. */}
           <div>
-            <EmbeddedManagerWidgets part="bottom" />
+            <EmbeddedManagerWidgets part="bottom" period={period} />
           </div>
         </div>
       </div>

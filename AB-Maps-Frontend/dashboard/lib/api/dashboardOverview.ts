@@ -126,8 +126,10 @@ const qp = (params: Record<string, string | undefined>): string => {
 
 // ─── Public fetchers ────────────────────────────────────────────────────────
 /** One composite call on first paint (guide §0) — bundles all six widgets. */
-export async function fetchOverview(range: DashRange, campaignId?: string): Promise<DashboardOverview> {
-  const raw = await getJSON<RawOverview>(`/api/dashboard/v2/overview/${qp({ range, campaign_id: campaignId })}`);
+/** `period` (YYYY-MM) limits the per-campaign block to that calendar month (Oslo); without
+ *  it the backend counts all time, as before. */
+export async function fetchOverview(range: DashRange, campaignId?: string, period?: string): Promise<DashboardOverview> {
+  const raw = await getJSON<RawOverview>(`/api/dashboard/v2/overview/${qp({ range, campaign_id: campaignId, period })}`);
   return {
     kpis: mapStats(raw.stats),
     trends: mapTrends(raw.trends),
