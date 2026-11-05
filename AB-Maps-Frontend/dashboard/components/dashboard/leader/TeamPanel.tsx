@@ -67,8 +67,9 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
   }, [open])
 
   const totalDoors     = team.promoters.reduce((s, p) => s + p.doors, 0)
+  // «Ja» = Ja-dører på kartet i valgt måned (feltet heter fortsatt `recruited`).
   const totalRec       = team.promoters.reduce((s, p) => s + p.recruited, 0)
-  const totalVervinger = team.promoters.reduce((s, p) => s + p.sumVervinger, 0)
+  const maxJa          = Math.max(1, ...team.promoters.map((p) => p.recruited))
   const avgActive      = team.promoters.length
     ? Math.round(team.promoters.reduce((s, p) => s + p.activePercent, 0) / team.promoters.length)
     : 0
@@ -77,7 +78,8 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
   const totalRecGoal   = team.teamRecruitedGoal ?? 0
   const doorsPct       = totalDoorsGoal ? Math.min(100, Math.round((totalDoors / totalDoorsGoal) * 100)) : 0
 
-  // Rank promoters by RECRUITS (primary, matches client's "delivered most"
+  // Rank promoters by JA on the map (primary), DOORS as tiebreaker. Was RECRUITS (HR) —
+  // replaced by «Ja» per Hassan 06.11. Original note: by RECRUITS (primary, matches client's "delivered most"
   // metric), with DOORS as tiebreaker (fresh period where no one has recruited
   // yet still gets a meaningful ranking). Was sumVervinger — that's a $ metric,
   // not the activity the client asked to spotlight (2026-08-10 fix).
@@ -186,7 +188,7 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
         {team.promoters.length > 0 && (
           <div className="hidden md:flex items-center gap-2">
             <SummaryChip icon={<DoorOpen className="h-3 w-3" />} label={t("Dører")} value={totalDoorsGoal ? `${totalDoors}/${totalDoorsGoal}` : `${totalDoors}`} accent="#8B5CF6" />
-            <SummaryChip icon={<UserPlus className="h-3 w-3" />} label={t("Rekrutt.")} value={totalRecGoal ? `${totalRec}/${totalRecGoal}` : `${totalRec}`} accent="#0E9384" />
+            <SummaryChip icon={<UserPlus className="h-3 w-3" />} label={t("Ja")} value={`${totalRec}`} accent="#0E9384" />
             <SummaryChip icon={<Activity className="h-3 w-3" />} label={t("Aktive")} value={`${avgActive}%`} accent="#F43F5E" />
           </div>
         )}
@@ -238,13 +240,12 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
               <div className="relative overflow-x-auto overscroll-x-contain px-5 md:px-0 md:overflow-x-visible">
                 <div className="min-w-[620px] md:min-w-0">
                   {/* Column headers */}
-                  <div className="mb-2 grid grid-cols-[28px_1fr_140px_140px_82px_100px] items-center gap-4 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3">
+                  <div className="mb-2 grid grid-cols-[28px_1fr_140px_140px_82px] items-center gap-4 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-3">
                     <span />
                     <span>{t("Promotør")}</span>
                     <span>{t("Dører")}</span>
-                    <span>{t("Rekruttert")}</span>
+                    <span>{t("Ja")}</span>
                     <span className="text-right">{t("Aktive")}</span>
-                    <span className="text-right">{t("Vervinger")}</span>
                   </div>
 
                   <div className="space-y-1">
@@ -257,7 +258,7 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
                       const isTop3      = rank >= 1 && rank <= 3
                       const isTop1      = rank === 1
                       const doorsPctP   = Math.min(100, Math.round((p.doors / Math.max(1, p.doorsGoal)) * 100))
-                      const recPctP     = Math.min(100, Math.round((p.recruited / Math.max(1, p.recruitedGoal)) * 100))
+                      const recPctP     = Math.min(100, Math.round((p.recruited / maxJa) * 100))
                       const activeColor = p.activePercent >= 90 ? "#10b981"
                                         : p.activePercent >= 80 ? "#4ADE80"
                                         : p.activePercent >= 65 ? "#F59E0B"
@@ -269,7 +270,7 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
                           initial={reduced ? false : { opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: pi * 0.04, duration: 0.25 }}
-                          className="group grid grid-cols-[28px_1fr_140px_140px_82px_100px] items-center gap-4 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]"
+                          className="group grid grid-cols-[28px_1fr_140px_140px_82px] items-center gap-4 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]"
                         >
                           {/* Rank medal */}
                           <div className="grid h-6 w-6 place-items-center">
@@ -328,7 +329,7 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
                             </span>
                           </div>
 
-                          {/* Rekruttert — mini progress bar + count */}
+                          {/* Ja — mini bar (relative to the team's best) + count */}
                           <div className="flex items-center gap-2">
                             <div className="h-1.5 flex-1 rounded-full bg-white/[0.05] overflow-hidden">
                               <div
@@ -342,7 +343,6 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
                             </div>
                             <span className="font-mono text-[11px] tabular-nums shrink-0">
                               <span className="font-semibold text-ab-fg">{p.recruited}</span>
-                              {p.recruitedGoal > 0 && <span className="text-ab-fg-4">/{p.recruitedGoal}</span>}
                             </span>
                           </div>
 
@@ -356,13 +356,6 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
                             </span>
                           </div>
 
-                          {/* Vervinger — mono kr, highlighted for top-1 */}
-                          <div className="text-right font-mono text-[11px] tabular-nums">
-                            <span className={isTop1 ? "font-bold text-aurora-amber" : "font-semibold text-ab-fg"}>
-                              {p.sumVervinger.toLocaleString("nb-NO")}
-                            </span>
-                            <span className="ml-0.5 text-ab-fg-4">kr</span>
-                          </div>
                         </motion.div>
                       )
                     })}
@@ -370,7 +363,7 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
 
                   {/* Team totals footer */}
                   <div
-                    className="mt-3 grid grid-cols-[28px_1fr_140px_140px_82px_100px] items-center gap-4 rounded-xl px-2 py-3"
+                    className="mt-3 grid grid-cols-[28px_1fr_140px_140px_82px] items-center gap-4 rounded-xl px-2 py-3"
                     style={{
                       background: `linear-gradient(90deg, ${hexAlpha(team.color, 0.08)}, ${hexAlpha(team.color, 0.02)})`,
                       border: `1px solid ${hexAlpha(team.color, 0.18)}`,
@@ -384,9 +377,6 @@ function TeamCard({ team, index, period, loading, onExpand, onGoalSaved, isWinni
                     <span className="font-mono text-xs font-bold text-ab-fg tabular-nums">{totalRec}</span>
                     <span className="text-right font-mono text-xs font-bold tabular-nums" style={{ color: avgActive >= 80 ? "#10b981" : avgActive >= 65 ? "#F59E0B" : "#F43F5E" }}>
                       {avgActive}%
-                    </span>
-                    <span className="text-right font-mono text-xs font-bold text-ab-fg tabular-nums">
-                      {totalVervinger.toLocaleString("nb-NO")}<span className="ml-0.5 text-ab-fg-4"> kr</span>
                     </span>
                   </div>
                 </div>

@@ -208,7 +208,7 @@ export async function fetchActivities(limit = 50, campaignId?: string): Promise<
 // grouped by employee_id, joined to IdentityDirectory for ab_person_id. Used
 // alongside hr-service's member-earnings endpoint to fill the DOORS column
 // of TeamPanel — the rest (recruited/active/vervinger) comes from hr.
-export interface EmployeeDoorsRow { ab_person_id: string; doors: number }
+export interface EmployeeDoorsRow { ab_person_id: string; doors: number; ja?: number }  // ja = Ja-dører same month
 export interface EmployeeDoorsByPeriod {
   campaign_id: string | null;
   period: string | null;

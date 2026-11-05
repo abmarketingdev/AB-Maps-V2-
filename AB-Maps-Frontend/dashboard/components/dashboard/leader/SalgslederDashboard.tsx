@@ -84,12 +84,13 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
     .map((m) => m.ab_person_id)
     .filter((x): x is string => Boolean(x))
   const doorsByAb = new Map<string, number>()
+  const jaByAb = new Map<string, number>()  // «Ja» on the map, same month (Hassan 06.11)
   if (abIds.length) {
     try {
       const resp = await fetchEmployeeDoors({
         period, abPersonIds: abIds,  // all campaigns (teams are not campaign-based)
       })
-      for (const r of resp.doors_by_employee) doorsByAb.set(r.ab_person_id, r.doors)
+      for (const r of resp.doors_by_employee) { doorsByAb.set(r.ab_person_id, r.doors); jaByAb.set(r.ab_person_id, r.ja ?? 0) }
     } catch { /* silent — doors falls back to 0 per promoter below */ }
   }
 
@@ -107,7 +108,7 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
   const tg = earnings?.team_goals
   return {
     teamDoorsGoal: tg?.doors_goal ?? 0,
-    teamRecruitedGoal: tg?.recruited_goal ?? 0,
+    teamRecruitedGoal: 0,  // «Ja» has no HR goal
     teamDoorsWeeklyGoal: tg?.doors_weekly_goal ?? null,
     teamRecruitedWeeklyGoal: tg?.recruited_weekly_goal ?? null,
     canEditGoals: tg?.can_edit ?? false,
@@ -116,12 +117,13 @@ async function fetchTeamDetail(teamId: string, period: string): Promise<{
       .map((m) => {
         const e = earningsByPerson.get(m.id) ?? { recruited: 0, active_percent: 0, sum_vervinger: 0, ab_person_id: null }
         const doorsCount = e.ab_person_id ? (doorsByAb.get(e.ab_person_id) ?? 0) : 0
+        const jaCount = e.ab_person_id ? (jaByAb.get(e.ab_person_id) ?? 0) : 0
         return {
           id: m.id,
           name: m.name,
           doors: doorsCount,
           doorsGoal: 0,
-          recruited: e.recruited,
+          recruited: jaCount,  // «Ja» dører, not HR recruits
           recruitedGoal: 0,
           activePercent: e.active_percent,
           sumVervinger: Math.round(e.sum_vervinger),
