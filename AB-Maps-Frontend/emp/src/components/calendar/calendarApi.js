@@ -7,8 +7,11 @@
 // Request  { id, status: 'venter'|'godkjent'|'avslått'|'avbrutt', fromDate, toDate,
 //            reason, declineReason, createdAt, decidedAt }
 import { fetchWithAuthRefresh } from '../../utils/apiInterceptor';
+import { API_CONFIG } from '../../config/apiConfig';
 
-const BASE = `${process.env.REACT_APP_BACKEND_URL || ''}/api/scheduling`;
+// Same base as every other emp maps call (API_CONFIG.backend.baseUrl, fallback like useMapState):
+// never a relative /api/ (on maps.abmarketing.no that reaches the dashboard).
+const BASE = `${API_CONFIG.backend.baseUrl || process.env.REACT_APP_API_BASE_URL || ''}/api/scheduling`;
 
 // Dev-only mock (REACT_APP_CAL_MOCK=1 at build time). The condition is a literal after
 // DefinePlugin, so the production build drops the branch and never emits the mock chunk.
