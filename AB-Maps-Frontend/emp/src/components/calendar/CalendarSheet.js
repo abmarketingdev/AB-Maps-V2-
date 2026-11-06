@@ -1,6 +1,6 @@
 // Lazy chunk: the whole calendar UI. Loaded the first time the promoter opens «Kalender».
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FaExclamationTriangle, FaSyncAlt, FaTimes, FaWifi, FaArrowRight } from 'react-icons/fa';
+import { FaCalendarAlt, FaExclamationTriangle, FaSyncAlt, FaTimes, FaWifi, FaArrowRight } from 'react-icons/fa';
 import Sheet from './Sheet';
 import WeekRow from './WeekRow';
 import TodayCard from './TodayCard';
@@ -72,6 +72,7 @@ export default function CalendarSheet({ open, onClose, onLoaded }) {
   const monday = mondayOf(today);
   const [days, setDays] = useState(null);
   const [requests, setRequests] = useState(null);
+  const [noPerson, setNoPerson] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [moveDay, setMoveDay] = useState(null);
@@ -90,6 +91,8 @@ export default function CalendarSheet({ open, onClose, onLoaded }) {
         listMyRequests().catch(() => null),
       ]);
       if (my !== seq.current) return;
+      if (week.today && week.today !== t) setToday(week.today);
+      setNoPerson(!week.person);
       setDays(week.days);
       setRequests(reqs);
       if (onLoaded) onLoaded(week.days);
@@ -146,6 +149,14 @@ export default function CalendarSheet({ open, onClose, onLoaded }) {
     );
   } else if (!days) {
     content = <Skeleton />;
+  } else if (noPerson) {
+    content = (
+      <div className="calx-empty">
+        <div className="calx-empty__icon"><FaCalendarAlt aria-hidden="true" /></div>
+        <h3 className="calx-h3">Ingen kalender ennå</h3>
+        <p className="calx-muted">Kontoen din er ikke koblet til en ansatt. Ta kontakt med salgssjefen din.</p>
+      </div>
+    );
   } else {
     content = (
       <>
