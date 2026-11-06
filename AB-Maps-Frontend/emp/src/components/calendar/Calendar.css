@@ -239,9 +239,10 @@
 .calx-day__wd { font-weight: 700; }
 .calx-day__icon { flex: none; font-size: 13px; color: var(--c); }
 .calx-day__body { flex: 1; margin-top: 8px; color: var(--ink); }
-.calx-day__metric { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 4px; line-height: 1.1; }
+.calx-day__metric { display: flex; align-items: baseline; column-gap: 4px; line-height: 26px; white-space: nowrap; }
 .calx-day__metric strong { font-size: 22px; font-weight: 700; color: var(--calx-ink); font-variant-numeric: tabular-nums; }
-.calx-day__metric span { font-size: 12px; color: var(--ink); }
+.calx-day__metric span { font-size: 13px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.calx-day__unit { font-size: 12px; line-height: 16px; color: var(--ink); }
 .calx-day__sub { margin-top: 4px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--ink); }
 .calx-day__goal { font-size: 12px; line-height: 18px; color: var(--ink); white-space: nowrap; }
 .calx-day__goal strong { font-size: 15px; color: var(--calx-ink); font-variant-numeric: tabular-nums; }
@@ -470,7 +471,6 @@
   .calx-week__cell { flex: none; min-width: 0; }
   .calx-day { min-height: 132px; padding: 12px 12px 12px 16px; }
   .calx-today { padding: 20px 24px; }
-  .calx-today__stats { max-width: 520px; }
 }
 
 @keyframes calx-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
