@@ -162,24 +162,6 @@ export default function AdminLearningLayout({
             <span className="text-neutral-300">/</span>
             <span className="font-medium text-[#0A0A0A]">{breadcrumb}</span>
           </div>
-          <div className="flex items-center gap-2 md:gap-4">
-            <div className="relative hidden sm:block">
-              <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 text-[20px] text-neutral-400 -translate-y-1/2">search</span>
-              <input
-                className="h-9 w-48 rounded-lg border border-black/[0.08] bg-[#F7F7F5] pl-10 pr-4 text-sm transition-all placeholder:text-neutral-400 focus:border-emerald-500/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 md:w-64"
-                placeholder="Søk kampanjer..."
-                type="text"
-              />
-            </div>
-            <div className="mx-2 hidden h-6 w-px bg-black/[0.08] sm:block" />
-            <button
-              type="button"
-              className="relative rounded-lg p-2 text-neutral-500 transition-colors hover:bg-black/[0.04] hover:text-[#0A0A0A]"
-            >
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-white bg-emerald-500" />
-            </button>
-          </div>
         </header>
 
         {/* Phone: the sidebar is hidden, so the admin sections become a scrollable tab strip */}

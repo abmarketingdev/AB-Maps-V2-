@@ -617,7 +617,7 @@ const UserProgressManagement = () => {
                         setSelectedUser(user);
                         setIsResetDialogOpen(true);
                       }}
-                      className={cn("flex-1", isMobile && "h-11")}
+                      className={cn("w-full justify-center", isMobile && "h-11")}
                     >
                       <RefreshCw className="w-4 h-4 mr-1.5" />
                       Nullstill
@@ -629,20 +629,20 @@ const UserProgressManagement = () => {
                         setSelectedUser(user);
                         setIsOverrideDialogOpen(true);
                       }}
-                      className={cn("flex-1", isMobile && "h-11")}
+                      className={cn("w-full justify-center", isMobile && "h-11")}
                     >
                       <Edit className="w-4 h-4 mr-1.5" />
                       Overstyr
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size={isMobile ? "default" : "sm"}
                       onClick={() => {
                         setSelectedUser(user);
                         fetchIndividualUserProgress(user.user.id);
                         setIsDetailDialogOpen(true);
                       }}
-                      className={cn(isMobile && "h-11")}
+                      className={cn("w-full justify-center", isMobile && "h-11")}
                     >
                       <Eye className="w-4 h-4 mr-1.5" />
                       Detaljer
@@ -654,7 +654,7 @@ const UserProgressManagement = () => {
                         setSelectedUser(user);
                         setIsCourseDialogOpen(true);
                       }}
-                      className={cn(isMobile && "h-11")}
+                      className={cn("w-full justify-center", isMobile && "h-11")}
                     >
                       <BookOpen className="w-4 h-4 mr-1.5" />
                       Tildel kurs

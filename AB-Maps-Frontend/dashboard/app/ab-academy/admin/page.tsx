@@ -347,7 +347,7 @@ export default function AdminLearningDashboard() {
           </div>
         </div>
 
-        {/* Høyre: Hurtighandlinger + Systemkapasitet */}
+        {/* Høyre: Hurtighandlinger */}
         <div className="space-y-6">
           <div className="relative overflow-hidden rounded-xl bg-emerald-600 p-6 text-white shadow-sm">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 transition-transform duration-500 group-hover:scale-110" />
@@ -384,38 +384,6 @@ export default function AdminLearningDashboard() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-[#E0E0E0] bg-white p-6">
-            <h3 className="mb-4 text-sm font-bold text-[#141414]">Systemkapasitet</h3>
-            <div className="space-y-4">
-              <div>
-                <div className="mb-1.5 flex justify-between text-xs">
-                  <span className="font-medium text-[#757575]">Lagring brukt</span>
-                  <span className="font-bold text-[#141414]">45%</span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-[#f7f7f7]">
-                  <div className="h-1.5 rounded-full bg-emerald-600" style={{ width: "45%" }} />
-                </div>
-              </div>
-              <div>
-                <div className="mb-1.5 flex justify-between text-xs">
-                  <span className="font-medium text-[#757575]">Månedlige API-kall</span>
-                  <span className="font-bold text-[#141414]">72%</span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-[#f7f7f7]">
-                  <div className="h-1.5 rounded-full bg-[#757575]" style={{ width: "72%" }} />
-                </div>
-              </div>
-              <div>
-                <div className="mb-1.5 flex justify-between text-xs">
-                  <span className="font-medium text-[#757575]">Aktive økter</span>
-                  <span className="font-bold text-[#141414]">24%</span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-[#f7f7f7]">
-                  <div className="h-1.5 rounded-full bg-emerald-600/40" style={{ width: "24%" }} />
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
