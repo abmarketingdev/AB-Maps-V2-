@@ -45,7 +45,8 @@ function Body({ day }) {
   if (state === 'worked') {
     return (
       <>
-        <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong><span>dører</span></div>
+        <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong></div>
+        <div className="calx-day__unit">dører</div>
         <div className="calx-day__sub">Ja {actual ? fmtPct(actual.jaPct) : '0 %'}</div>
       </>
     );
@@ -55,14 +56,16 @@ function Body({ day }) {
     if (!goals) {
       return (
         <>
-          <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong><span>dører</span></div>
+          <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong></div>
+          <div className="calx-day__unit">dører</div>
           <div className="calx-day__sub">Ingen mål i dag</div>
         </>
       );
     }
     return (
       <>
-        <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong><span>/ {fmtNum(goals.doors)} dører</span></div>
+        <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong><span>/ {fmtNum(goals.doors)}</span></div>
+        <div className="calx-day__unit">dører</div>
         <div className="calx-day__sub">Mål {fmtNum(goals.givers)} givere</div>
       </>
     );
