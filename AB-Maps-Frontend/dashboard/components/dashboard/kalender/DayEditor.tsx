@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import type { DayCell, GridMember } from "@/lib/api/scheduling"
 import { cardDate, longDate, shortDate } from "./dates"
-import { STATE_STYLES, fmtNum, fmtPct } from "./states"
+import { STATE_STYLES, doorsWord, fmtNum, fmtPct, giversWord } from "./states"
 import { Btn, NumberField, Surface } from "./Surface"
 import { MemberAvatar } from "./WeekGrid"
 
@@ -173,7 +173,8 @@ function EditorBody({
         {cell.actual && (cell.state === "worked" || cell.state === "today") && (
           <div className="text-right text-[12px] leading-4 text-ab-fg-2">
             <div>
-              <span className="font-semibold tabular-nums text-ab-fg">{fmtNum(cell.actual.doors)}</span> dører
+              <span className="font-semibold tabular-nums text-ab-fg">{fmtNum(cell.actual.doors)}</span>{" "}
+              {doorsWord(cell.actual.doors)}
             </div>
             <div>
               Ja {fmtNum(cell.actual.ja)} · {fmtPct(cell.actual.ja_pct)}
@@ -261,7 +262,7 @@ function EditorBody({
           </div>
           <p className="text-[12px] leading-4 text-ab-fg-3">
             {def
-              ? `Tomt felt bruker standardmålet (${fmtNum(def.doors)} dører / ${fmtNum(def.givers)} givere).`
+              ? `Tomt felt bruker standardmålet (${fmtNum(def.doors)} ${doorsWord(def.doors)} / ${fmtNum(def.givers)} ${giversWord(def.givers)}).`
               : "Ingen standardmål satt. Sett det under «Mål»."}
           </p>
           {dirty && (

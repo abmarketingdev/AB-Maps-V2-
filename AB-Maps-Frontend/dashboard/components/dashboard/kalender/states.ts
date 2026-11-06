@@ -71,6 +71,16 @@ export function fmtNum(n: number | null | undefined): string {
   return new Intl.NumberFormat("nb-NO").format(n)
 }
 
+/** «1 dør» / «N dører» (null → plural) */
+export function doorsWord(n: number | null | undefined): string {
+  return n === 1 ? "dør" : "dører"
+}
+
+/** «1 giver» / «N givere» (null → plural) */
+export function giversWord(n: number | null | undefined): string {
+  return n === 1 ? "giver" : "givere"
+}
+
 export function fmtPct(n: number | null | undefined): string {
   if (n === null || n === undefined) return "–"
   return `${new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 1 }).format(n)} %`

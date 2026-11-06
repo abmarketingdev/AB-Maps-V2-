@@ -5,7 +5,7 @@ import { ArrowRightLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { DayCell } from "@/lib/api/scheduling"
 import { cardDate, shortDate } from "./dates"
-import { STATE_STYLES, fmtNum, fmtPct } from "./states"
+import { STATE_STYLES, doorsWord, fmtNum, fmtPct, giversWord } from "./states"
 
 // One day box. Always: date on top («Tor 12.11»), state colour as outlined
 // card + left stripe + icon. Body by state:
@@ -32,10 +32,12 @@ export function describeCell(cell: DayCell): string {
   const s = STATE_STYLES[cell.state].label
   const parts = [`${day} ${date}`, s]
   if (cell.goals && (cell.state === "planned" || cell.state === "today")) {
-    parts.push(`mål ${fmtNum(cell.goals.doors)} dører, ${fmtNum(cell.goals.givers)} givere`)
+    parts.push(
+      `mål ${fmtNum(cell.goals.doors)} ${doorsWord(cell.goals.doors)}, ${fmtNum(cell.goals.givers)} ${giversWord(cell.goals.givers)}`,
+    )
   }
   if (cell.actual && (cell.state === "worked" || cell.state === "today")) {
-    parts.push(`${cell.actual.doors} dører, Ja ${fmtPct(cell.actual.ja_pct)}`)
+    parts.push(`${cell.actual.doors} ${doorsWord(cell.actual.doors)}, Ja ${fmtPct(cell.actual.ja_pct)}`)
   }
   const mr = cell.move_request
   if (mr?.status === "venter") {
@@ -71,18 +73,23 @@ export const DayCard = React.memo(function DayCard({ cell, editable, selected, o
         <>
           <span className="mr-1 hidden text-[11px] font-medium text-ab-fg-2 md:inline">Mål</span>
           <span className="tabular-nums">{fmtNum(cell.goals.doors)}</span>
-          <span className="ml-1 text-[11px] font-medium text-ab-fg-2">dører</span>
+          <span className="ml-1 text-[11px] font-medium text-ab-fg-2">{doorsWord(cell.goals.doors)}</span>
         </>
       ) : (
         <span className="text-[12px] font-medium text-ab-fg-3">Uten mål</span>
       )
-      sub = cell.goals && cell.goals.givers !== null ? <>{fmtNum(cell.goals.givers)} givere</> : null
+      sub =
+        cell.goals && cell.goals.givers !== null ? (
+          <>
+            {fmtNum(cell.goals.givers)} {giversWord(cell.goals.givers)}
+          </>
+        ) : null
       break
     case "worked":
       main = (
         <>
           <span className="tabular-nums">{fmtNum(cell.actual?.doors ?? 0)}</span>
-          <span className="ml-1 text-[11px] font-medium text-ab-fg-2">dører</span>
+          <span className="ml-1 text-[11px] font-medium text-ab-fg-2">{doorsWord(cell.actual?.doors ?? 0)}</span>
         </>
       )
       sub = <>Ja {fmtPct(cell.actual?.ja_pct)}</>
@@ -98,10 +105,19 @@ export const DayCard = React.memo(function DayCard({ cell, editable, selected, o
           {cell.goals?.doors != null && (
             <span className="text-[11px] font-medium text-ab-fg-2 tabular-nums">/{fmtNum(cell.goals.doors)}</span>
           )}
-          <span className="ml-1 text-[11px] font-medium text-ab-fg-2">dører</span>
+          <span className="ml-1 text-[11px] font-medium text-ab-fg-2">
+            {doorsWord(cell.goals?.doors ?? cell.actual?.doors ?? 0)}
+          </span>
         </>
       )
-      sub = cell.goals?.givers != null ? <>Mål {fmtNum(cell.goals.givers)} givere</> : <>Ja {fmtPct(cell.actual?.ja_pct)}</>
+      sub =
+        cell.goals?.givers != null ? (
+          <>
+            Mål {fmtNum(cell.goals.givers)} {giversWord(cell.goals.givers)}
+          </>
+        ) : (
+          <>Ja {fmtPct(cell.actual?.ja_pct)}</>
+        )
       break
     case "no_show":
       main = <span className={cn("text-[11px] font-bold uppercase tracking-[0.06em]", st.ink)}>Ikke møtt</span>
