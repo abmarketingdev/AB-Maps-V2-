@@ -28,11 +28,15 @@ export class CalendarError extends Error {
   }
 }
 
+// Fallbacks only: the backend sends a Norwegian `detail` with every error (E1 contract).
 const MESSAGES = {
   date_taken: 'Du har allerede en arbeidsdag den datoen.',
-  date_in_past: 'Datoen har passert. Velg en senere dato.',
-  shift_in_past: 'Denne arbeidsdagen har passert og kan ikke flyttes.',
-  pending_exists: 'Du har allerede en forespørsel som venter for denne dagen.',
+  to_date_past: 'Velg en dato fra i morgen.',
+  to_date_too_far: 'Du kan ikke flytte mer enn 8 uker frem.',
+  same_date: 'Velg en annen dato enn dagen du flytter fra.',
+  past_shift: 'Denne arbeidsdagen kan ikke flyttes lenger.',
+  already_pending: 'Du har allerede en forespørsel som venter for denne dagen.',
+  not_own_shift: 'Du kan bare flytte dine egne arbeidsdager.',
   not_pending: 'Forespørselen er allerede behandlet.',
 };
 
@@ -46,7 +50,7 @@ function toCalendarError(err) {
     let body = null;
     try { body = JSON.parse(m[2]); } catch (_) { /* not JSON */ }
     const code = (body && (body.code || body.error)) || '';
-    let msg = MESSAGES[code] || (body && (body.detail || body.message));
+    let msg = (body && typeof body.detail === 'string' && body.detail) || MESSAGES[code] || (body && body.message);
     if (!msg && body && typeof body === 'object') {
       const first = Object.values(body).flat().find((v) => typeof v === 'string');
       if (first) msg = first;
@@ -94,7 +98,7 @@ function normaliseRequest(r) {
     toDate: r.to_date || r.toDate,
     reason: r.reason || '',
     declineReason: r.decline_reason || r.declineReason || '',
-    createdAt: r.created_at || null,
+    createdAt: r.requested_at || r.created_at || null,
     decidedAt: r.decided_at || null,
   };
 }
@@ -123,13 +127,18 @@ function normaliseDay(d) {
   };
 }
 
-/** 14 days from `from` (a Monday) for the logged-in promoter. */
+/** `days` days from `from` for the logged-in person: { days, person, today }. */
 export async function getWeek(from, days = 14) {
   const mock = loadMock();
   if (mock) return (await mock).getWeek(from, days);
-  const data = await call(`/week/?person=me&from=${from}&days=${days}`);
+  const data = await call(`/week/?from=${from}&days=${days}`);
   const list = Array.isArray(data) ? data : (data && data.days) || [];
-  return { days: list.map(normaliseDay) };
+  return {
+    days: list.map(normaliseDay),
+    // null = account without an employee/manager id (no calendar)
+    person: data && !Array.isArray(data) ? data.person || null : null,
+    today: (data && data.today) || null,
+  };
 }
 
 /** Own move requests (newest first). Returns null when the backend has no list endpoint. */
@@ -151,7 +160,7 @@ export async function createMoveRequest({ shiftId, fromDate, toDate, reason }) {
   if (mock) return (await mock).createMoveRequest({ shiftId, fromDate, toDate, reason });
   const data = await call('/move-requests/', {
     method: 'POST',
-    body: JSON.stringify({ shift_id: shiftId, from_date: fromDate, to_date: toDate, reason: reason || '' }),
+    body: JSON.stringify({ shift_id: shiftId, to_date: toDate, reason: reason || '' }),
   });
   return normaliseRequest(data);
 }

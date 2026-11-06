@@ -1,5 +1,5 @@
 // Dev-only mock of the scheduling API (loaded only when REACT_APP_CAL_MOCK=1).
-// Scenario via ?calmock=<name>: default | error | offline | dayoff | noshow | slow | empty | decided
+// Scenario via ?calmock=<name>: default | error | offline | dayoff | noshow | slow | empty | decided | noperson
 import { addDays, mondayOf, osloToday } from './calendarDates';
 
 const scenario = () => new URLSearchParams(window.location.search).get('calmock') || 'default';
@@ -78,7 +78,7 @@ export async function getWeek(from, days = 14) {
       move_request: req || null,
     });
   }
-  return { days: out.map((d) => ({
+  return { person: s === 'noperson' ? null : { person_type: 'employee', person_id: 'e1', name: 'Test Promotør' }, today, days: (s === 'noperson' ? [] : out).map((d) => ({
     date: d.date,
     state: d.state,
     shiftId: d.shift_id,
