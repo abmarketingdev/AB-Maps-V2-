@@ -123,7 +123,10 @@ function EditorBody({
   actions: EditorActions
   onClose: () => void
 }) {
-  const isWork = cell.shift_id !== null || cell.state !== "off"
+  // A work day is a day with a shift. Not the box colour: today is always «today» and a
+  // past day with knocks is «worked» whether or not a shift exists, and treating those as
+  // work days showed the goal form for a shift that did not exist (PATCH shifts/null/).
+  const isWork = cell.shift_id !== null
   const isPast = cell.date < today
   const canNoShow = isWork && cell.date <= today
   const st = STATE_STYLES[cell.state]

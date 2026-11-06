@@ -207,7 +207,9 @@ async function fetchTeamDetail(teamId: string, period: string) {
         const jaCount = e.ab_person_id ? (jaByAb.get(e.ab_person_id) ?? 0) : 0
         return {
           id: m.id, name: m.name, doors: doorsCount, doorsGoal: 0,
-          recruited: jaCount,  // «Ja» dører, not HR recruits recruitedGoal: 0, activePercent: e.active_percent,
+          recruited: jaCount,  // «Ja» dører, not HR recruits
+          recruitedGoal: 0,
+          activePercent: e.active_percent,
           sumVervinger: Math.round(e.sum_vervinger),
         }
       }),
