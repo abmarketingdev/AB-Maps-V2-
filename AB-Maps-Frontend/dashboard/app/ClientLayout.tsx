@@ -28,6 +28,7 @@ import {
   ChevronsRight,
   Sparkles,
   Target,
+  CalendarDays,
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 
@@ -103,6 +104,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/uploaded-addresses": "Legg til adresse",
   "/teams": "Team",
   "/mal-innstillinger": "Mål-innstillinger",
+  "/kalender": "Kalender",
 }
 
 export const CampaignContext = createContext({
@@ -389,6 +391,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       // Goal-settings — same audience as Team management. Server-side per-row
       // permission still enforces who can actually write (leader/chief/HR-staff).
       items.push({ href: "/mal-innstillinger", title: "Mål-innstillinger", icon: <Target className="h-4 w-4" />, group: "TEAM" })
+      // Kalender — every manager-level login (chief, leader/co-leader, admin).
+      // Edit rights are per team (`can_edit` from /api/scheduling/teams/).
+      items.push({ href: "/kalender", title: "Kalender", icon: <CalendarDays className="h-4 w-4" />, group: "TEAM" })
     }
     items.push({
       href: "/ab-academy",
