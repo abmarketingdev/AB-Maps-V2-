@@ -1,5 +1,6 @@
 import React from 'react';
 import { longLabel, dayLabel } from './calendarDates';
+import { dorer, givere } from './DayCard';
 
 const R = 30;
 const C = 2 * Math.PI * R;
@@ -54,7 +55,7 @@ export default function TodayCard({ day, nextWork }) {
         <div className="calx-today__title">Du har fri i dag</div>
         <p className="calx-today__text">
           {nextWork
-            ? <>Neste arbeidsdag: <strong>{dayLabel(nextWork.date)}</strong>{nextWork.goals ? ` · Mål ${nextWork.goals.doors ?? '–'} dører` : ''}</>
+            ? <>Neste arbeidsdag: <strong>{dayLabel(nextWork.date)}</strong>{nextWork.goals ? ` · Mål ${nextWork.goals.doors ?? '–'} ${dorer(nextWork.goals.doors)}` : ''}</>
             : 'Ingen planlagte arbeidsdager de neste to ukene.'}
         </p>
       </div>
@@ -79,7 +80,7 @@ export default function TodayCard({ day, nextWork }) {
           <div className="calx-stat">
             <div className="calx-stat__row">
               <span className="calx-stat__k">Ja · {fmtPct(a.jaPct)}</span>
-              <span className="calx-stat__v"><strong>{a.ja}</strong> / {g.givers ?? '–'} givere</span>
+              <span className="calx-stat__v"><strong>{a.ja}</strong> / {g.givers ?? '–'} {givere(g.givers)}</span>
             </div>
             <Bar value={a.ja} goal={g.givers} />
           </div>

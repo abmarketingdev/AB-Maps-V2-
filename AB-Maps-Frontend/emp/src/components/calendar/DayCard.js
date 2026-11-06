@@ -12,6 +12,9 @@ export const STATE_META = {
 
 const fmtPct = (v) => `${(Math.round(v * 10) / 10).toLocaleString('nb-NO')} %`;
 const fmtNum = (v) => (v === null || v === undefined ? '–' : String(v));
+/** Norwegian singular/plural: exactly 1 → «dør»/«giver», everything else → «dører»/«givere». */
+export const dorer = (n) => (n === 1 ? 'dør' : 'dører');
+export const givere = (n) => (n === 1 ? 'giver' : 'givere');
 
 /** Small status chip for a move request on a day. */
 export function requestChip(day) {
@@ -27,9 +30,9 @@ export function requestChip(day) {
 /** Screen-reader sentence for a day. */
 function describe(day, canMove) {
   const parts = [longLabel(day.date), STATE_META[day.state]?.label || ''];
-  if (day.state === 'worked' && day.actual) parts.push(`${day.actual.doors} dører, ${fmtPct(day.actual.jaPct)} ja`);
+  if (day.state === 'worked' && day.actual) parts.push(`${day.actual.doors} ${dorer(day.actual.doors)}, ${fmtPct(day.actual.jaPct)} ja`);
   if ((day.state === 'planned' || day.state === 'today') && day.goals) {
-    parts.push(`mål ${fmtNum(day.goals.doors)} dører og ${fmtNum(day.goals.givers)} givere`);
+    parts.push(`mål ${fmtNum(day.goals.doors)} ${dorer(day.goals.doors)} og ${fmtNum(day.goals.givers)} ${givere(day.goals.givers)}`);
   }
   const chip = requestChip(day);
   if (chip) parts.push(chip.text);
@@ -46,7 +49,7 @@ function Body({ day }) {
     return (
       <>
         <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong></div>
-        <div className="calx-day__unit">dører</div>
+        <div className="calx-day__unit">{dorer(actual ? actual.doors : 0)}</div>
         <div className="calx-day__sub">Ja {actual ? fmtPct(actual.jaPct) : '0 %'}</div>
       </>
     );
@@ -57,7 +60,7 @@ function Body({ day }) {
       return (
         <>
           <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong></div>
-          <div className="calx-day__unit">dører</div>
+          <div className="calx-day__unit">{dorer(actual ? actual.doors : 0)}</div>
           <div className="calx-day__sub">Ingen mål i dag</div>
         </>
       );
@@ -65,8 +68,8 @@ function Body({ day }) {
     return (
       <>
         <div className="calx-day__metric"><strong>{actual ? actual.doors : 0}</strong><span>/ {fmtNum(goals.doors)}</span></div>
-        <div className="calx-day__unit">dører</div>
-        <div className="calx-day__sub">Mål {fmtNum(goals.givers)} givere</div>
+        <div className="calx-day__unit">{dorer(goals.doors)}</div>
+        <div className="calx-day__sub">Mål {fmtNum(goals.givers)} {givere(goals.givers)}</div>
       </>
     );
   }
@@ -74,8 +77,8 @@ function Body({ day }) {
     if (!goals) return <div className="calx-day__sub">Mål ikke satt</div>;
     return (
       <>
-        <div className="calx-day__goal">Mål <strong>{fmtNum(goals.doors)}</strong> dører</div>
-        <div className="calx-day__goal">Mål <strong>{fmtNum(goals.givers)}</strong> givere</div>
+        <div className="calx-day__goal">Mål <strong>{fmtNum(goals.doors)}</strong> {dorer(goals.doors)}</div>
+        <div className="calx-day__goal">Mål <strong>{fmtNum(goals.givers)}</strong> {givere(goals.givers)}</div>
       </>
     );
   }

@@ -3,6 +3,7 @@ import { FaArrowRight, FaTimes, FaCalendarPlus } from 'react-icons/fa';
 import Sheet from './Sheet';
 import { addDays, dayLabel, longLabel } from './calendarDates';
 import { cancelMoveRequest, createMoveRequest } from './calendarApi';
+import { dorer, givere } from './DayCard';
 
 const MAX_REASON = 300;
 const MAX_DAYS_AHEAD = 56; // 8 weeks
@@ -116,7 +117,7 @@ export default function MoveRequestSheet({ day, days, today, onClose, onChanged 
         <div className="calx-summary">
           <span className="calx-summary__date">{dayLabel(d.date)}</span>
           <span className="calx-muted">
-            {d.goals ? `Mål ${d.goals.doors ?? '–'} dører · ${d.goals.givers ?? '–'} givere` : 'Planlagt arbeidsdag'}
+            {d.goals ? `Mål ${d.goals.doors ?? '–'} ${dorer(d.goals.doors)} · ${d.goals.givers ?? '–'} ${givere(d.goals.givers)}` : 'Planlagt arbeidsdag'}
           </span>
         </div>
 
