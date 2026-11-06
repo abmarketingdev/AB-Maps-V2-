@@ -97,8 +97,8 @@ export function LessonEditorContent({
         auth.isAuthenticated(),
         auth.checkSuperuser().catch(() => false),
       ]);
-      if (!ok) { router.push("/learning-platform/login"); return; }
-      if (!isSuper) { router.push("/learning-dashboard"); return; }
+      if (!ok) { router.push("/ab-academy/login"); return; }
+      if (!isSuper) { router.push("/ab-academy/oversikt"); return; }
       const admin = LearningAdminService.getInstance();
 
       if (isNew) {
@@ -248,7 +248,7 @@ export function LessonEditorContent({
       <ErrorState
         title="Kunne ikke laste leksjon"
         message={error}
-        onGoHome={() => (onClose ? onClose() : router.push("/admin-dashboard-learning/lessons"))}
+        onGoHome={() => (onClose ? onClose() : router.push("/ab-academy/admin/lessons"))}
       />
     );
   }
@@ -273,7 +273,7 @@ export function LessonEditorContent({
           {expanded && ls.map((l) => {
             const isActive = lessonId !== null && l.id === lessonId;
             return (
-              <div key={l.id} className={cn("ml-6 flex items-center gap-2 rounded-md px-2 py-1.5", isActive && "bg-[#141414] text-white")}>
+              <div key={l.id} className={cn("ml-6 flex items-center gap-2 rounded-md px-2 py-1.5", isActive && "bg-emerald-600 text-white")}>
                 <GripVertical className="h-3.5 w-3.5 shrink-0 opacity-50" />
                 {onSelectLesson ? (
                   <button type="button" onClick={() => onSelectLesson(l.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm">
@@ -281,13 +281,13 @@ export function LessonEditorContent({
                     <span className="truncate">{sec.order}.{l.order} {l.title}</span>
                   </button>
                 ) : (
-                  <Link href={`/admin-dashboard-learning/lessons/${l.id}`} className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm">
+                  <Link href={`/ab-academy/admin/lessons/${l.id}`} className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm">
                     {getLessonIcon(l.kind)}
                     <span className="truncate">{sec.order}.{l.order} {l.title}</span>
                   </Link>
                 )}
                 {!onSelectLesson && (
-                  <Link href={`/admin-dashboard-learning/lessons/${l.id}`} className="shrink-0 rounded p-1 opacity-70 hover:opacity-100" aria-label="Rediger">
+                  <Link href={`/ab-academy/admin/lessons/${l.id}`} className="shrink-0 rounded p-1 opacity-70 hover:opacity-100" aria-label="Rediger">
                     <Pencil className="h-3.5 w-3.5" />
                   </Link>
                 )}
@@ -307,7 +307,7 @@ export function LessonEditorContent({
           {onClose ? (
             <button type="button" onClick={onClose} className="hover:text-[#141414]">Leksjoner</button>
           ) : (
-            <Link href="/admin-dashboard-learning/lessons" className="hover:text-[#141414]">Leksjoner</Link>
+            <Link href="/ab-academy/admin/lessons" className="hover:text-[#141414]">Leksjoner</Link>
           )}
           <span>/</span>
           <span className="font-medium text-[#141414]">{isNew ? "Ny leksjon" : currentSection?.title || lesson?.title}</span>
@@ -315,11 +315,11 @@ export function LessonEditorContent({
         <div className="flex items-center gap-3">
           {savedAt && <span className="text-sm text-[#757575]">Sist lagret {savedAt.toLocaleTimeString("nb-NO", { minute: "2-digit", second: "2-digit" })}</span>}
           {isNew ? (
-            <Button size="sm" onClick={handleCreate} disabled={saving || !form.title?.trim()} className="bg-[#141414] text-white hover:bg-[#333]">Opprett leksjon</Button>
+            <Button size="sm" onClick={handleCreate} disabled={saving || !form.title?.trim()} className="bg-emerald-600 text-white hover:bg-emerald-700">Opprett leksjon</Button>
           ) : (
             <>
               <Button variant="outline" size="sm" onClick={handleSaveDraft} disabled={saving} className="border-[#E0E0E0]">Lagre utkast</Button>
-              <Button size="sm" onClick={handlePublish} disabled={saving} className="bg-[#141414] text-white hover:bg-[#333]">Publiser endringer</Button>
+              <Button size="sm" onClick={handlePublish} disabled={saving} className="bg-emerald-600 text-white hover:bg-emerald-700">Publiser endringer</Button>
             </>
           )}
         </div>
@@ -344,7 +344,7 @@ export function LessonEditorContent({
                 <span className="text-lg">+</span> Legg til leksjon
               </button>
             ) : (
-              <Link href={`/admin-dashboard-learning/lessons/new?section=${lesson?.section ?? form.section ?? sections[0]?.id ?? ""}`} className={cn("flex w-full items-center justify-center gap-2 rounded-lg border py-3 text-sm font-medium transition-colors", isNew ? "border-[#141414] bg-[#f7f7f7] text-[#141414]" : "border-[#E0E0E0] bg-white text-[#141414] hover:bg-[#f7f7f7]")}>
+              <Link href={`/ab-academy/admin/lessons/new?section=${lesson?.section ?? form.section ?? sections[0]?.id ?? ""}`} className={cn("flex w-full items-center justify-center gap-2 rounded-lg border py-3 text-sm font-medium transition-colors", isNew ? "border-[#141414] bg-[#f7f7f7] text-[#141414]" : "border-[#E0E0E0] bg-white text-[#141414] hover:bg-[#f7f7f7]")}>
                 <span className="text-lg">+</span> Legg til leksjon
               </Link>
             )}
@@ -399,15 +399,15 @@ export function LessonEditorContent({
             <div className="space-y-4 rounded-lg border border-[#E0E0E0] bg-white p-4">
               <div className="flex items-center justify-between">
                 <div><p className="text-sm font-medium text-[#141414]">Påkrevd fullføring</p><p className="text-xs text-[#757575]">Bruker må fullføre for å gå videre</p></div>
-                <Switch checked={requiredCompletion} onCheckedChange={setRequiredCompletion} className="data-[state=checked]:bg-[#141414]" />
+                <Switch checked={requiredCompletion} onCheckedChange={setRequiredCompletion} className="data-[state=checked]:bg-emerald-600" />
               </div>
               <div className="flex items-center justify-between">
                 <div><p className="text-sm font-medium text-[#141414]">Nedlastbare ressurser</p><p className="text-xs text-[#757575]">Tillat vedlegg</p></div>
-                <Switch checked={downloadableResources} onCheckedChange={setDownloadableResources} className="data-[state=checked]:bg-[#141414]" />
+                <Switch checked={downloadableResources} onCheckedChange={setDownloadableResources} className="data-[state=checked]:bg-emerald-600" />
               </div>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-[#141414]">Synlig for studenter</p>
-                <Switch checked={form.is_active ?? true} onCheckedChange={(c) => setForm((f) => ({ ...f, is_active: !!c }))} className="data-[state=checked]:bg-[#141414]" />
+                <Switch checked={form.is_active ?? true} onCheckedChange={(c) => setForm((f) => ({ ...f, is_active: !!c }))} className="data-[state=checked]:bg-emerald-600" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-[#757575]">Estimert varighet (min)</label>
@@ -423,7 +423,7 @@ export function LessonEditorContent({
             </div>
             {form.kind === "QUIZ" && (
               <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-                <p className="text-sm text-amber-800">For å redigere spørsmål og svar, bruk <Link href="/admin-dashboard-learning/quizzes" className="font-medium underline">Quizzer</Link> og velg denne quizen.</p>
+                <p className="text-sm text-amber-800">For å redigere spørsmål og svar, bruk <Link href="/ab-academy/admin/quizzes" className="font-medium underline">Quizzer</Link> og velg denne quizen.</p>
               </div>
             )}
           </div>
@@ -436,8 +436,8 @@ export function LessonEditorContent({
             <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600"><span className="h-2 w-2 rounded-full bg-emerald-500" /> LIVE</span>
           </div>
           <div className="flex gap-1 border-b border-[#E0E0E0] p-2">
-            <button type="button" onClick={() => setPreviewRole("ansatt")} className={cn("flex-1 rounded-md py-2 text-sm font-medium transition-colors", previewRole === "ansatt" ? "bg-[#141414] text-white" : "bg-[#f0f0f0] text-[#757575] hover:bg-[#E0E0E0]")}>Ansatt</button>
-            <button type="button" onClick={() => setPreviewRole("leder")} className={cn("flex-1 rounded-md py-2 text-sm font-medium transition-colors", previewRole === "leder" ? "bg-[#141414] text-white" : "bg-[#f0f0f0] text-[#757575] hover:bg-[#E0E0E0]")}>Leder</button>
+            <button type="button" onClick={() => setPreviewRole("ansatt")} className={cn("flex-1 rounded-md py-2 text-sm font-medium transition-colors", previewRole === "ansatt" ? "bg-emerald-600 text-white" : "bg-[#f0f0f0] text-[#757575] hover:bg-[#E0E0E0]")}>Ansatt</button>
+            <button type="button" onClick={() => setPreviewRole("leder")} className={cn("flex-1 rounded-md py-2 text-sm font-medium transition-colors", previewRole === "leder" ? "bg-emerald-600 text-white" : "bg-[#f0f0f0] text-[#757575] hover:bg-[#E0E0E0]")}>Leder</button>
           </div>
           <div className="flex flex-1 flex-col items-center overflow-y-auto p-4">
             <div className="w-full max-w-[280px] overflow-hidden rounded-2xl border-2 border-[#1a1a1a] bg-[#1a1a1a] shadow-xl">

@@ -25,25 +25,25 @@ const SectionCard: React.FC<SectionCardProps> = ({
   const getStatusIcon = () => {
     const iconSize = isMobile ? "w-5 h-5" : "w-6 h-6";
     if (isCompleted) {
-      return <Check className={cn(iconSize, "text-green-600")} />;
+      return <Check className={cn(iconSize, "text-emerald-600")} />;
     }
     if (isUnlocked) {
       return (
         <div className={cn(
-          "bg-blue-500 rounded-full flex items-center justify-center",
+          "bg-emerald-600 rounded-full flex items-center justify-center",
           isMobile ? "w-6 h-6" : "w-7 h-7"
         )}>
           <span className={cn("text-white", isMobile ? "text-[10px]" : "text-xs")}>→</span>
         </div>
       );
     }
-    return <Lock className={cn(iconSize, "text-gray-400")} />;
+    return <Lock className={cn(iconSize, "text-neutral-400")} />;
   };
 
   const getStatusColor = () => {
-    if (isCompleted) return "border-green-200 bg-green-50";
-    if (isUnlocked) return "border-blue-200 bg-blue-50";
-    return "border-gray-200 bg-gray-50";
+    if (isCompleted) return "border-emerald-200 bg-emerald-50";
+    if (isUnlocked) return "border-emerald-200 bg-emerald-50";
+    return "border-neutral-200 bg-neutral-50";
   };
 
   return (
@@ -62,7 +62,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
           <div className={cn(
             "rounded-full flex items-center justify-center text-white flex-shrink-0",
             isMobile ? "w-10 h-10 text-lg" : "w-12 h-12 text-xl",
-            section.icon_color || 'bg-green-500'
+            section.icon_color || 'bg-emerald-600'
           )}>
             {section.icon_emoji || "📚"}
           </div>
@@ -74,7 +74,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
               {section.title}
             </h3>
             <p className={cn(
-              "text-gray-600 mb-3 line-clamp-2",
+              "text-neutral-600 mb-3 line-clamp-2",
               isMobile ? "text-xs" : "text-sm"
             )}>
               {section.description}
@@ -93,7 +93,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
             )}
             
             <div className={cn(
-              "flex items-center gap-2 text-gray-500",
+              "flex items-center gap-2 text-neutral-500",
               isMobile ? "text-xs" : "text-sm"
             )}>
               <Clock className={cn(isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />

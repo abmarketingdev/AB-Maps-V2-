@@ -38,13 +38,13 @@ const SectionManagement = () => {
         const authenticated = await authService.isAuthenticated();
         
         if (!authenticated) {
-          router.push("/learning-platform");
+          router.push("/ab-academy");
           return;
         }
 
         const isSuperuser = await authService.checkSuperuser();
         if (!isSuperuser) {
-          router.push("/learning-dashboard");
+          router.push("/ab-academy/oversikt");
           return;
         }
 
@@ -188,7 +188,7 @@ const SectionManagement = () => {
       <ErrorState
         title="Could not load sections"
         message={error}
-        onGoHome={() => router.push("/admin-dashboard-learning")}
+        onGoHome={() => router.push("/ab-academy/admin")}
       />
     );
   }
@@ -201,14 +201,14 @@ const SectionManagement = () => {
           title="Section Management"
           userData={null}
           onLogout={() => {}}
-          onBack={() => router.push("/admin-dashboard-learning")}
+          onBack={() => router.push("/ab-academy/admin")}
           showBack={true}
         />
       ) : (
         <header className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/admin-dashboard-learning" prefetch={true}>
+              <Link href="/ab-academy/admin" prefetch={true}>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Back to Admin Dashboard
@@ -464,7 +464,7 @@ const SectionManagement = () => {
                             {section.description}
                           </p>
                           <Link
-                            href={`/learning-platform/${section.id}`}
+                            href={`/ab-academy/${section.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={cn("inline-flex items-center gap-1.5 text-sm font-medium text-[#141414] hover:underline mb-3", isMobile && "text-xs")}
@@ -578,7 +578,7 @@ const SectionManagement = () => {
                     {section.description}
                   </p>
                   <Link
-                    href={`/learning-platform/${section.id}`}
+                    href={`/ab-academy/${section.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={cn("inline-flex items-center gap-1.5 text-sm font-medium text-[#141414] hover:underline mb-3", isMobile && "text-xs")}

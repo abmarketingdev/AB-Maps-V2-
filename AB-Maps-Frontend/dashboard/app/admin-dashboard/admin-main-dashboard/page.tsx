@@ -1072,7 +1072,7 @@ const AdminMainDashboard: React.FC = () => {
       onCreateManager={handleCreateManagerOpen}
       onCreateEmployee={handleCreateEmployeeOpen}
       onCreateSuperuser={handleCreateSuperuserOpen}
-      onLearning={() => router.push("/learning-platform")}
+      onLearning={() => router.push("/ab-academy")}
       totalCount={allCount}
     >
       {/* KPI stat strip — admin-page signal */}
@@ -2120,14 +2120,14 @@ function DashboardShell({
               {/* Theme toggle — light/dark switch */}
               <ThemeToggle className="h-9 w-9 rounded-lg" />
 
-              {/* Learning Academy — ghost link with external glyph */}
+              {/* AB Academy — ghost link with external glyph */}
               <button
                 type="button"
                 onClick={onLearning}
                 className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-ab-fg-2 hover:text-ab-fg hover:bg-ab-hover text-[13px] font-medium transition-all duration-120"
               >
                 <BookOpen className="h-4 w-4" />
-                Learning Academy
+                AB Academy
                 <ArrowUpRight className="h-3.5 w-3.5 -translate-y-px text-ab-fg-3" />
               </button>
 

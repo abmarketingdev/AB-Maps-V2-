@@ -90,11 +90,11 @@ export function SectionEditorContent({
         auth.checkSuperuser().catch(() => false),
       ]);
       if (!ok) {
-        router.push("/learning-platform/login");
+        router.push("/ab-academy/login");
         return;
       }
       if (!isSuper) {
-        router.push("/learning-dashboard");
+        router.push("/ab-academy/oversikt");
         return;
       }
       await fetchCampaigns();
@@ -236,7 +236,7 @@ export function SectionEditorContent({
       <ErrorState
         title="Kunne ikke laste seksjon"
         message={error}
-        onGoHome={() => (onClose ? onClose() : router.push("/admin-dashboard-learning/sections"))}
+        onGoHome={() => (onClose ? onClose() : router.push("/ab-academy/admin/sections"))}
       />
     );
   }
@@ -251,7 +251,7 @@ export function SectionEditorContent({
               Innhold
             </button>
           ) : (
-            <Link href="/admin-dashboard-learning/sections" className="hover:text-[#141414]">
+            <Link href="/ab-academy/admin/sections" className="hover:text-[#141414]">
               Innhold
             </Link>
           )}
@@ -271,7 +271,7 @@ export function SectionEditorContent({
               size="sm"
               onClick={handleCreate}
               disabled={saving || !form.title?.trim()}
-              className="bg-[#141414] text-white hover:bg-[#333]"
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
             >
               Opprett seksjon
             </Button>
@@ -284,7 +284,7 @@ export function SectionEditorContent({
                 size="sm"
                 onClick={handlePublish}
                 disabled={saving}
-                className="bg-[#141414] text-white hover:bg-[#333]"
+                className="bg-emerald-600 text-white hover:bg-emerald-700"
               >
                 Publiser endringer
               </Button>
@@ -331,7 +331,7 @@ export function SectionEditorContent({
                           key={sec.id}
                           className={cn(
                             "ml-6 flex items-center gap-2 rounded-md px-2 py-1.5",
-                            isActive && "bg-[#141414] text-white"
+                            isActive && "bg-emerald-600 text-white"
                           )}
                         >
                           {onSelectSection ? (
@@ -347,7 +347,7 @@ export function SectionEditorContent({
                             </button>
                           ) : (
                             <Link
-                              href={`/admin-dashboard-learning/sections/${sec.id}`}
+                              href={`/ab-academy/admin/sections/${sec.id}`}
                               className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm"
                             >
                               <span className="text-base">{sec.icon_emoji || "📚"}</span>
@@ -358,7 +358,7 @@ export function SectionEditorContent({
                           )}
                           {!onSelectSection && (
                             <Link
-                              href={`/admin-dashboard-learning/sections/${sec.id}`}
+                              href={`/ab-academy/admin/sections/${sec.id}`}
                               className="shrink-0 rounded p-1 opacity-70 hover:opacity-100"
                               aria-label="Rediger"
                             >
@@ -387,7 +387,7 @@ export function SectionEditorContent({
               </button>
             ) : (
               <Link
-                href="/admin-dashboard-learning/sections/new"
+                href="/ab-academy/admin/sections/new"
                 className={cn(
                   "flex w-full items-center justify-center gap-2 rounded-lg border py-3 text-sm font-medium transition-colors",
                   isNew ? "border-[#141414] bg-[#f7f7f7] text-[#141414]" : "border-[#E0E0E0] bg-white text-[#141414] hover:bg-[#f7f7f7]"
@@ -559,7 +559,7 @@ export function SectionEditorContent({
             </div>
             {!isNew && section && (
               <Link
-                href={`/learning-platform/${section.id}`}
+                href={`/ab-academy/${section.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#141414] hover:underline"

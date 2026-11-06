@@ -1189,7 +1189,7 @@ function PreviewPanel({
     : null;
 
   const previewUrl = selectedSection
-    ? `/learning-platform/${selectedSection.id}`
+    ? `/ab-academy/${selectedSection.id}`
     : null;
 
   // Use live content if available, otherwise fall back to saved content
@@ -1235,7 +1235,7 @@ function PreviewPanel({
           className={cn(
             "flex-1 py-2 text-sm font-medium transition-colors",
             previewRole === "ansatt"
-              ? "bg-slate-900 text-white"
+              ? "bg-emerald-600 text-white"
               : "text-slate-600 hover:bg-slate-100"
           )}
         >
@@ -1247,7 +1247,7 @@ function PreviewPanel({
           className={cn(
             "flex-1 py-2 text-sm font-medium transition-colors",
             previewRole === "leder"
-              ? "bg-slate-900 text-white"
+              ? "bg-emerald-600 text-white"
               : "text-slate-600 hover:bg-slate-100"
           )}
         >
@@ -1770,11 +1770,11 @@ export default function CourseBuilderPage() {
       ]);
 
       if (!authenticated) {
-        router.push("/learning-platform/login");
+        router.push("/ab-academy/login");
         return;
       }
       if (!isSuperuser) {
-        router.push("/learning-dashboard");
+        router.push("/ab-academy/oversikt");
         return;
       }
 
@@ -2355,7 +2355,7 @@ export default function CourseBuilderPage() {
       <ErrorState
         title="Kunne ikke laste data"
         message={error}
-        onGoHome={() => router.push("/admin-dashboard-learning")}
+        onGoHome={() => router.push("/ab-academy/admin")}
       />
     );
   }

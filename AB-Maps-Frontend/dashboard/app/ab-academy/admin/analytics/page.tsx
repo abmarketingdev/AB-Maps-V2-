@@ -40,12 +40,12 @@ const AnalyticsDashboard = () => {
         ]);
         
         if (!authenticated) {
-          router.push("/learning-platform");
+          router.push("/ab-academy");
           return;
         }
 
         if (!isSuperuser) {
-          router.push("/learning-dashboard");
+          router.push("/ab-academy/oversikt");
           return;
         }
 
@@ -113,7 +113,7 @@ const AnalyticsDashboard = () => {
       <ErrorState
         title="Kunne ikke laste analytikk"
         message={error}
-        onGoHome={() => router.push("/admin-dashboard-learning")}
+        onGoHome={() => router.push("/ab-academy/admin")}
       />
     );
   }
@@ -126,14 +126,14 @@ const AnalyticsDashboard = () => {
           title="Analytikk Dashbord"
           userData={null}
           onLogout={() => {}}
-          onBack={() => router.push("/admin-dashboard-learning")}
+          onBack={() => router.push("/ab-academy/admin")}
           showBack={true}
         />
       ) : (
         <header className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/admin-dashboard-learning" prefetch={true}>
+              <Link href="/ab-academy/admin" prefetch={true}>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Tilbake til Admin Dashboard
@@ -141,7 +141,7 @@ const AnalyticsDashboard = () => {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Analytikk Dashbord</h1>
-                <p className="text-gray-600">Læringsplattform statistikk og rapporter</p>
+                <p className="text-gray-600">AB Academy statistikk og rapporter</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -565,7 +565,7 @@ const AnalyticsDashboard = () => {
               "grid gap-4",
               isMobile ? "grid-cols-1" : "md:grid-cols-3"
             )}>
-              <Link href="/admin-dashboard-learning/sections" prefetch={true}>
+              <Link href="/ab-academy/admin/sections" prefetch={true}>
                 <Button
                   variant="outline"
                   className={cn(
@@ -577,7 +577,7 @@ const AnalyticsDashboard = () => {
                   Administrer seksjoner
                 </Button>
               </Link>
-              <Link href="/admin-dashboard-learning/lessons" prefetch={true}>
+              <Link href="/ab-academy/admin/lessons" prefetch={true}>
                 <Button
                   variant="outline"
                   className={cn(
@@ -589,7 +589,7 @@ const AnalyticsDashboard = () => {
                   Administrer leksjoner
                 </Button>
               </Link>
-              <Link href="/admin-dashboard-learning/users" prefetch={true}>
+              <Link href="/ab-academy/admin/users" prefetch={true}>
                 <Button
                   variant="outline"
                   className={cn(

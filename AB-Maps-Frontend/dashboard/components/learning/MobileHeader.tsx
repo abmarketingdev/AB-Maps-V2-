@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { LearningAuthService } from "@/services/learningAuthService";
 import { launchMap, currentCampaignId } from "@/lib/maps/launchMap";
+import { AcademyBrand } from "@/components/learning/AcademyHeader";
 
 interface MobileHeaderProps {
   title: string;
@@ -30,6 +31,8 @@ interface MobileHeaderProps {
    * Additional header actions (desktop only)
    */
   desktopActions?: React.ReactNode;
+  /** Show the AB Academy brand (logo + name) instead of the plain title. */
+  brand?: boolean;
 }
 
 interface NavItem {
@@ -47,6 +50,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   onBack,
   showBack = false,
   desktopActions,
+  brand = false,
 }) => {
   const isMobile = useIsMobile();
   const router = useRouter();
@@ -153,7 +157,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   // Mobile header with hamburger menu
   if (isMobile) {
     return (
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <header className="bg-white/95 backdrop-blur border-b border-black/[0.08] sticky top-0 z-50">
         <div className="px-4">
           <div className="flex items-center justify-between h-14">
             {/* Left: Back button or Menu */}
@@ -198,7 +202,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <div className="mt-6 space-y-2">
                       {/* Show navigation items based on user role */}
                       {isManager === null ? (
-                        <div className="text-center py-4 text-gray-500 text-sm">
+                        <div className="text-center py-4 text-neutral-500 text-sm">
                           Laster...
                         </div>
                       ) : (
@@ -223,8 +227,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                           ))}
                           
                           <div className="pt-4 border-t mt-4">
-                            <p className="text-xs text-gray-500 mb-2 px-2">Learning Academy</p>
-                            <div className="text-sm text-gray-700 px-2 font-medium">
+                            <p className="text-xs text-neutral-500 mb-2 px-2">AB Academy</p>
+                            <div className="text-sm text-neutral-700 px-2 font-medium">
                               {title}
                             </div>
                           </div>
@@ -234,9 +238,13 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                   </SheetContent>
                 </Sheet>
               )}
-              <h1 className="text-lg font-semibold text-gray-900 truncate">
-                {title}
-              </h1>
+              {brand ? (
+                <AcademyBrand size="sm" />
+              ) : (
+                <h1 className="text-lg font-semibold text-[#0A0A0A] truncate">
+                  {title}
+                </h1>
+              )}
             </div>
 
             {/* Right: User icon (opens user menu) */}
@@ -249,8 +257,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                     className="h-9 w-9 p-0 rounded-full"
                     aria-label="User menu"
                   >
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-blue-600" />
+                    <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
+                      <User className="w-4 h-4 text-emerald-700" />
                     </div>
                   </Button>
                 </SheetTrigger>
@@ -262,15 +270,15 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                     {userData && (
                       <div className="pb-4 border-b">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                            <User className="w-6 h-6 text-blue-600" />
+                          <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center">
+                            <User className="w-6 h-6 text-emerald-700" />
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-[#0A0A0A]">
                               {userData.first_name} {userData.last_name}
                             </p>
                             {userData.email && (
-                              <p className="text-sm text-gray-500">{userData.email}</p>
+                              <p className="text-sm text-neutral-500">{userData.email}</p>
                             )}
                           </div>
                         </div>
@@ -299,7 +307,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
 
   // Desktop header (original design)
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white border-b border-black/[0.08]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -326,13 +334,13 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                 Tilbake
               </Button>
             )}
-            <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+            <h1 className="text-xl font-semibold text-[#0A0A0A]">{title}</h1>
           </div>
           <div className="flex items-center space-x-4">
             {userData && (
               <div className="flex items-center space-x-2">
-                <User className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">
+                <User className="h-4 w-4 text-neutral-500" />
+                <span className="text-sm text-neutral-700">
                   {userData.first_name} {userData.last_name}
                 </span>
               </div>

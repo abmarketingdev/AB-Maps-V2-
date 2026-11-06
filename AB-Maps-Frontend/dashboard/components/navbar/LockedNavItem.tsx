@@ -31,7 +31,7 @@ interface LockedNavItemProps {
 
 /**
  * Navbar item component with locking mechanism
- * Locks items when course completion is incomplete (except "Learning Academy")
+ * Locks items when course completion is incomplete (except "AB Academy")
  */
 export function LockedNavItem({
   href,
@@ -45,8 +45,8 @@ export function LockedNavItem({
   className,
   collapsed = false,
 }: LockedNavItemProps) {
-  // "Learning Academy" or "AB Academy Learning Panel" should always be accessible
-  const isLearningPlatform = href === '/learning-platform';
+  // "AB Academy" (/ab-academy and everything under it) is always accessible
+  const isLearningPlatform = href === '/ab-academy' || href.startsWith('/ab-academy/');
   const shouldBeLocked = isLocked && !isLearningPlatform;
 
   // Generate tooltip message for incomplete sections
@@ -66,7 +66,7 @@ export function LockedNavItem({
       .join(', ');
     
     const moreText = incompleteCount > 3 ? ` og ${incompleteCount - 3} flere` : '';
-    return `Du må fullføre følgende seksjoner først: ${sectionNames}${moreText}. Gå til Learning Academy for å fullføre kurset.`;
+    return `Du må fullføre følgende seksjoner først: ${sectionNames}${moreText}. Gå til AB Academy for å fullføre kurset.`;
   };
 
   const tooltipMessage = getTooltipMessage();

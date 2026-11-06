@@ -3,6 +3,7 @@
 import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { AcademyBrand } from "@/components/learning/AcademyHeader";
 
 interface LoadingStateProps {
   message?: string;
@@ -30,22 +31,23 @@ const LoadingState: React.FC<LoadingStateProps> = ({
   };
 
   const containerClasses = fullScreen
-    ? "min-h-screen bg-gray-50 flex items-center justify-center"
+    ? "min-h-screen bg-[#F7F7F5] flex items-center justify-center px-4"
     : "flex items-center justify-center py-8";
 
   return (
     <div className={containerClasses} role="status" aria-live="polite" aria-label="Laster">
-      <div className="text-center">
+      <div className="flex flex-col items-center text-center">
+        {fullScreen && <AcademyBrand size="md" className="mb-8" />}
         <div
           className={cn(
-            "animate-spin rounded-full border-b-2 border-blue-600 mx-auto mb-2 transition-opacity",
+            "animate-spin rounded-full border-[3px] border-emerald-600/15 border-t-emerald-600 mx-auto mb-3 transition-opacity",
             sizeClasses[size]
           )}
           aria-hidden="true"
         />
         <p
           className={cn(
-            "text-gray-600 transition-opacity animate-in fade-in duration-300",
+            "text-neutral-500 transition-opacity animate-in fade-in duration-300",
             isMobile ? "text-sm" : "text-base"
           )}
         >
@@ -75,7 +77,7 @@ export const SkeletonLoader: React.FC<{
         <div
           key={i}
           className={cn(
-            "bg-gray-200 rounded",
+            "bg-black/[0.06] rounded",
             isMobile ? "h-4" : "h-5",
             i === lines - 1 ? "w-3/4" : "w-full"
           )}

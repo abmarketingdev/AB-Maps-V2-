@@ -95,8 +95,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/areas": "Områder",
   "/campaigns": "Kampanje",
   "/employee": "Ansatt",
-  "/learning-platform": "Learning Academy",
-  "/learning-dashboard": "Læringsoversikt",
+  "/ab-academy": "AB Academy",
+  "/ab-academy/oversikt": "AB Academy",
   "/admin-dashboard": "Admin Dashboard",
   "/analytics": "Analytics",
   "/admin/tasks": "Tildel oppgaver",
@@ -391,8 +391,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       items.push({ href: "/mal-innstillinger", title: "Mål-innstillinger", icon: <Target className="h-4 w-4" />, group: "TEAM" })
     }
     items.push({
-      href: "/learning-platform",
-      title: isSuperuser ? "AB Academy Learning Panel" : "Learning Academy",
+      href: "/ab-academy",
+      title: "AB Academy",
       icon: <BookOpen className="h-4 w-4" />,
       group: "LÆRING",
     })

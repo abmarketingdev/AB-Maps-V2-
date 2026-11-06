@@ -29,26 +29,26 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
   const totalLessons = progress.total_lessons || 0;
   
   const getProgressColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600";
+    if (percentage >= 80) return "text-emerald-600";
     if (percentage >= 60) return "text-yellow-600";
     if (percentage >= 40) return "text-orange-600";
     return "text-red-600";
   };
 
   const getProgressBarColor = (percentage: number) => {
-    if (percentage >= 80) return "bg-green-600";
+    if (percentage >= 80) return "bg-emerald-600";
     if (percentage >= 60) return "bg-yellow-600";
     if (percentage >= 40) return "bg-orange-600";
     return "bg-red-600";
   };
 
   return (
-    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+    <Card className="bg-gradient-to-r from-emerald-50 to-indigo-50 border-emerald-200">
       <CardContent className={cn("p-6", isMobile && "p-4")}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <BookOpen className={cn("text-blue-600", isMobile ? "w-5 h-5" : "w-6 h-6")} />
-            <h3 className={cn("font-semibold text-gray-900", isMobile ? "text-base" : "text-lg")}>
+            <BookOpen className={cn("text-emerald-600", isMobile ? "w-5 h-5" : "w-6 h-6")} />
+            <h3 className={cn("font-semibold text-[#0A0A0A]", isMobile ? "text-base" : "text-lg")}>
               Din fremgang
             </h3>
           </div>
@@ -74,7 +74,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
             {/* Overall Progress */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className={cn("font-medium text-gray-700", isMobile ? "text-xs" : "text-sm")}>
+                <span className={cn("font-medium text-neutral-700", isMobile ? "text-xs" : "text-sm")}>
                   Total fremgang
                 </span>
                 <span className={cn("font-semibold", getProgressColor(completionPercentage), isMobile ? "text-xs" : "text-sm")}>
@@ -86,7 +86,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
                 className={cn(isMobile ? "h-1.5" : "h-2")}
               />
               {progress.total_campaigns !== undefined && (
-                <div className={cn("text-gray-500 mt-1 text-center", isMobile ? "text-[10px]" : "text-xs")}>
+                <div className={cn("text-neutral-500 mt-1 text-center", isMobile ? "text-[10px]" : "text-xs")}>
                   {progress.total_campaigns} kampanje{progress.total_campaigns !== 1 ? 'r' : ''}
                 </div>
               )}
@@ -95,7 +95,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
             {/* NEW: Per-Campaign Progress */}
             {progress.campaigns && progress.campaigns.length > 0 && (
               <div className={cn("space-y-3", isMobile && "space-y-2")}>
-                <h4 className={cn("font-semibold text-gray-700 flex items-center gap-2", isMobile ? "text-xs" : "text-sm")}>
+                <h4 className={cn("font-semibold text-neutral-700 flex items-center gap-2", isMobile ? "text-xs" : "text-sm")}>
                   <Target className={cn(isMobile ? "w-3 h-3" : "w-4 h-4")} />
                   Per kampanje
                 </h4>
@@ -104,7 +104,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
                     <div className="flex items-center justify-between">
                       <div className={cn("flex items-center gap-2", isMobile ? "text-[10px]" : "text-xs")}>
                         <span>{campaign.is_general ? '📚' : '🎯'}</span>
-                        <span className={cn("font-medium text-gray-700 truncate", isMobile ? "max-w-[100px]" : "max-w-[120px]")}>
+                        <span className={cn("font-medium text-neutral-700 truncate", isMobile ? "max-w-[100px]" : "max-w-[120px]")}>
                           {campaign.campaign_name}
                         </span>
                       </div>
@@ -112,11 +112,11 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
                         {campaign.progress_percent}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full" style={{ height: isMobile ? '4px' : '6px' }}>
+                    <div className="w-full bg-neutral-200 rounded-full" style={{ height: isMobile ? '4px' : '6px' }}>
                       <div 
                         className={cn(
                           "rounded-full transition-all",
-                          campaign.is_general ? "bg-green-500" : "bg-blue-500"
+                          campaign.is_general ? "bg-emerald-600" : "bg-emerald-600"
                         )}
                         style={{ 
                           width: `${campaign.progress_percent}%`,
@@ -124,9 +124,9 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
                         }}
                       />
                     </div>
-                    <div className={cn("flex items-center gap-2 text-gray-500", isMobile ? "text-[10px] gap-2" : "text-xs gap-3")}>
+                    <div className={cn("flex items-center gap-2 text-neutral-500", isMobile ? "text-[10px] gap-2" : "text-xs gap-3")}>
                       <span className="flex items-center gap-1">
-                        <CheckCircle className={cn("text-green-600", isMobile ? "w-2.5 h-2.5" : "w-3 h-3")} />
+                        <CheckCircle className={cn("text-emerald-600", isMobile ? "w-2.5 h-2.5" : "w-3 h-3")} />
                         {campaign.completed_sections}
                       </span>
                       <span className="flex items-center gap-1">
@@ -134,7 +134,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
                         {campaign.in_progress_sections}
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className={cn("rounded-full border-2 border-gray-400", isMobile ? "w-2.5 h-2.5" : "w-3 h-3")} />
+                        <span className={cn("rounded-full border-2 border-neutral-400", isMobile ? "w-2.5 h-2.5" : "w-3 h-3")} />
                         {campaign.not_started_sections}
                       </span>
                     </div>
@@ -148,26 +148,26 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
               <div className={cn("grid grid-cols-2 gap-4", isMobile && "gap-3")}>
                 <div className="text-center">
                   <div className={cn("flex items-center justify-center gap-2 mb-1", isMobile && "gap-1")}>
-                    <CheckCircle className={cn("text-green-600", isMobile ? "w-3 h-3" : "w-4 h-4")} />
-                    <span className={cn("font-medium text-gray-700", isMobile ? "text-xs" : "text-sm")}>Fullført</span>
+                    <CheckCircle className={cn("text-emerald-600", isMobile ? "w-3 h-3" : "w-4 h-4")} />
+                    <span className={cn("font-medium text-neutral-700", isMobile ? "text-xs" : "text-sm")}>Fullført</span>
                   </div>
-                  <div className={cn("font-bold text-green-600", isMobile ? "text-xl" : "text-2xl")}>
+                  <div className={cn("font-bold text-emerald-600", isMobile ? "text-xl" : "text-2xl")}>
                     {completedSections.length}
                   </div>
-                  <div className={cn("text-gray-500", isMobile ? "text-[10px]" : "text-xs")}>
+                  <div className={cn("text-neutral-500", isMobile ? "text-[10px]" : "text-xs")}>
                     av {totalSections} seksjoner
                   </div>
                 </div>
                 
                 <div className="text-center">
                   <div className={cn("flex items-center justify-center gap-2 mb-1", isMobile && "gap-1")}>
-                    <Clock className={cn("text-blue-600", isMobile ? "w-3 h-3" : "w-4 h-4")} />
-                    <span className={cn("font-medium text-gray-700", isMobile ? "text-xs" : "text-sm")}>Leksjoner</span>
+                    <Clock className={cn("text-emerald-600", isMobile ? "w-3 h-3" : "w-4 h-4")} />
+                    <span className={cn("font-medium text-neutral-700", isMobile ? "text-xs" : "text-sm")}>Leksjoner</span>
                   </div>
-                  <div className={cn("font-bold text-blue-600", isMobile ? "text-xl" : "text-2xl")}>
+                  <div className={cn("font-bold text-emerald-600", isMobile ? "text-xl" : "text-2xl")}>
                     {completedLessonsCount}
                   </div>
-                  <div className={cn("text-gray-500", isMobile ? "text-[10px]" : "text-xs")}>
+                  <div className={cn("text-neutral-500", isMobile ? "text-[10px]" : "text-xs")}>
                     av {totalLessons} leksjoner
                   </div>
                 </div>
@@ -180,13 +180,13 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
         {isMobile && isCollapsed && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600">Total fremgang:</span>
+              <span className="text-xs text-neutral-600">Total fremgang:</span>
               <span className={cn("text-sm font-semibold", getProgressColor(completionPercentage))}>
                 {completionPercentage}%
               </span>
             </div>
             {progress.campaigns && progress.campaigns.length > 0 && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-neutral-500">
                 {progress.campaigns.length} kampanje{progress.campaigns.length !== 1 ? 'r' : ''}
               </span>
             )}

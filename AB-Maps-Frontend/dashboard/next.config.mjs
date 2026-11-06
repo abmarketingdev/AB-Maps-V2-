@@ -62,6 +62,17 @@ const nextConfig = {
       "@radix-ui/react-dropdown-menu",
     ],
   },
+  // AB Academy moved to /ab-academy (06 Nov 2026). Old addresses (bookmarks, the
+  // emp/manager course-gate screen) forward permanently (308).
+  async redirects() {
+    return [
+      { source: '/learning-platform', destination: '/ab-academy', permanent: true },
+      { source: '/learning-platform/:path*', destination: '/ab-academy/:path*', permanent: true },
+      { source: '/learning-dashboard', destination: '/ab-academy/oversikt', permanent: true },
+      { source: '/admin-dashboard-learning', destination: '/ab-academy/admin', permanent: true },
+      { source: '/admin-dashboard-learning/:path*', destination: '/ab-academy/admin/:path*', permanent: true },
+    ]
+  },
   webpack(config) {
     config.resolve.alias = {
       ...config.resolve.alias,

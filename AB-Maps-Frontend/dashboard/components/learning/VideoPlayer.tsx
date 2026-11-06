@@ -120,7 +120,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, onVideoEnd }) => 
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium",
+                  "inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium",
                   isMobile ? "text-sm py-2 min-h-[44px]" : "text-sm"
                 )}
               >
@@ -128,7 +128,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, onVideoEnd }) => 
                 Open video in new tab
               </a>
             )}
-            <p className={cn("text-gray-600 mt-2", isMobile ? "text-xs break-all" : "text-xs")}>
+            <p className={cn("text-neutral-600 mt-2", isMobile ? "text-xs break-all" : "text-xs")}>
               Original URL: {url}
             </p>
           </div>
@@ -143,12 +143,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, onVideoEnd }) => 
       {title && (
         <div className={cn("mb-3", isMobile && "mb-2")}>
           <h3 className={cn(
-            "font-semibold text-gray-900 flex items-center gap-2",
+            "font-semibold text-[#0A0A0A] flex items-center gap-2",
             isMobile ? "text-base" : "text-lg"
           )}>
             🎬 {title}
           </h3>
-          <p className={cn("text-gray-600", isMobile ? "text-xs" : "text-sm")}>
+          <p className={cn("text-neutral-600", isMobile ? "text-xs" : "text-sm")}>
             {platform === 'youtube' ? 'YouTube' : platform === 'vimeo' ? 'Vimeo' : 'Video'}
           </p>
         </div>
@@ -157,13 +157,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, onVideoEnd }) => 
       {/* Responsive Video Container (16:9 aspect ratio) */}
       <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
+          <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 rounded-lg">
             <div className="text-center">
               <div className={cn(
-                "animate-spin rounded-full border-b-2 border-blue-600 mx-auto mb-2",
+                "animate-spin rounded-full border-b-2 border-emerald-600 mx-auto mb-2",
                 isMobile ? "h-10 w-10" : "h-12 w-12"
               )}></div>
-              <p className={cn("text-gray-600", isMobile ? "text-xs" : "text-sm")}>
+              <p className={cn("text-neutral-600", isMobile ? "text-xs" : "text-sm")}>
                 Loading video...
               </p>
             </div>
@@ -194,7 +194,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, onVideoEnd }) => 
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                "inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium mt-2",
+                "inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium mt-2",
                 isMobile ? "text-sm py-2 min-h-[44px]" : "text-sm"
               )}
             >
@@ -207,7 +207,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, onVideoEnd }) => 
 
       {/* Helper Text */}
       <div className={cn(
-        "text-gray-500 text-center",
+        "text-neutral-500 text-center",
         isMobile ? "mt-2 text-xs" : "mt-3 text-xs"
       )}>
         💡 Tip: Watch the complete video to continue to the next lesson

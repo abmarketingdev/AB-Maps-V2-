@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { LearningAuthService } from "@/services/learningAuthService";
 import { LearningService, type DetailedProgress, type CurrentPath, type UserOverview } from "@/services/learningService";
 import { cn } from "@/lib/utils";
@@ -11,6 +10,8 @@ import LessonNavigationDrawer from "@/components/learning/LessonNavigationDrawer
 import MobileBottomNav from "@/components/learning/MobileBottomNav";
 import MobileHeader from "@/components/learning/MobileHeader";
 import LoadingState from "@/components/learning/LoadingState";
+import LessonShell from "@/components/learning/LessonShell";
+import AcademyHeader, { AcademyBrand, AcademyAvatar } from "@/components/learning/AcademyHeader";
 import FormattedContent from "@/components/learning/FormattedContent";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { LearningSection, LearningLesson, LearningProgress, LearningUser, GroupedSectionsResponse } from "@/services/learningTypes";
@@ -306,199 +307,80 @@ const LearningDashboard = () => {
   // Redirect to login if not authenticated
   if (!isCheckingAuth && !isAuthenticated) {
     console.log("Not authenticated, redirecting to login");
-    router.push("/learning-platform/login");
+    router.push("/ab-academy/login");
     return null;
   }
 
   // Show loading state
   if (isCheckingAuth || loading) {
-    return <LoadingState message="Laster læringsplattform..." />;
+    return <LoadingState message="Laster AB Academy…" />;
   }
 
-  // Section Detail View – Learning Academy (student_lesson_viewer)
+  // Section Detail View – AB Academy lesson viewer (same chrome as /ab-academy/<section>)
   if (currentSection) {
     const curLessons = currentSection.lessons || [];
     const currentLesson = curLessons[currentLessonIndex];
     const prevLesson = curLessons[currentLessonIndex - 1];
     const nextLesson = curLessons[currentLessonIndex + 1];
     const currentCampaign = groupedData?.campaigns.find(c => (c.id ?? "general") === (currentSection.campaign_id ?? "general"));
-    const completedInSection = curLessons.filter(l => completedLessons.has(l.id)).length;
-    const progressPercent = curLessons.length > 0 ? Math.round((completedInSection / curLessons.length) * 100) : 0;
-    const isLessonUnlocked = (i: number) => i === 0 || (curLessons[i - 1] && completedLessons.has(curLessons[i - 1].id));
-    
-    // Calculate remaining time
-    const remainingLessons = curLessons.slice(currentLessonIndex);
-    const remainingMinutes = remainingLessons.reduce((acc, l) => acc + (l.duration_estimate_minutes || 0), 0);
 
     return (
-      <div className="flex h-screen w-full flex-col bg-white text-[#141414] antialiased overflow-hidden" style={{ fontFamily: "Inter, sans-serif" }}>
-        {/* Learning Academy Header */}
-        <header className="flex h-16 w-full shrink-0 items-center justify-between border-b border-[#E8EBF0] bg-white px-4 md:px-6 z-20">
-          <div className="flex items-center gap-4">
-            {isMobile && (
-              <button type="button" onClick={handleGoHome} className="p-2 -ml-2 hover:bg-neutral-100 rounded" aria-label="Tilbake">
-                <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-              </button>
-            )}
-            <Image
-              src="/abmarketing.png"
-              alt="Learning Academy Logo"
-              width={120}
-              height={32}
-              className="object-contain h-8"
+      <LessonShell
+        sectionTitle={currentSection.title}
+        sectionOrder={currentSection.order}
+        crumbRoot={currentCampaign?.name ?? "Generell opplæring"}
+        lessons={curLessons}
+        currentLessonIndex={currentLessonIndex}
+        completedLessons={completedLessons}
+        isMobile={isMobile}
+        userName={userData?.first_name || user?.username}
+        onBack={handleGoHome}
+        onLessonSelect={handleLessonSelect}
+        mobileLessonPicker={
+          <LessonNavigationDrawer
+            lessons={curLessons}
+            currentLessonIndex={currentLessonIndex}
+            completedLessons={completedLessons}
+            onLessonSelect={handleLessonSelect}
+            sectionTitle={currentSection.title}
+            open={lessonDrawerOpen}
+            onOpenChange={setLessonDrawerOpen}
+          />
+        }
+        bottomNav={
+          curLessons.length > 0 && currentLesson ? (
+            <MobileBottomNav
+              hasPrevious={currentLessonIndex > 0}
+              hasNext={currentLessonIndex < curLessons.length - 1}
+              isCompleted={completedLessons.has(currentLesson.id)}
+              onPrevious={goToPreviousLesson}
+              onComplete={() => handleLessonComplete(currentLesson.id)}
+              onNext={goToNextLesson}
+              lessonProgress={`${currentLessonIndex + 1}/${curLessons.length}`}
+              isQuiz={currentLesson.kind === "QUIZ"}
+              quizSubmitted={false}
             />
-            {!isMobile && (
-              <nav className="hidden md:flex gap-6">
-                <button type="button" onClick={handleGoHome} className="text-sm font-medium hover:opacity-60 transition-opacity">Oversikt</button>
-                <button type="button" onClick={handleGoHome} className="text-sm font-medium hover:opacity-60 transition-opacity">Kurs</button>
-                <button type="button" className="text-sm font-medium hover:opacity-60 transition-opacity">Profil</button>
-              </nav>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <button type="button" className="flex h-8 w-8 items-center justify-center rounded hover:bg-neutral-100 transition-colors">
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
-            </button>
-            <div className="h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-semibold">
-              {userData?.first_name?.[0] || user?.username?.[0] || 'U'}
-            </div>
-          </div>
-        </header>
-
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar – desktop */}
-          <aside className="w-80 flex-shrink-0 flex flex-col border-r border-[#E8EBF0] bg-white overflow-y-auto hidden md:flex">
-            <div className="p-6 pb-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-                Seksjon {currentSection.order ?? 1}: {currentSection.title}
-              </h2>
-              <p className="text-xs text-neutral-400 mt-1">
-                {curLessons.length} Leksjoner • {formatTime(remainingMinutes)} gjenstår
-              </p>
-            </div>
-            <div className="flex flex-col py-2">
-              {curLessons.map((les, idx) => {
-                const completed = completedLessons.has(les.id);
-                const current = currentLessonIndex === idx;
-                const unlocked = isLessonUnlocked(idx);
-                return (
-                  <button
-                    key={les.id}
-                    type="button"
-                    onClick={() => unlocked && handleLessonSelect(idx)}
-                    className={cn(
-                      "group flex items-center gap-4 px-6 py-4 hover:bg-neutral-50 transition-colors border-l-4 text-left w-full",
-                      current ? "bg-neutral-50 border-[#141414]" : "border-transparent",
-                      !unlocked && "opacity-60 cursor-not-allowed"
-                    )}
-                    disabled={!unlocked}
-                  >
-                    <div className="flex-shrink-0">
-                      {completed && <span className="material-symbols-outlined fill-current text-[22px] text-[#2FB86F]">check_circle</span>}
-                      {!completed && current && <span className="material-symbols-outlined text-[22px] text-[#2FA3FB]" style={{ fontVariationSettings: "'FILL' 1" }}>circle</span>}
-                      {!completed && !current && !unlocked && <span className="material-symbols-outlined text-[22px] text-[#B3B3B3]">lock</span>}
-                      {!completed && !current && unlocked && <span className="material-symbols-outlined text-[22px] text-[#B3B3B3]">circle</span>}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className={cn("text-sm", completed && "text-neutral-400 line-through", current && "font-bold text-[#141414]", !current && !completed && "text-neutral-500 font-medium")}>{les.title}</span>
-                      {current && <span className="text-xs text-neutral-500 font-medium">Leses nå</span>}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="mt-auto p-6 border-t border-[#E8EBF0]">
-              <div className="rounded-lg bg-neutral-100 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider">KURSPROGRESJON</span>
-                  <span className="text-xs font-bold">{progressPercent}%</span>
-                </div>
-                <div className="h-1.5 w-full bg-neutral-300 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#141414] rounded-full transition-all" style={{ width: `${progressPercent}%` }} />
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          <main className="flex-1 overflow-y-auto bg-white relative flex flex-col">
-            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-[#E8EBF0] px-4 py-4 md:px-8 lg:px-12">
-              <nav className="flex items-center text-sm font-medium text-neutral-500 flex-wrap gap-x-1">
-                <button type="button" onClick={handleGoHome} className="hover:text-[#141414] transition-colors">
-                  {currentCampaign?.name ?? "Generell opplæring"}
-                </button>
-                <span className="text-neutral-300">/</span>
-                <span className="hover:text-[#141414]">Seksjon {currentSection.order ?? 1}</span>
-                <span className="text-neutral-300">/</span>
-                <span className="text-[#141414] font-semibold">Leksjon {currentLessonIndex + 1}</span>
-              </nav>
-            </div>
-
-            <div className="mx-auto max-w-4xl w-full px-4 py-6 md:px-8 lg:px-12 pb-24 flex-1">
-              {currentLesson ? (
-                <>
-                  {isMobile && curLessons.length > 0 && (
-                    <div className="mb-4 flex justify-between items-center">
-                      <LessonNavigationDrawer
-                        lessons={curLessons}
-                        currentLessonIndex={currentLessonIndex}
-                        completedLessons={completedLessons}
-                        onLessonSelect={handleLessonSelect}
-                        sectionTitle={currentSection.title}
-                        open={lessonDrawerOpen}
-                        onOpenChange={setLessonDrawerOpen}
-                      />
-                      <span className="text-sm text-neutral-500">{currentLessonIndex + 1} / {curLessons.length}</span>
-                    </div>
-                  )}
-                  <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-[#141414] leading-[1.1] mb-6">
-                      {currentLesson.title}
-                    </h1>
-                    {currentLesson.kind !== "TEXT" && currentLesson.description && (
-                      <p className="text-lg md:text-xl font-light text-neutral-600 leading-relaxed border-l-4 border-[#141414] pl-6">
-                        {currentLesson.description}
-                      </p>
-                    )}
-                  </div>
-                  <LessonViewer
-                    lesson={currentLesson}
-                    isCompleted={completedLessons.has(currentLesson.id)}
-                    isUnlocked
-                    onComplete={() => handleLessonComplete(currentLesson.id)}
-                    onNext={goToNextLesson}
-                    onPrevious={goToPreviousLesson}
-                    onGoHome={handleGoHome}
-                    hasNext={currentLessonIndex < curLessons.length - 1}
-                    hasPrevious={currentLessonIndex > 0}
-                    hideHeader
-                    previousLessonTitle={prevLesson?.title}
-                    nextLessonTitle={nextLesson?.title}
-                    certificationLabel={currentCampaign?.name ?? currentSection.title}
-                  />
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-neutral-600">Ingen leksjoner tilgjengelig i denne seksjonen.</p>
-                </div>
-              )}
-            </div>
-          </main>
-        </div>
-
-        {isMobile && curLessons.length > 0 && currentLesson && (
-          <MobileBottomNav
-            hasPrevious={currentLessonIndex > 0}
-            hasNext={currentLessonIndex < curLessons.length - 1}
+          ) : null
+        }
+      >
+        {currentLesson && (
+          <LessonViewer
+            lesson={currentLesson}
             isCompleted={completedLessons.has(currentLesson.id)}
-            onPrevious={goToPreviousLesson}
+            isUnlocked
             onComplete={() => handleLessonComplete(currentLesson.id)}
             onNext={goToNextLesson}
-            lessonProgress={`${currentLessonIndex + 1}/${curLessons.length}`}
-            isQuiz={currentLesson.kind === "QUIZ"}
-            quizSubmitted={false}
+            onPrevious={goToPreviousLesson}
+            onGoHome={handleGoHome}
+            hasNext={currentLessonIndex < curLessons.length - 1}
+            hasPrevious={currentLessonIndex > 0}
+            hideHeader
+            previousLessonTitle={prevLesson?.title}
+            nextLessonTitle={nextLesson?.title}
+            certificationLabel={currentCampaign?.name ?? currentSection.title}
           />
         )}
-      </div>
+      </LessonShell>
     );
   }
 
@@ -520,34 +402,37 @@ const LearningDashboard = () => {
   const totalLessons = detailedProgress?.lesson_progress?.total_lessons ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#f8f7f7] text-[#141414] flex flex-col overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
-      {/* Mobile: top header */}
-      {isMobile && (
-        <MobileHeader title="Learning Academy" userData={userData} onLogout={handleLogout} />
+    <div className="h-[100dvh] bg-[#F7F7F5] text-[#0A0A0A] flex flex-col overflow-hidden">
+      {/* AB Academy header: phone keeps its menu sheets, desktop the shared bar */}
+      {isMobile ? (
+        <MobileHeader title="AB Academy" brand userData={userData} onLogout={handleLogout} />
+      ) : (
+        <AcademyHeader
+          right={
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-semibold leading-none">{userData?.first_name} {userData?.last_name?.[0] ? `${userData.last_name[0]}.` : ''}</p>
+                <p className="text-xs text-neutral-500 mt-1 leading-none">Sist aktiv: {formatDate(lastLearningDate ?? null).toLowerCase()}</p>
+              </div>
+              <AcademyAvatar name={userData?.first_name || user?.username} className="h-9 w-9" />
+            </div>
+          }
+        />
       )}
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left sidebar – desktop only (LearnSpace) */}
         <aside className={cn(
-          "flex-shrink-0 bg-white border-r border-[#E8EBF0] flex flex-col h-full overflow-y-auto z-20",
+          "flex-shrink-0 bg-white border-r border-black/[0.08] flex flex-col h-full overflow-y-auto z-20",
           isMobile ? "hidden" : "w-80"
         )}>
-          <div className="p-6 pb-4 border-b border-[#E8EBF0] flex items-center gap-3">
-            <Image
-              src="/abmarketing.png"
-              alt="Learning Academy Logo"
-              width={140}
-              height={36}
-              className="object-contain h-9"
-            />
-          </div>
           <div className="p-6 flex flex-col gap-8">
             {/* Progress circle + greeting */}
             <div className="flex flex-col items-center gap-4">
               <div className="relative size-40">
                 <svg className="size-full -rotate-90" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                  <path className="text-gray-200" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
-                  <path className="text-[#141414]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${overallPercent}, 100`} strokeLinecap="round" strokeWidth="2.5" />
+                  <path className="text-black/[0.06]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                  <path className="text-emerald-600" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${overallPercent}, 100`} strokeLinecap="round" strokeWidth="2.5" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-3xl font-bold tracking-tight">{Math.round(overallPercent)}%</span>
@@ -564,17 +449,17 @@ const LearningDashboard = () => {
             
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="bg-neutral-50 rounded-lg p-3">
+              <div className="bg-[#F7F7F5] rounded-xl p-3">
                 <span className="material-symbols-outlined text-amber-500 text-[20px]">local_fire_department</span>
                 <p className="text-lg font-bold mt-1">{learningStreak}</p>
                 <p className="text-[10px] text-neutral-500 uppercase tracking-wide">Dagers rekke</p>
               </div>
-              <div className="bg-neutral-50 rounded-lg p-3">
+              <div className="bg-[#F7F7F5] rounded-xl p-3">
                 <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
                 <p className="text-lg font-bold mt-1">{formatTime(totalTimeMinutes)}</p>
                 <p className="text-[10px] text-neutral-500 uppercase tracking-wide">Total tid</p>
               </div>
-              <div className="bg-neutral-50 rounded-lg p-3">
+              <div className="bg-[#F7F7F5] rounded-xl p-3">
                 <span className="material-symbols-outlined text-emerald-500 text-[20px]">quiz</span>
                 <p className="text-lg font-bold mt-1">{Math.round(quizAvgScore)}%</p>
                 <p className="text-[10px] text-neutral-500 uppercase tracking-wide">Quiz snitt</p>
@@ -598,24 +483,24 @@ const LearningDashboard = () => {
                     onClick={() => setActiveCampaignTab(key)}
                     className={cn(
                       "group text-left p-3 rounded-lg transition-all",
-                      isActive ? "bg-neutral-100 border border-neutral-200" : "hover:bg-neutral-50"
+                      isActive ? "bg-emerald-50/70 ring-1 ring-emerald-200" : "hover:bg-black/[0.03]"
                     )}
                   >
                     <div className="flex justify-between items-end mb-2">
                       <span className="text-sm font-medium truncate">{c.name}</span>
-                      <span className={cn("text-xs font-semibold", pct >= 80 ? "text-[#33A34E]" : "text-neutral-500")}>{Math.round(pct)}%</span>
+                      <span className={cn("text-xs font-semibold", pct >= 80 ? "text-emerald-700" : "text-neutral-500")}>{Math.round(pct)}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className={cn("h-full rounded-full transition-all", pct >= 80 ? "bg-[#33A34E]" : "bg-[#141414]")} style={{ width: `${pct}%` }} />
+                    <div className="h-1.5 w-full bg-black/[0.06] rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full transition-all", pct >= 80 ? "bg-emerald-600" : "bg-emerald-600")} style={{ width: `${pct}%` }} />
                     </div>
                     <p className="text-[11px] text-neutral-400 mt-1.5">{completed}/{total} moduler fullført</p>
                   </button>
                 );
               })}
             </div>
-            <div className="mt-auto pt-6 border-t border-[#E8EBF0]">
+            <div className="mt-auto pt-6 border-t border-black/[0.08]">
               <button 
-                className="w-full py-2.5 px-4 rounded-md border border-[#E8EBF0] text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                className="w-full h-10 px-4 rounded-lg border border-black/[0.12] bg-white text-sm font-semibold text-[#0A0A0A] hover:bg-black/[0.04] transition-colors flex items-center justify-center gap-2"
                 onClick={() => {
                   // Check user type and redirect to appropriate dashboard
                   if (user?.user_type === "employee") {
@@ -641,36 +526,29 @@ const LearningDashboard = () => {
 
         {/* Main */}
         <main className="flex-1 flex flex-col min-w-0 relative">
-          {/* Desktop header */}
-          {!isMobile && (
-            <header className="h-16 flex-shrink-0 bg-white/80 backdrop-blur-md border-b border-[#E8EBF0] px-8 flex items-center justify-between sticky top-0 z-10">
-              <div className="flex items-center gap-3 flex-1 max-w-md">
-                <span className="material-symbols-outlined text-neutral-400">search</span>
-                <input className="bg-transparent border-none p-0 text-sm w-full placeholder-neutral-400 focus:ring-0 focus:outline-none" placeholder="Søk etter emner, moduler eller tagger..." />
-              </div>
-              <div className="flex items-center gap-6">
-                <button className="relative text-neutral-500 hover:text-[#141414] transition-colors">
-                  <span className="material-symbols-outlined">notifications</span>
-                  <span className="absolute top-0 right-0 size-2 bg-red-500 rounded-full border-2 border-white" />
-                </button>
-                <div className="h-8 w-px bg-[#E8EBF0]" />
-                <button className="flex items-center gap-3 group">
-                  <div className="text-right hidden sm:block">
-                    <p className="text-sm font-bold leading-none">{userData?.first_name} {userData?.last_name?.[0] || ''}.</p>
-                    <p className="text-xs text-neutral-500 mt-1 leading-none">
-                      {formatDate(lastLearningDate ?? null)}
-                    </p>
-                  </div>
-                  <div className="size-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-semibold border border-[#E8EBF0]">
-                    {userData?.first_name?.[0] || 'U'}
-                  </div>
-                </button>
-              </div>
-            </header>
-          )}
-
           <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10">
             <div className="max-w-6xl mx-auto">
+              {/* Phone: the sidebar is hidden, so show the overall progress on top */}
+              {isMobile && (
+                <div className="mb-5 flex items-center gap-4 rounded-xl border border-black/[0.08] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+                  <div className="relative size-16 shrink-0">
+                    <svg className="size-full -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+                      <path className="text-black/[0.06]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" />
+                      <path className="text-emerald-600" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${overallPercent}, 100`} strokeLinecap="round" strokeWidth="3.5" />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums">{Math.round(overallPercent)}%</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">Klar for feltet, {userName}?</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">{lessonsCompleted} av {totalLessons} leksjoner fullført</p>
+                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-500">
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-amber-500">local_fire_department</span>{learningStreak} d</span>
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-neutral-400">schedule</span>{formatTime(totalTimeMinutes)}</span>
+                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-emerald-600">quiz</span>{Math.round(quizAvgScore)}%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* Campaign title + Stats + Tabs */}
               <div className="mb-8 md:mb-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 md:gap-6 mb-6 md:mb-8">
@@ -689,7 +567,7 @@ const LearningDashboard = () => {
                         <span className="text-sm font-semibold text-amber-700">{learningStreak} dagers rekke!</span>
                       </div>
                     )}
-                    <div className="text-right px-4 py-2 bg-white rounded-md border border-[#E8EBF0] shadow-sm">
+                    <div className="text-right px-4 py-2 bg-white rounded-lg border border-black/[0.08] shadow-sm">
                       <span className="block text-xs text-neutral-500 font-medium uppercase">Progresjon</span>
                       <span className="block text-sm font-bold">{Math.round(campaignProgress?.progress_percent ?? 0)}%</span>
                     </div>
@@ -711,8 +589,8 @@ const LearningDashboard = () => {
                             className={cn(
                               "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                               isActive 
-                                ? "bg-[#141414] text-white" 
-                                : "bg-white border border-[#E8EBF0] text-neutral-600"
+                                ? "bg-emerald-600 text-white" 
+                                : "bg-white border border-black/[0.08] text-neutral-600"
                             )}
                           >
                             {c.name}
@@ -723,9 +601,9 @@ const LearningDashboard = () => {
                   </div>
                 )}
                 
-                <div className="flex gap-2 border-b border-[#E8EBF0] pb-1 overflow-x-auto">
+                <div className="flex gap-1 border-b border-black/[0.08] overflow-x-auto">
                   {(['moduler', 'ressurser', 'diskusjoner', 'sertifikater'] as const).map((t) => (
-                    <button key={t} onClick={() => setMainTab(t)} className={cn("px-4 md:px-5 py-2 md:py-2.5 rounded-t-md text-sm font-medium relative top-[1px] whitespace-nowrap", mainTab === t ? "bg-[#141414] text-white" : "text-neutral-500 hover:bg-white/50")}>
+                    <button key={t} onClick={() => setMainTab(t)} className={cn("px-3 md:px-4 py-2.5 text-sm font-medium relative top-[1px] whitespace-nowrap border-b-2 transition-colors", mainTab === t ? "border-emerald-600 text-[#0A0A0A]" : "border-transparent text-neutral-500 hover:text-[#0A0A0A]")}>
                       {t === 'moduler' && 'Moduler'}
                       {t === 'ressurser' && 'Ressurser'}
                       {t === 'diskusjoner' && 'Diskusjoner'}
@@ -742,7 +620,7 @@ const LearningDashboard = () => {
                     <div className="mb-10 md:mb-12">
                       <div className="flex items-center gap-3 mb-4 md:mb-6">
                         <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-400">Skal fullføres</h3>
-                        <span className="px-2 py-0.5 rounded-full bg-neutral-200 text-xs font-bold text-neutral-600">{toCompleteInCampaign.length}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-black/[0.06] text-xs font-bold text-neutral-600">{toCompleteInCampaign.length}</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                         {toCompleteInCampaign.map((section) => {
@@ -761,18 +639,18 @@ const LearningDashboard = () => {
                               key={section.id}
                               onClick={() => isUnlocked && handleSectionClick(section)}
                               className={cn(
-                                "group bg-white border rounded-xl p-5 h-52 md:h-56 flex flex-col justify-between relative overflow-hidden cursor-pointer transition-all hover:shadow-md",
-                                isUnlocked ? "border-[#E8EBF0] hover:border-neutral-400" : "border-[#E8EBF0] opacity-70 select-none"
+                                "group bg-white border rounded-xl p-5 min-h-[13rem] md:h-56 flex flex-col justify-between relative overflow-hidden cursor-pointer transition-all shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-md",
+                                isUnlocked ? "border-black/[0.08] hover:border-emerald-300" : "border-black/[0.08] opacity-70 select-none cursor-not-allowed"
                               )}
                             >
-                              <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
+                              <div className="absolute top-0 left-0 w-full h-1 bg-black/[0.05]">
                                 <div className={cn("h-full transition-all", isInProgress ? "bg-amber-400" : progressW > 0 ? "bg-emerald-500" : "bg-transparent")} style={{ width: `${progressW}%` }} />
                               </div>
                               <div>
                                 <div className="flex justify-between items-start mb-3 md:mb-4">
                                   <span className="text-2xl md:text-3xl">{section.icon_emoji || '📚'}</span>
                                   {isUnlocked ? (
-                                    <span className={cn("px-2 py-1 text-[10px] font-bold uppercase tracking-wide rounded", isInProgress ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-neutral-600")}>
+                                    <span className={cn("px-2 py-1 text-[10px] font-bold uppercase tracking-wide rounded", isInProgress ? "bg-amber-50 text-amber-700" : "bg-black/[0.05] text-neutral-600")}>
                                       {isInProgress ? 'I gang' : 'Ikke startet'}
                                     </span>
                                   ) : (
@@ -782,7 +660,7 @@ const LearningDashboard = () => {
                                 <h4 className="text-base md:text-lg font-bold leading-tight mb-2">{section.title}</h4>
                                 <p className="text-xs md:text-sm text-neutral-500 line-clamp-2">{section.description || 'Start denne modulen for å lære mer.'}</p>
                               </div>
-                              <div className="flex items-center justify-between mt-4 pt-3 md:pt-4 border-t border-dashed border-[#E8EBF0]">
+                              <div className="flex items-center justify-between mt-4 pt-3 md:pt-4 border-t border-dashed border-black/[0.08]">
                                 <div className="flex items-center gap-3 text-xs font-medium text-neutral-500">
                                   <span className="flex items-center gap-1">
                                     <span className="material-symbols-outlined text-[14px]">schedule</span>
@@ -794,7 +672,7 @@ const LearningDashboard = () => {
                                   </span>
                                 </div>
                                 {isUnlocked ? (
-                                  <div className={cn("size-8 rounded-full flex items-center justify-center transition-transform", isInProgress ? "bg-[#141414] text-white group-hover:translate-x-1" : "bg-white border border-neutral-200 text-[#141414] group-hover:bg-[#141414] group-hover:text-white group-hover:border-[#141414] group-hover:translate-x-1")}>
+                                  <div className={cn("size-8 rounded-full flex items-center justify-center transition-transform", isInProgress ? "bg-emerald-600 text-white group-hover:translate-x-1" : "bg-white border border-black/[0.12] text-[#0A0A0A] group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 group-hover:translate-x-1")}>
                                     <span className="material-symbols-outlined text-[18px]">{isInProgress ? 'arrow_forward' : 'play_arrow'}</span>
                                   </div>
                                 ) : (
@@ -815,25 +693,25 @@ const LearningDashboard = () => {
                     <div>
                       <div className="flex items-center gap-3 mb-4 md:mb-6">
                         <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-400">Fullført</h3>
-                        <span className="px-2 py-0.5 rounded-full bg-[#33A34E]/10 text-xs font-bold text-[#33A34E]">{completedInCampaign.length}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-xs font-bold text-emerald-700">{completedInCampaign.length}</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                         {completedInCampaign.map((section) => (
-                          <div key={section.id} onClick={() => handleSectionClick(section)} className="group bg-white border border-[#E8EBF0] rounded-xl p-4 h-44 md:h-48 flex flex-col justify-between cursor-pointer hover:border-[#33A34E] transition-colors">
+                          <div key={section.id} onClick={() => handleSectionClick(section)} className="group bg-white border border-black/[0.08] rounded-xl p-4 h-44 md:h-48 flex flex-col justify-between cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-colors">
                             <div>
                               <div className="flex justify-between items-start mb-3">
-                                <div className="size-8 rounded bg-[#33A34E]/10 flex items-center justify-center text-[#33A34E]">
+                                <div className="size-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
                                   <span className="material-symbols-outlined text-[20px]">check</span>
                                 </div>
                                 <span className="text-xs text-neutral-400">{formatDate(section.updated_at)}</span>
                               </div>
-                              <h4 className="text-base font-bold leading-tight mb-1 text-neutral-600 group-hover:text-[#141414]">{section.title}</h4>
+                              <h4 className="text-base font-bold leading-tight mb-1 text-neutral-600 group-hover:text-[#0A0A0A]">{section.title}</h4>
                               <p className="text-xs text-neutral-400">
                                 {section.lessons?.length || section.lesson_count || 0} leksjoner fullført
                               </p>
                             </div>
                             <div className="flex items-center gap-2 mt-4">
-                              <span className="text-[10px] font-bold uppercase tracking-wide text-[#33A34E] bg-[#33A34E]/5 px-2 py-1 rounded">Bestått</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700 bg-emerald-50 px-2 py-1 rounded">Bestått</span>
                               <span className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide ml-auto">Se gjennom →</span>
                             </div>
                           </div>
@@ -844,8 +722,8 @@ const LearningDashboard = () => {
                   
                   {/* Empty state */}
                   {toCompleteInCampaign.length === 0 && completedInCampaign.length === 0 && (
-                    <div className="py-16 text-center">
-                      <span className="material-symbols-outlined text-[64px] text-neutral-300 mb-4">school</span>
+                    <div className="py-16 text-center bg-white border border-dashed border-black/[0.12] rounded-xl">
+                      <span className="material-symbols-outlined text-[56px] text-emerald-600/40 mb-3 block">school</span>
                       <h3 className="text-lg font-semibold text-neutral-600 mb-2">Ingen moduler ennå</h3>
                       <p className="text-neutral-500">Det er ingen moduler tilgjengelig for denne kampanjen ennå.</p>
                     </div>
@@ -854,7 +732,7 @@ const LearningDashboard = () => {
               )}
 
               {mainTab !== 'moduler' && (
-                <div className="py-16 text-center text-neutral-500 border border-dashed border-neutral-300 rounded-lg">
+                <div className="py-16 text-center text-neutral-500 bg-white border border-dashed border-black/[0.12] rounded-xl">
                   <span className="material-symbols-outlined text-[48px] text-neutral-300 mb-4 block">construction</span>
                   <h3 className="text-lg font-semibold text-neutral-600 mb-2">Kommer snart</h3>
                   <p className="text-sm">Denne seksjonen er under utvikling.</p>

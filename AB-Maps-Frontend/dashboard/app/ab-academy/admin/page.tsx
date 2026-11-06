@@ -60,7 +60,7 @@ export default function AdminLearningDashboard() {
     switch (event) {
       case "SECTION_COMPLETED":
       case "LESSON_COMPLETED":
-        return "bg-[#141414]/10 text-[#141414]";
+        return "bg-emerald-50 text-emerald-700";
       case "LESSON_STARTED":
       case "QUIZ_SUBMITTED":
         return "bg-[#757575]/10 text-[#757575]";
@@ -169,7 +169,7 @@ export default function AdminLearningDashboard() {
               <p className="text-3xl font-bold tracking-tight text-[#141414]">{stats?.total_users ?? 0}</p>
             )}
             <div className="mt-1 flex items-center gap-1">
-              <span className="text-xs text-[#757575]">registrert på læringsplattformen</span>
+              <span className="text-xs text-[#757575]">registrert i AB Academy</span>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function AdminLearningDashboard() {
           <div className="overflow-hidden rounded-lg border border-[#E0E0E0] bg-white">
             <div className="flex items-center justify-between border-b border-[#E0E0E0] bg-gray-50/50 px-6 py-4">
               <h3 className="text-base font-bold text-[#141414]">Innholdsstatus</h3>
-              <Link href="/admin-dashboard-learning/sections" className="text-xs font-medium text-[#141414] hover:underline">
+              <Link href="/ab-academy/admin/sections" className="text-xs font-medium text-[#141414] hover:underline">
                 Se alt innhold
               </Link>
             </div>
@@ -331,7 +331,7 @@ export default function AdminLearningDashboard() {
                 {stats.recent_activity.count > stats.recent_activity.activities.length && (
                   <div className="border-t border-[#E0E0E0] bg-gray-50/50 px-6 py-3 text-center">
                     <Link
-                      href="/admin-dashboard-learning/analytics"
+                      href="/ab-academy/admin/analytics"
                       className="text-xs font-semibold uppercase tracking-wide text-[#141414] hover:text-[#757575]"
                     >
                       Se hele loggen ({stats.recent_activity.count} aktiviteter)
@@ -349,33 +349,33 @@ export default function AdminLearningDashboard() {
 
         {/* Høyre: Hurtighandlinger + Systemkapasitet */}
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-lg bg-[#141414] p-6 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-xl bg-emerald-600 p-6 text-white shadow-sm">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 transition-transform duration-500 group-hover:scale-110" />
             <h3 className="relative z-10 mb-4 text-lg font-bold">Hurtighandlinger</h3>
             <div className="relative z-10 space-y-3">
               <Link
-                href="/admin-dashboard-learning/courses/create"
-                className="flex w-full items-center justify-between rounded-lg bg-white px-4 py-3 text-sm font-semibold text-[#141414] shadow-sm transition-colors hover:bg-gray-100"
+                href="/ab-academy/admin/courses/create"
+                className="flex w-full items-center justify-between rounded-lg bg-white px-4 py-3 text-sm font-semibold text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50"
               >
                 <span>Innhold / Seksjoner</span>
                 <span className="material-symbols-outlined text-[18px]">folder_open</span>
               </Link>
               <Link
-                href="/admin-dashboard-learning/courses/create"
+                href="/ab-academy/admin/courses/create"
                 className="flex w-full items-center justify-between rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/20"
               >
                 <span>Leksjoner</span>
                 <span className="material-symbols-outlined text-[18px]">edit_document</span>
               </Link>
               <Link
-                href="/admin-dashboard-learning/courses/create"
+                href="/ab-academy/admin/courses/create"
                 className="flex w-full items-center justify-between rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/20"
               >
                 <span>Quizzer</span>
                 <span className="material-symbols-outlined text-[18px]">quiz</span>
               </Link>
               <Link
-                href="/admin-dashboard-learning/users"
+                href="/ab-academy/admin/users"
                 className="flex w-full items-center justify-between rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/20"
               >
                 <span>Brukere</span>
@@ -393,7 +393,7 @@ export default function AdminLearningDashboard() {
                   <span className="font-bold text-[#141414]">45%</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-[#f7f7f7]">
-                  <div className="h-1.5 rounded-full bg-[#141414]" style={{ width: "45%" }} />
+                  <div className="h-1.5 rounded-full bg-emerald-600" style={{ width: "45%" }} />
                 </div>
               </div>
               <div>
@@ -411,7 +411,7 @@ export default function AdminLearningDashboard() {
                   <span className="font-bold text-[#141414]">24%</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-[#f7f7f7]">
-                  <div className="h-1.5 rounded-full bg-[#141414]/40" style={{ width: "24%" }} />
+                  <div className="h-1.5 rounded-full bg-emerald-600/40" style={{ width: "24%" }} />
                 </div>
               </div>
             </div>

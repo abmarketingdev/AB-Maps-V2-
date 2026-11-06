@@ -71,11 +71,11 @@ export default function SectionEditorPage() {
         auth.checkSuperuser().catch(() => false),
       ]);
       if (!ok) {
-        router.push("/learning-platform/login");
+        router.push("/ab-academy/login");
         return;
       }
       if (!isSuper) {
-        router.push("/learning-dashboard");
+        router.push("/ab-academy/oversikt");
         return;
       }
 
@@ -154,7 +154,7 @@ export default function SectionEditorPage() {
       if (payload.campaign == null) delete payload.campaign;
       const created = await admin.createSection(payload as LearningSectionCreate);
       setSavedAt(new Date());
-      router.replace(`/admin-dashboard-learning/sections/${created.id}`);
+      router.replace(`/ab-academy/admin/sections/${created.id}`);
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Kunne ikke opprette seksjon");
@@ -233,7 +233,7 @@ export default function SectionEditorPage() {
       <ErrorState
         title="Kunne ikke laste seksjon"
         message={error}
-        onGoHome={() => router.push("/admin-dashboard-learning/sections")}
+        onGoHome={() => router.push("/ab-academy/admin/sections")}
       />
     );
   }
@@ -243,11 +243,11 @@ export default function SectionEditorPage() {
       {/* Topp: Brødsmule, Sist lagret, Knapper */}
       <div className="flex shrink-0 items-center justify-between border-b border-[#E0E0E0] bg-white px-4 py-3">
         <div className="flex items-center gap-2 text-sm text-[#757575]">
-          <Link href="/admin-dashboard-learning" className="hover:text-[#141414]">
+          <Link href="/ab-academy/admin" className="hover:text-[#141414]">
             Hjem
           </Link>
           <span>/</span>
-          <Link href="/admin-dashboard-learning/sections" className="hover:text-[#141414]">
+          <Link href="/ab-academy/admin/sections" className="hover:text-[#141414]">
             Innhold
           </Link>
           <span>/</span>
@@ -332,7 +332,7 @@ export default function SectionEditorPage() {
                           >
                             <button
                               type="button"
-                              onClick={() => router.push(`/admin-dashboard-learning/sections/${sec.id}`)}
+                              onClick={() => router.push(`/ab-academy/admin/sections/${sec.id}`)}
                               className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm"
                             >
                               <span className="text-base">{sec.icon_emoji || "📚"}</span>
@@ -341,7 +341,7 @@ export default function SectionEditorPage() {
                               </span>
                             </button>
                             <Link
-                              href={`/admin-dashboard-learning/sections/${sec.id}`}
+                              href={`/ab-academy/admin/sections/${sec.id}`}
                               className="shrink-0 rounded p-1 opacity-70 hover:opacity-100"
                               aria-label="Rediger"
                             >
@@ -357,7 +357,7 @@ export default function SectionEditorPage() {
           </div>
           <div className="border-t border-[#E0E0E0] p-3">
             <Link
-              href="/admin-dashboard-learning/sections/new"
+              href="/ab-academy/admin/sections/new"
               className={cn(
                 "flex w-full items-center justify-center gap-2 rounded-lg border py-3 text-sm font-medium transition-colors",
                 isNew
@@ -529,7 +529,7 @@ export default function SectionEditorPage() {
             </div>
             {!isNew && section && (
               <Link
-                href={`/learning-platform/${section.id}`}
+                href={`/ab-academy/${section.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:underline"

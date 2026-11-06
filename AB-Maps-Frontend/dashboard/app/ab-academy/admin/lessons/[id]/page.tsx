@@ -18,7 +18,7 @@ export default function LessonEditorPage() {
     return (
       <div className="flex min-h-[50vh] items-center justify-center p-8">
         <p className="text-red-600">Ugyldig leksjons-id</p>
-        <button type="button" onClick={() => router.push("/admin-dashboard-learning/lessons")} className="ml-4 text-[#141414] underline">
+        <button type="button" onClick={() => router.push("/ab-academy/admin/lessons")} className="ml-4 text-[#141414] underline">
           Tilbake til leksjoner
         </button>
       </div>
@@ -35,7 +35,7 @@ export default function LessonEditorPage() {
         lessonId={lessonId}
         preselectedSectionId={preselectedSectionId}
         onSuccess={(action, newId) => {
-          if (action === "created" && newId) router.replace(`/admin-dashboard-learning/lessons/${newId}`);
+          if (action === "created" && newId) router.replace(`/ab-academy/admin/lessons/${newId}`);
         }}
       />
     </div>

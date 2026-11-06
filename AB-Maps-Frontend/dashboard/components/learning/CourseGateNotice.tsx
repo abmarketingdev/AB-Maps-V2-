@@ -19,7 +19,7 @@ export function CourseGateNotice() {
     return () => { alive = false }
   }, [pathname])
 
-  const onCoursePage = pathname.startsWith("/learning-platform") || pathname.startsWith("/learning-dashboard")
+  const onCoursePage = pathname === "/ab-academy" || pathname.startsWith("/ab-academy/")
   if (!state?.blocked || onCoursePage) return null
 
   const plural = state.sections.length > 1

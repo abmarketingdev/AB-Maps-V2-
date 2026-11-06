@@ -44,7 +44,7 @@ export async function fetchCourseGate(): Promise<CourseGateState | null> {
 
 export function courseUrl(state: CourseGateState | null): string {
   const first = state?.sections?.[0];
-  return first ? `/learning-platform/${first.id}` : '/learning-platform';
+  return first ? `/ab-academy/${first.id}` : '/ab-academy';
 }
 
 export function courseNames(sections: CourseGateSection[]): string {

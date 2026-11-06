@@ -643,7 +643,7 @@ label:has(input:checked) .radio-dot { transform: scale(1); }
   contain: layout paint style;
 }
 
-/* AB Academy (admin-dashboard-learning) is a LIGHT area inside a dark-by-default dashboard:
+/* AB Academy (ab-academy/admin) is a LIGHT area inside a dark-by-default dashboard:
    re-declare the light tokens on its root so shadcn Cards/Buttons/inputs don't flip to dark.
    Primary = AB Academy green (emerald-600), same as its sidebar. */
 .academy-light {

@@ -239,12 +239,12 @@ const UserProgressManagement = () => {
         ]);
         
         if (!authenticated) {
-          router.push("/learning-platform");
+          router.push("/ab-academy");
           return;
         }
 
         if (!isSuperuser) {
-          router.push("/learning-dashboard");
+          router.push("/ab-academy/oversikt");
           return;
         }
 
@@ -427,7 +427,7 @@ const UserProgressManagement = () => {
       <ErrorState
         title="Kunne ikke laste brukerprogresjon"
         message={error}
-        onGoHome={() => router.push("/admin-dashboard-learning")}
+        onGoHome={() => router.push("/ab-academy/admin")}
       />
     );
   }
@@ -440,14 +440,14 @@ const UserProgressManagement = () => {
           title="Brukerprogresjon"
           userData={null}
           onLogout={() => {}}
-          onBack={() => router.push("/admin-dashboard-learning")}
+          onBack={() => router.push("/ab-academy/admin")}
           showBack={true}
         />
       ) : (
         <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/admin-dashboard-learning" prefetch={true}>
+              <Link href="/ab-academy/admin" prefetch={true}>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Tilbake
@@ -501,7 +501,7 @@ const UserProgressManagement = () => {
               isMobile ? "flex-col gap-3 items-stretch" : "flex-row"
             )}>
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-slate-900 text-white flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-emerald-600 text-white flex items-center justify-center">
                   <Users className="h-6 w-6" />
                 </div>
                 <div>

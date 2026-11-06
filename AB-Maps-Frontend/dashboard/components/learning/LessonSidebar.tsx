@@ -88,9 +88,9 @@ const LessonSidebar: React.FC<LessonSidebarProps> = ({
   return (
     <Card className="sticky top-4 h-[calc(100vh-120px)] flex flex-col overflow-hidden">
       {/* Header */}
-      <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+      <CardHeader className="border-b bg-gradient-to-r from-emerald-50 to-indigo-50">
         <CardTitle className="text-lg truncate">{sectionTitle}</CardTitle>
-        <p className="text-sm text-gray-600">{totalLessons} leksjon{totalLessons !== 1 ? 'er' : ''}</p>
+        <p className="text-sm text-neutral-600">{totalLessons} leksjon{totalLessons !== 1 ? 'er' : ''}</p>
       </CardHeader>
 
       {/* Lesson List - Scrollable */}
@@ -112,13 +112,13 @@ const LessonSidebar: React.FC<LessonSidebarProps> = ({
                 className={cn(
                   "p-3 rounded-lg border-2 transition-all duration-200",
                   // Completed state
-                  isCompleted && "bg-green-50 border-green-200 hover:bg-green-100",
+                  isCompleted && "bg-emerald-50 border-emerald-200 hover:bg-emerald-100",
                   // Current state (not completed yet)
-                  isCurrent && !isCompleted && "bg-blue-50 border-blue-500 shadow-md ring-2 ring-blue-200",
+                  isCurrent && !isCompleted && "bg-emerald-50 border-emerald-600 shadow-md ring-2 ring-emerald-200",
                   // Unlocked but not current or completed
-                  !isCompleted && !isCurrent && isUnlocked && "bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm cursor-pointer",
+                  !isCompleted && !isCurrent && isUnlocked && "bg-white border-neutral-200 hover:border-emerald-300 hover:shadow-sm cursor-pointer",
                   // Locked state
-                  !isUnlocked && "bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed",
+                  !isUnlocked && "bg-neutral-50 border-neutral-200 opacity-60 cursor-not-allowed",
                   // Make completed lessons also clickable for review
                   isCompleted && "cursor-pointer"
                 )}
@@ -130,19 +130,19 @@ const LessonSidebar: React.FC<LessonSidebarProps> = ({
                   {/* Status Icon */}
                   <div className="flex-shrink-0 mt-0.5">
                     {isCompleted ? (
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
                         <Check className="w-4 h-4 text-white" />
                       </div>
                     ) : isCurrent ? (
-                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full" />
                       </div>
                     ) : !isUnlocked ? (
-                      <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                        <Lock className="w-3 h-3 text-gray-600" />
+                      <div className="w-6 h-6 bg-neutral-300 rounded-full flex items-center justify-center">
+                        <Lock className="w-3 h-3 text-neutral-600" />
                       </div>
                     ) : (
-                      <div className="w-6 h-6 border-2 border-gray-300 rounded-full" />
+                      <div className="w-6 h-6 border-2 border-neutral-300 rounded-full" />
                     )}
                   </div>
 
@@ -150,17 +150,17 @@ const LessonSidebar: React.FC<LessonSidebarProps> = ({
                   <div className="flex-1 min-w-0">
                     <p className={cn(
                       "font-semibold text-sm mb-1 line-clamp-2",
-                      isCompleted && "text-green-700",
-                      isCurrent && "text-blue-900",
-                      !isCurrent && !isCompleted && isUnlocked && "text-gray-900",
-                      !isUnlocked && "text-gray-500"
+                      isCompleted && "text-emerald-700",
+                      isCurrent && "text-emerald-900",
+                      !isCurrent && !isCompleted && isUnlocked && "text-[#0A0A0A]",
+                      !isUnlocked && "text-neutral-500"
                     )}>
                       {index + 1}. {lesson.title}
                     </p>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <div className="flex items-center gap-1.5 text-xs text-neutral-600">
                       {getTypeIcon(lesson.kind)}
                       <span className="font-medium">{getTypeLabel(lesson.kind)}</span>
-                      <span className="text-gray-400">•</span>
+                      <span className="text-neutral-400">•</span>
                       <Clock className="w-3 h-3" />
                       <span>{lesson.duration_estimate_minutes}min</span>
                     </div>
@@ -173,16 +173,16 @@ const LessonSidebar: React.FC<LessonSidebarProps> = ({
       </CardContent>
 
       {/* Progress Footer */}
-      <div className="border-t bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
+      <div className="border-t bg-gradient-to-r from-emerald-50 to-indigo-50 p-4">
         <div className="space-y-2">
           <div className="flex justify-between items-center text-sm">
-            <span className="font-medium text-gray-700">Fremgang</span>
-            <span className="font-bold text-blue-600">
+            <span className="font-medium text-neutral-700">Fremgang</span>
+            <span className="font-bold text-emerald-600">
               {completedCount}/{totalLessons}
             </span>
           </div>
           <Progress value={progressPercent} className="h-2" />
-          <p className="text-xs text-center text-gray-600">
+          <p className="text-xs text-center text-neutral-600">
             {progressPercent}% fullført
           </p>
         </div>

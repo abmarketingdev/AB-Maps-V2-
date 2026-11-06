@@ -62,12 +62,12 @@ const QuizManagement = () => {
         ]);
         
         if (!authenticated) {
-          router.push("/learning-platform");
+          router.push("/ab-academy");
           return;
         }
 
         if (!isSuperuser) {
-          router.push("/learning-dashboard");
+          router.push("/ab-academy/oversikt");
           return;
         }
 
@@ -409,14 +409,14 @@ const QuizManagement = () => {
           title="Quiz Management"
           userData={null}
           onLogout={() => {}}
-          onBack={() => router.push("/admin-dashboard-learning")}
+          onBack={() => router.push("/ab-academy/admin")}
           showBack={true}
         />
       ) : (
         <header className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/admin-dashboard-learning" prefetch={true}>
+              <Link href="/ab-academy/admin" prefetch={true}>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Back to Admin Dashboard
@@ -740,7 +740,7 @@ const QuizFormDialog: React.FC<QuizFormDialogProps> = ({
             variant="outline"
             onClick={() => {
               if (formData.sectionId)
-                window.open(`/learning-platform/${formData.sectionId}`, "_blank", "noopener,noreferrer");
+                window.open(`/ab-academy/${formData.sectionId}`, "_blank", "noopener,noreferrer");
             }}
             disabled={!formData.sectionId}
             title={!formData.sectionId ? "Velg seksjon for å forhåndsvise" : "Åpner seksjonen i ny fane"}

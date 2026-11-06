@@ -32,7 +32,7 @@ function LessonPreviewPanel({
   onDelete: (l: LearningLesson) => void;
   onAdministrer?: (l: LearningLesson) => void;
 }) {
-  const previewUrl = `/learning-platform/${lesson.section}`;
+  const previewUrl = `/ab-academy/${lesson.section}`;
   const contentLabel =
     lesson.kind === "VIDEO" ? "Videoleksjon" : lesson.kind === "QUIZ" ? "Quiz" : "Tekstartikkel";
   return (
@@ -87,7 +87,7 @@ function LessonPreviewPanel({
             </button>
           ) : (
             <Link
-              href={`/admin-dashboard-learning/lessons/${lesson.id}`}
+              href={`/ab-academy/admin/lessons/${lesson.id}`}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Administrer leksjon
@@ -148,7 +148,7 @@ const LessonManagement = () => {
     if (!sec) return;
     const n = parseInt(sec, 10);
     if (isNaN(n) || !sections.some((s) => s.id === n)) return;
-    router.replace("/admin-dashboard-learning/lessons");
+    router.replace("/ab-academy/admin/lessons");
     setLessonModalPreselectedSectionId(n);
     setLessonModalId(null);
     setLessonModalOpen(true);
@@ -167,12 +167,12 @@ const LessonManagement = () => {
         ]);
         
         if (!authenticated) {
-          router.push("/learning-platform");
+          router.push("/ab-academy");
           return;
         }
 
         if (!isSuperuser) {
-          router.push("/learning-dashboard");
+          router.push("/ab-academy/oversikt");
           return;
         }
 
@@ -314,7 +314,7 @@ const LessonManagement = () => {
       <ErrorState
         title="Could not load lessons"
         message={error}
-        onGoHome={() => router.push("/admin-dashboard-learning")}
+        onGoHome={() => router.push("/ab-academy/admin")}
       />
     );
   }
@@ -327,13 +327,13 @@ const LessonManagement = () => {
           title="Leksjoner"
           userData={null}
           onLogout={() => {}}
-          onBack={() => router.push("/admin-dashboard-learning")}
+          onBack={() => router.push("/ab-academy/admin")}
           showBack={true}
         />
       ) : (
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link href="/admin-dashboard-learning" prefetch={true}>
+            <Link href="/ab-academy/admin" prefetch={true}>
               <Button variant="ghost" size="sm" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
                 <ArrowLeft className="h-4 w-4" />
                 Tilbake til oversikt

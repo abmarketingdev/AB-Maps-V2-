@@ -52,7 +52,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   return (
     <div 
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 shadow-lg"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
@@ -60,7 +60,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       {/* Progress Indicator */}
       {lessonProgress && (
         <div className="px-4 pt-2 pb-1">
-          <div className="text-xs text-center text-gray-500">
+          <div className="text-xs text-center text-neutral-500">
             Leksjon {lessonProgress}
           </div>
         </div>
@@ -74,23 +74,22 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           onClick={onPrevious}
           disabled={!hasPrevious}
           className={cn(
-            "flex-1 h-12 min-h-[44px]",
+            "flex-1 h-12 min-h-[44px] border-black/[0.12] bg-white text-[#0A0A0A] hover:bg-black/[0.04]",
             !hasPrevious && "opacity-50 cursor-not-allowed"
           )}
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
-          <span className="hidden xs:inline">Forrige</span>
+          <span>Forrige</span>
         </Button>
 
         {/* Complete Button (only show if not completed and not a quiz) */}
         {showCompleteButton && (
           <Button
             onClick={onComplete}
-            className="flex-1 h-12 min-h-[44px] bg-green-600 hover:bg-green-700 text-white"
+            className="flex-1 h-12 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             <Check className="h-4 w-4 mr-1" />
-            <span className="hidden xs:inline">Fullfør</span>
-            <span className="xs:hidden">✓</span>
+            <span>Fullfør</span>
           </Button>
         )}
 
@@ -100,12 +99,11 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             onClick={onNext}
             disabled={!isCompleted && isQuiz && !quizSubmitted}
             className={cn(
-              "flex-1 h-12 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white",
+              "flex-1 h-12 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 text-white",
               !isCompleted && isQuiz && !quizSubmitted && "opacity-50 cursor-not-allowed"
             )}
           >
-            <span className="hidden xs:inline">Neste</span>
-            <span className="xs:hidden">→</span>
+            <span>Neste</span>
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         )}
@@ -113,7 +111,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         {/* Show message if no next lesson */}
         {!hasNext && isCompleted && (
           <div className="flex-1 text-center">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-neutral-500">
               Alle leksjoner fullført
             </p>
           </div>
