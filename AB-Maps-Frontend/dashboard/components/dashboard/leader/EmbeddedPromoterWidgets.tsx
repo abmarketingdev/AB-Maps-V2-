@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo } from "react"
 import { motion, useReducedMotion } from "framer-motion"
-import { Loader2, Plus, TrendingUp, TrendingDown, Zap } from "lucide-react"
+import { Loader2, TrendingUp, TrendingDown, Zap } from "lucide-react"
 import { RoyMascot } from "@/components/gamification/RoyMascot"
 import { GoalRing } from "@/components/dashboard/v2/employee/GoalRing"
 import { StreakFlame } from "@/components/dashboard/v2/employee/StreakFlame"
@@ -69,24 +69,7 @@ export function EmbeddedPromoterWidgets() {
 
   return (
     <div className="space-y-4">
-      {/* Register-knock action bar — prominent, keeps the primary daily action visible */}
-      <motion.div {...fade(0)} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-ab-line bg-ab-elevated px-5 py-4">
-        <div>
-          <p className="text-sm font-semibold text-ab-fg">{t("Registrer en dør nå")}</p>
-          <p className="mt-0.5 text-xs text-ab-fg-3">{t("Ja / Nei / Ikke hjemme — samme som før")}</p>
-        </div>
-        {/* Redirects to /emp/ map app — the real knock-registration endpoint.
-            The inline modal formerly opened by setRegisterOpen(true) POSTs to a
-            non-existent /api/employee/me/registrations/ backend route (verified
-            2026-08-05). Employees register knocks via emp map's PATCH
-            /api/apartments/{id}/ flow. */}
-        <button
-          onClick={() => { window.location.href = "/emp/" }}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_-6px_rgba(16,185,129,0.6)] transition-colors hover:bg-emerald-500"
-        >
-          <Plus className="h-4 w-4" /> {t("Registrer dør")}
-        </button>
-      </motion.div>
+      {/* «Registrer en dør nå» removed (client 2026-11-08): doors are registered in the map app. */}
 
       {/* Hero: goal ring + Roy + streak + ja-rate side by side */}
       <motion.section {...fade(0.05)} className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4">
