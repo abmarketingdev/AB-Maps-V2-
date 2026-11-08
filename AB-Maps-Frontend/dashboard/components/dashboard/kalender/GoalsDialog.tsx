@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { GridMember, PersonType } from "@/lib/api/scheduling"
 import { Btn, Surface } from "./Surface"
-import { MemberAvatar } from "./WeekGrid"
+import { Avatar as MemberAvatar } from "./team/Avatar"
 
 // «Mål»: default daily goal per promoter (doors / givers), used on every
 // work day without a per-day override. «Sett for alle» fills every row.
