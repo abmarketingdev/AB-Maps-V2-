@@ -97,6 +97,17 @@ export interface MoveRequest {
   decline_reason: string | null
 }
 
+export interface LogEntry {
+  id: string
+  at: string
+  action: string
+  date: string | null
+  actor: { id: string | null; name: string; kind: string }
+  person: { id: string; type: PersonType; name: string } | null
+  detail: Record<string, unknown>
+  text: string
+}
+
 export interface ShiftKey {
   person_id: string
   person_type: PersonType
@@ -123,6 +134,8 @@ export interface SchedulingApi {
   moveRequests(teamId: string, status?: MoveStatus): Promise<MoveRequest[]>
   approveMove(id: string): Promise<void>
   declineMove(id: string, reason: string | null): Promise<void>
+  /** calendar log for a team, newest first; kind = promotor | leder */
+  teamLog(teamId: string, kind?: "promotor" | "leder"): Promise<LogEntry[]>
 }
 
 export const ROLE_LABEL: Record<string, string> = {
@@ -384,6 +397,12 @@ const liveApi: SchedulingApi = {
 
   declineMove: (id, reason) =>
     call<void>(`move-requests/${encodeURIComponent(id)}/decline/`, json("POST", { decline_reason: reason ?? "" })),
+
+  teamLog: (teamId, kind) => {
+    const q = new URLSearchParams({ limit: "120" })
+    if (kind) q.set("kind", kind)
+    return call<LogEntry[]>(`teams/${encodeURIComponent(teamId)}/log/?${q}`)
+  },
 }
 
 let mockPromise: Promise<SchedulingApi> | null = null

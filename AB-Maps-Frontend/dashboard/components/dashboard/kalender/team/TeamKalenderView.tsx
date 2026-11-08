@@ -24,6 +24,7 @@ import { TeamPicker } from "../TeamPicker"
 import { PlanWeeksDialog } from "./PlanWeeksDialog"
 import { BLUE_BTN, Btn2, DayDetail, GREY_BTN, RequestsList, type DayActions } from "./SidePanel"
 import { GridSkeleton, TeamGrid, kindOf } from "./TeamGrid"
+import { TeamLog } from "./TeamLog"
 
 // Teamkalender for sales chiefs, team leaders and admins, after the client's
 // HTML (08 Nov): header with week tabs + «Kopier vaktmønster», four KPI cards
@@ -117,7 +118,8 @@ export function TeamKalenderView() {
     return () => clearTimeout(t)
   }, [teamId, weekStart, grid])
   const invalidate = (tid: string) => { for (const k of [...cache.current.keys()]) if (k.startsWith(`${tid}|`)) cache.current.delete(k) }
-  const reload = () => { if (teamId) { invalidate(teamId); fetchGrid(teamId, weekStart, { silent: true }) } }
+  const [logVersion, setLogVersion] = React.useState(0)
+  const reload = () => { if (teamId) { invalidate(teamId); fetchGrid(teamId, weekStart, { silent: true }); setLogVersion((v) => v + 1) } }
 
   const [onlyActive, setOnlyActive] = React.useState(false)
   // phone day view: today when it is in the shown week, else Monday
@@ -173,13 +175,13 @@ export function TeamKalenderView() {
       try { await schedulingApi.approveMove(r.id) } catch (e) { toast({ title: "Kunne ikke godkjenne", description: errMsg(e), variant: "destructive" }); throw e }
       setRequests((rs) => (rs ?? []).map((x) => x.id === r.id ? { ...x, status: "godkjent", decided_by_name: "deg" } : x))
       toast({ title: "Bytte godkjent", description: `${r.person_name} er flyttet.` })
-      invalidate(r.team_id); if (r.team_id === teamId) fetchGrid(r.team_id, weekStart, { silent: true }); loadTeams()
+      invalidate(r.team_id); if (r.team_id === teamId) fetchGrid(r.team_id, weekStart, { silent: true }); loadTeams(); setLogVersion((v) => v + 1)
     },
     decline: async (r, reason) => {
       try { await schedulingApi.declineMove(r.id, reason) } catch (e) { toast({ title: "Kunne ikke avslå", description: errMsg(e), variant: "destructive" }); throw e }
       setRequests((rs) => (rs ?? []).map((x) => x.id === r.id ? { ...x, status: "avslatt", decline_reason: reason, decided_by_name: "deg" } : x))
       toast({ title: "Bytte avslått" })
-      invalidate(r.team_id); if (r.team_id === teamId) fetchGrid(r.team_id, weekStart, { silent: true }); loadTeams()
+      invalidate(r.team_id); if (r.team_id === teamId) fetchGrid(r.team_id, weekStart, { silent: true }); loadTeams(); setLogVersion((v) => v + 1)
     },
   }
 
@@ -422,6 +424,8 @@ export function TeamKalenderView() {
             </aside>
           </div>
         )}
+
+        {teamId && <TeamLog teamId={teamId} version={logVersion} canSeeAll={Boolean(teams?.sees_all)} />}
       </div>
 
       {isMobile && (

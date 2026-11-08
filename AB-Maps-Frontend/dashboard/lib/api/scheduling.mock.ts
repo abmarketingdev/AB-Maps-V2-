@@ -283,6 +283,18 @@ export const mockApi: SchedulingApi = {
     s.noShow = noShow
   },
 
+  async teamLog(teamId, kind) {
+    await wait()
+    const now = Date.now()
+    const rows = [
+      { id: "l1", at: new Date(now - 4 * 60000).toISOString(), action: "goal.changed", date: osloToday(), actor: { id: "p", name: "Mathilde Berg", kind: "promotor" }, person: { id: "p", type: "employee" as const, name: "Mathilde Berg" }, detail: {}, text: "Mathilde Berg endret sitt dagsmål 09.11: 80 → 60 dører" },
+      { id: "l2", at: new Date(now - 50 * 60000).toISOString(), action: "move.requested", date: osloToday(), actor: { id: "p2", name: "Sara Lindqvist", kind: "promotor" }, person: { id: "p2", type: "employee" as const, name: "Sara Lindqvist" }, detail: {}, text: "Sara Lindqvist ba om å flytte 10.11 → 16.11 («Lege»)" },
+      { id: "l3", at: new Date(now - 3 * 3600000).toISOString(), action: "shift.planned", date: null, actor: { id: "c", name: "Siri Sjef", kind: "salgssjef" }, person: null, detail: {}, text: "Siri Sjef planla 24 vakter for 6 personer (16.11 til 29.11)" },
+      { id: "l4", at: new Date(now - 26 * 3600000).toISOString(), action: "no_show.on", date: osloToday(), actor: { id: "c", name: "Siri Sjef", kind: "salgssjef" }, person: { id: "p3", type: "employee" as const, name: "Jonas Halvorsen" }, detail: {}, text: "Siri Sjef markerte Jonas Halvorsen som ikke møtt 07.11" },
+    ]
+    return rows.filter((r) => !kind || (kind === "promotor" ? r.actor.kind === "promotor" : r.actor.kind !== "promotor"))
+  },
+
   async setDefaultGoals(teamId, rows) {
     guardEdit()
     await wait()
