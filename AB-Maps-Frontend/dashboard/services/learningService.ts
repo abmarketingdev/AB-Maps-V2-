@@ -2,7 +2,6 @@ import type {
   LearningSection, 
   LearningLesson, 
   LearningProgress, 
-  QuizSubmission,
   PaginatedResponse,
   GroupedSectionsResponse
 } from './learningTypes';
@@ -81,12 +80,32 @@ export interface CampaignCompletionCheck {
   is_assigned_to_campaign: boolean;
 }
 
+/** POST /lessons/{id}/quiz-submit/ result: the SERVER grades the quiz (learners never get is_correct). */
 export interface QuizSubmitResponse {
-  success: boolean;
+  score_percent: number;
   passed: boolean;
-  score: number;
-  message: string;
   pass_threshold: number;
+  correct: number;
+  total: number;
+  /** Per question: whether the learner's own answer was right (the right answer itself is not revealed). */
+  results?: { question_id: number; answer_id: number | null; correct: boolean }[];
+  campaign_completion?: { training_complete: boolean; all_completed: boolean } | null;
+}
+
+/** GET /me/progress/raw/: this learner's status per section and per lesson. */
+export interface RawProgress {
+  sections: { section_id: number; title: string; campaign_id: string | null; progress_percent: number; status: string }[];
+  lessons: { lesson_id: number; title: string; status: string }[];
+  completions: { campaign_id: string | null; training_complete: boolean }[];
+}
+
+/** Completed lesson ids + section ids from /me/progress/raw/ (the only per-learner source). */
+export function completedFromRawProgress(p: RawProgress | null | undefined): { lessons: Set<number>; sections: Set<number> } {
+  const lessons = new Set<number>();
+  const sections = new Set<number>();
+  (p?.lessons || []).forEach((l) => { if (l?.status === "COMPLETED") lessons.add(Number(l.lesson_id)); });
+  (p?.sections || []).forEach((s) => { if (s?.status === "COMPLETED") sections.add(Number(s.section_id)); });
+  return { lessons, sections };
 }
 
 // Main learning platform API service for employees
@@ -153,6 +172,19 @@ export class LearningService {
     });
     
     if (!response.ok) throw new Error('Failed to fetch progress');
+    return response.json();
+  }
+
+  /**
+   * GET /api/learning/me/progress/raw/
+   * Per-learner status of every section and lesson. The section endpoints carry no
+   * per-learner status, so this is what decides «Fullført» after a reload.
+   */
+  async getRawProgress(): Promise<RawProgress> {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/learning/me/progress/raw/`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch lesson progress');
     return response.json();
   }
 
@@ -397,7 +429,7 @@ export class LearningService {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/learning/lessons/${lessonId}/complete/`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
-      body: seconds ? JSON.stringify({ seconds }) : undefined,
+      body: JSON.stringify(seconds ? { time_spent_seconds: seconds } : {}),
     });
     
     if (!response.ok) throw new Error('Failed to complete lesson');
@@ -410,20 +442,21 @@ export class LearningService {
   
   /**
    * POST /api/learning/lessons/{lesson_id}/quiz-submit/
-   * Body: { score_percent: number, duration_seconds: number }
+   * Body: { answers: { "<question_id>": <answer_id>, ... } }. The server grades it and, on a
+   * pass, marks the lesson complete.
    */
-  async submitQuiz(lessonId: number, score: number, duration: number): Promise<QuizSubmitResponse> {
+  async submitQuiz(lessonId: number, answers: Record<string, number>): Promise<QuizSubmitResponse> {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/learning/lessons/${lessonId}/quiz-submit/`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
-      body: JSON.stringify({
-        score_percent: score,
-        duration_seconds: duration,
-      } as QuizSubmission),
+      body: JSON.stringify({ answers }),
     });
-    
-    if (!response.ok) throw new Error('Failed to submit quiz');
-    return response.json();
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = (data && (data.detail || data.error)) || "Kunne ikke sende inn quiz. Prøv igjen.";
+      throw new Error(typeof msg === "string" ? msg : "Kunne ikke sende inn quiz. Prøv igjen.");
+    }
+    return data as QuizSubmitResponse;
   }
 
   // ============================================

@@ -163,10 +163,16 @@ export default function LessonShell({
                     <div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: `${progressPercent}%` }} />
                   </div>
                 )}
-                <div className="mb-8">
-                  <h1 className="mb-4 text-2xl font-bold leading-tight tracking-tight text-[#0A0A0A] md:text-4xl">
+                <div className={cn(isMobile ? "mb-5" : "mb-8")}>
+                  <h1 className="mb-3 text-[22px] font-bold leading-tight tracking-tight text-[#0A0A0A] md:mb-4 md:text-4xl">
                     {currentLesson.title}
                   </h1>
+                  {completedLessons.has(currentLesson.id) && (
+                    <span className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                      Fullført
+                    </span>
+                  )}
                   {currentLesson.kind !== "TEXT" && currentLesson.kind !== "QUIZ" && currentLesson.description && (
                     <p className="border-l-4 border-emerald-600 pl-4 text-base leading-relaxed text-neutral-600 md:pl-5 md:text-lg">
                       {currentLesson.description}

@@ -55,6 +55,10 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
   const [quizStartTime, setQuizStartTime] = useState<number>(Date.now());
   const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
   const [quizSubmitError, setQuizSubmitError] = useState<string>("");
+  // Server verdict per question (true = the learner's answer was right).
+  const [quizResults, setQuizResults] = useState<Record<number, boolean>>({});
+  // A passed quiz shows «Quiz bestått» instead of empty questions; «Ta quizen på nytt» reopens it.
+  const [retake, setRetake] = useState(false);
   
   // Reset quiz state when lesson changes
   useEffect(() => {
@@ -65,6 +69,8 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
     setQuizStartTime(Date.now());
     setIsSubmittingQuiz(false);
     setQuizSubmitError("");
+    setQuizResults({});
+    setRetake(false);
   }, [lesson.id]);
 
   const handleQuizAnswer = (questionId: number, answerIndex: number) => {
@@ -77,47 +83,35 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
   const handleQuizSubmit = async () => {
     setIsSubmittingQuiz(true);
     setQuizSubmitError("");
-    
+
     try {
-      // Calculate score based on correct answers
-      let correctAnswers = 0;
-      const totalQuestions = lesson.quiz_questions?.length || 0;
-      
+      // The quiz is graded by the server: learners never receive which answer is right,
+      // so send the chosen answer IDs ({ "<question_id>": <answer_id> }), not a score.
+      const answers: Record<string, number> = {};
       lesson.quiz_questions?.forEach((question) => {
-        const selectedAnswerIndex = quizAnswers[question.id];
-        if (selectedAnswerIndex !== undefined) {
-          const answer = question.answers[selectedAnswerIndex];
-          if (answer?.is_correct) {
-            correctAnswers++;
-          }
-        }
+        const idx = quizAnswers[question.id];
+        const answer = idx !== undefined ? question.answers[idx] : undefined;
+        if (answer) answers[String(question.id)] = answer.id;
       });
-      
-      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-      
-      // Calculate quiz duration in seconds
-      const duration = Math.floor((Date.now() - quizStartTime) / 1000);
-      
-      // Check pass threshold
-      const passThreshold = lesson.pass_threshold_percent || 80;
-      const passed = score >= passThreshold;
-      
-      // Submit to backend API
+
       const learningService = LearningService.getInstance();
-      await learningService.submitQuiz(lesson.id, score, duration);
-      
-      // Update state
-      setQuizScore(score);
-      setQuizPassed(passed);
+      const result = await learningService.submitQuiz(lesson.id, answers);
+
+      const verdicts: Record<number, boolean> = {};
+      (result.results || []).forEach((r) => { verdicts[r.question_id] = !!r.correct; });
+      setQuizResults(verdicts);
+      setQuizScore(result.score_percent);
+      setQuizPassed(!!result.passed);
       setQuizSubmitted(true);
-      
-      // Only complete lesson if passed
-      if (passed) {
+
+      // A pass already completed the lesson on the server; tell the page so it
+      // marks it «Fullført» and unlocks the next lesson.
+      if (result.passed) {
         onComplete();
       }
     } catch (error) {
       console.error('Quiz submission failed:', error);
-      setQuizSubmitError('Kunne ikke sende inn quiz. Prøv igjen.');
+      setQuizSubmitError(error instanceof Error && error.message ? error.message : 'Kunne ikke sende inn quiz. Prøv igjen.');
     } finally {
       setIsSubmittingQuiz(false);
     }
@@ -131,6 +125,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
     setQuizPassed(false);
     setQuizStartTime(Date.now());
     setQuizSubmitError("");
+    setQuizResults({});
   };
 
   // Handle main action button click
@@ -286,20 +281,47 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
             </Card>
           )}
           
+          {/* Already passed (e.g. after a reload): say so instead of showing empty questions */}
+          {isCompleted && !quizSubmitted && !retake && (
+            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
+              <CardContent className={cn(isMobile ? "p-5" : "p-6 md:p-8")}>
+                <div className="flex items-start gap-4">
+                  <div className={cn("shrink-0 rounded-full bg-emerald-100 flex items-center justify-center", isMobile ? "w-11 h-11" : "w-14 h-14")}>
+                    <Check className={cn("text-emerald-600", isMobile ? "w-6 h-6" : "w-7 h-7")} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h2 className={cn("font-bold text-[#0A0A0A]", isMobile ? "text-lg" : "text-2xl")}>Quiz bestått</h2>
+                    <p className="mt-1 text-sm text-neutral-600">
+                      Du har bestått denne quizen. Du kan gå videre, eller ta den på nytt for å øve.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setRetake(true)}
+                      className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl border-2 border-neutral-200 px-5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Ta quizen på nytt
+                    </button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Result card – shown after submission */}
           {quizSubmitted && quizScore !== null && (
             <Card className={cn(
               "overflow-hidden border-l-4",
               quizPassed ? "border-l-emerald-500" : "border-l-red-500"
             )}>
-              <CardContent className="p-6 md:p-8">
-                <div className="flex flex-col md:flex-row gap-6">
+              <CardContent className={cn(isMobile ? "p-5" : "p-6 md:p-8")}>
+                <div className={cn("flex", isMobile ? "flex-row-reverse items-start gap-4" : "flex-col md:flex-row gap-6")}>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-3">
                       <Badge variant="outline" className="text-xs">Resultat</Badge>
                       <span className="text-xs text-neutral-400">Akkurat nå</span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-[#0A0A0A] mb-2">
+                    <h2 className={cn("font-bold text-[#0A0A0A] mb-2", isMobile ? "text-xl" : "text-2xl md:text-3xl")}>
                       {quizPassed ? `Sertifisert for ${certificationLabel}` : "Ikke bestått"}
                     </h2>
                     <div className="flex items-center gap-3 mb-3">
@@ -317,15 +339,16 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
                         : `Grense for å bestå: ${lesson.pass_threshold_percent || 80}%. Prøv igjen.`}
                     </p>
                   </div>
-                  <div className="flex items-center justify-center md:w-32">
+                  <div className={cn("flex items-center justify-center", isMobile ? "shrink-0" : "md:w-32")}>
                     <div className={cn(
-                      "w-24 h-24 rounded-full flex items-center justify-center",
+                      "rounded-full flex items-center justify-center",
+                      isMobile ? "w-12 h-12" : "w-24 h-24",
                       quizPassed ? "bg-emerald-100" : "bg-red-100"
                     )}>
                       {quizPassed ? (
-                        <Check className="w-12 h-12 text-emerald-600" />
+                        <Check className={cn("text-emerald-600", isMobile ? "w-6 h-6" : "w-12 h-12")} />
                       ) : (
-                        <AlertCircle className="w-12 h-12 text-red-600" />
+                        <AlertCircle className={cn("text-red-600", isMobile ? "w-6 h-6" : "w-12 h-12")} />
                       )}
                     </div>
                   </div>
@@ -335,9 +358,9 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
           )}
 
           {/* Quiz questions – before submission */}
-          {!quizSubmitted && (
+          {!quizSubmitted && (!isCompleted || retake) && (
             <Card className="border-neutral-200 shadow-sm">
-              <CardContent className="p-6 md:p-8 space-y-8">
+              <CardContent className={cn(isMobile ? "p-4 space-y-7" : "p-6 md:p-8 space-y-8")}>
                 {lesson.quiz_questions.map((question, questionIndex) => (
                   <div key={question.id} className="space-y-4">
                     <div>
@@ -423,20 +446,20 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
             </Card>
           )}
 
-          {/* After submission: Review + Retry / Next (desktop) */}
-          {quizSubmitted && quizScore !== null && !isMobile && (
+          {/* After submission: review of answers (phone + desktop) */}
+          {quizSubmitted && quizScore !== null && (
             <Card className="border-neutral-200 shadow-sm">
-              <CardContent className="p-6">
+              <CardContent className={cn(isMobile ? "p-4" : "p-6")}>
                 <h4 className="font-semibold text-[#0A0A0A] mb-4">Gjennomgang av svar</h4>
                 <div className="space-y-3">
                   {lesson.quiz_questions?.map((q, qIdx) => {
                     const si = quizAnswers[q.id];
                     const sel = si !== undefined ? q.answers[si] : null;
-                    const ok = sel?.is_correct || false;
-                    const correct = q.answers.find(a => a.is_correct);
+                    const ok = quizResults[q.id] === true;
                     return (
                       <div key={q.id} className={cn(
-                        "rounded-lg border p-4",
+                        "rounded-lg border",
+                        isMobile ? "p-3" : "p-4",
                         ok ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
                       )}>
                         <p className="font-medium text-[#0A0A0A] mb-1">
@@ -445,11 +468,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
                         <p className={cn("text-sm", ok ? "text-emerald-700" : "text-red-700")}>
                           Ditt svar: {sel?.answer_text || "—"} {ok ? "✓" : "✗"}
                         </p>
-                        {!ok && correct && (
-                          <p className="text-sm text-emerald-700 mt-1">
-                            Riktig svar: {correct.answer_text}
-                          </p>
-                        )}
+
                       </div>
                     );
                   })}
@@ -479,14 +498,18 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
         </div>
       )}
 
-      {/* Quiz: Action buttons after submission */}
-      {!isMobile && lesson.kind === "QUIZ" && quizSubmitted && quizScore !== null && (
-        <div className="pt-6 flex gap-4 justify-center">
+      {/* Quiz: Action buttons after submission. On a phone «Neste» lives in the bottom bar,
+          so only «Prøv igjen» is shown here (full width). */}
+      {lesson.kind === "QUIZ" && quizSubmitted && quizScore !== null && (isMobile ? !quizPassed : true) && (
+        <div className={cn(isMobile ? "pt-2" : "pt-6 flex gap-4 justify-center")}>
           {!quizPassed && (
             <button
               type="button"
               onClick={handleQuizRetry}
-              className="h-12 px-6 rounded-xl font-semibold flex items-center gap-2 transition-all border-2 border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+              className={cn(
+                "h-12 px-6 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all border-2 border-neutral-200 text-neutral-700 hover:bg-neutral-50",
+                isMobile && "w-full"
+              )}
             >
               <RotateCcw className="w-5 h-5" />
               Prøv igjen

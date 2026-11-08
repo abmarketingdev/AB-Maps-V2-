@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { LearningAuthService } from "@/services/learningAuthService";
-import { LearningService, type DetailedProgress, type CurrentPath, type UserOverview } from "@/services/learningService";
+import { LearningService, completedFromRawProgress, type DetailedProgress, type CurrentPath, type UserOverview } from "@/services/learningService";
 import { cn } from "@/lib/utils";
 import LessonViewer from "@/components/learning/LessonViewer";
 import LessonNavigationDrawer from "@/components/learning/LessonNavigationDrawer";
@@ -105,7 +105,8 @@ const LearningDashboard = () => {
         userOverviewData,
         detailedProgressData,
         currentPathData,
-        currentUser
+        currentUser,
+        rawProgress
       ] = await Promise.all([
         learningService.getGroupedSections().catch(e => { console.error("getGroupedSections failed:", e); return null; }),
         learningService.getUserProgress().catch(e => { console.error("getUserProgress failed:", e); return null; }),
@@ -113,6 +114,7 @@ const LearningDashboard = () => {
         learningService.getDetailedProgress().catch(e => { console.error("getDetailedProgress failed:", e); return null; }),
         learningService.getCurrentPath().catch(e => { console.error("getCurrentPath failed:", e); return null; }),
         authService.getCurrentUser().catch(e => { console.error("getCurrentUser failed:", e); return null; }),
+        learningService.getRawProgress().catch(e => { console.error("getRawProgress failed:", e); return null; }),
       ]);
 
       console.log("Grouped sections received:", groupedSections);
@@ -184,6 +186,12 @@ const LearningDashboard = () => {
           });
         }
         
+        // The section detail endpoint carries no per-learner status: take it from
+        // /me/progress/raw/ so finished lessons and sections stay «Fullført» after a reload.
+        const fromRaw = completedFromRawProgress(rawProgress);
+        fromRaw.lessons.forEach(id => completedLessonsSet.add(id));
+        fromRaw.sections.forEach(id => completedSectionsSet.add(id));
+
         setCompletedSections(completedSectionsSet);
         setCompletedLessons(completedLessonsSet);
         
@@ -201,24 +209,6 @@ const LearningDashboard = () => {
     const authService = LearningAuthService.getInstance();
     authService.logout();
     router.push("/login");
-  };
-
-  const submitQuiz = async (lessonId: number, score: number, duration: number) => {
-    try {
-      const learningService = LearningService.getInstance();
-      await learningService.submitQuiz(lessonId, score, duration);
-      
-      const currentLesson = currentSection?.lessons?.find(lesson => lesson.id === lessonId);
-      const passThreshold = currentLesson?.pass_threshold_percent || 80;
-      
-      if (score >= passThreshold) {
-        await handleLessonComplete(lessonId);
-      } else {
-        await fetchAllData();
-      }
-    } catch (error) {
-      console.error("Error submitting quiz:", error);
-    }
   };
 
   const handleLessonComplete = async (lessonId: number) => {
@@ -628,7 +618,7 @@ const LearningDashboard = () => {
                           const prevDone = prev ? completedSections.has(prev.id) : true;
                           const onlyOne = activeCampaignSections.filter(s => s.is_active).length === 1;
                           const isUnlocked = !!section.is_active && ((section.order ?? 0) === 1 || prevDone || onlyOne);
-                          const isInProgress = section.status === 'IN_PROGRESS';
+                          const isInProgress = section.status === 'IN_PROGRESS' || (section.lessons || []).some(l => completedLessons.has(l.id));
                           const lessonCount = section.lessons?.length || section.lesson_count || 0;
                           const completedLessonsInSection = section.lessons?.filter(l => completedLessons.has(l.id)).length || 0;
                           const progressW = lessonCount > 0 ? Math.round((completedLessonsInSection / lessonCount) * 100) : 0;

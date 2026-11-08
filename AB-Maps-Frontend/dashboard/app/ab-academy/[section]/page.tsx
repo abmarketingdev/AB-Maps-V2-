@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { LearningAuthService } from "@/services/learningAuthService";
-import { LearningService } from "@/services/learningService";
+import { LearningService, completedFromRawProgress } from "@/services/learningService";
 import LessonShell from "@/components/learning/LessonShell";
 import LessonViewer from "@/components/learning/LessonViewer";
 import LessonNavigationDrawer from "@/components/learning/LessonNavigationDrawer";
@@ -52,10 +52,10 @@ const SectionDetailPage = () => {
       const learningService = LearningService.getInstance();
       const data = await learningService.getSection(parseInt(sectionId));
       setSection(data);
-      const progress = await learningService.getUserProgress();
-      if (progress.completed_lessons) {
-        setCompletedLessons(new Set(progress.completed_lessons));
-      }
+      // Per-learner status lives only in /me/progress/raw/ (the section endpoint has none),
+      // so this is what keeps finished lessons «Fullført» after a reload.
+      const raw = await learningService.getRawProgress().catch(() => null);
+      setCompletedLessons(completedFromRawProgress(raw).lessons);
     } catch (e) {
       console.error("Error fetching section:", e);
       setError("Kunne ikke hente seksjon");
