@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Plus } from "lucide-react"
+import { Lock, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { DayCell } from "@/lib/api/scheduling"
 import { cardDate, longDate } from "../dates"
@@ -47,7 +47,7 @@ export function describe(name: string, cell: DayCell, today: string): string {
   const k = kindOf(cell, today)
   const parts = [name, `${day} ${date}`]
   if (k === "done" && cell.actual) parts.push(`${cell.actual.doors} ${doorsWord(cell.actual.doors)}, ${cell.actual.ja} ${giversWord(cell.actual.ja)}`)
-  if (k === "plan") parts.push(`vakt, mål ${goalLine(cell)}`)
+  if (k === "plan") parts.push(cell.shift_editable ? `vakt, mål ${goalLine(cell)}` : `vakt planlagt av ${cell.shift_team_name || "annet team"}`)
   if (k === "swap" && cell.move_request) parts.push(`ønsker bytte til ${longDate(cell.move_request.to_date)}`)
   if (k === "noshow") parts.push("ikke møtt")
   if (k === "today") parts.push(cell.shift_id ? "i dag, på vakt" : "i dag, fri")
@@ -106,14 +106,20 @@ export const TeamCell = React.memo(function TeamCell({ cell, name, today, editab
       break
     }
     case "plan":
-      look = "bg-ab-subtle border-ab-line-2 dark:bg-[#1C1E22] dark:border-[#34373E]"
+      look = cell.shift_editable
+        ? "bg-ab-subtle border-ab-line-2 dark:bg-[#1C1E22] dark:border-[#34373E]"
+        : "bg-transparent border-ab-line-2 dark:border-[#34373E]"
       body = (
         <>
           <div className="flex items-center justify-between gap-1">
-            <span className="text-[13px] font-semibold">Vakt</span>
+            <span className="flex items-center gap-1 text-[13px] font-semibold">
+              {!cell.shift_editable && <Lock className="h-3 w-3 text-ab-fg-3" aria-hidden />}Vakt
+            </span>
             {override && <span className="shrink-0 text-[10px] font-semibold text-[#2563EB] dark:text-[#7CB8FF]">Justert</span>}
           </div>
-          <div className="text-[11px] leading-[1.35] text-ab-fg-2">{goalLine(cell)}</div>
+          <div className="truncate text-[11px] leading-[1.35] text-ab-fg-2">
+            {cell.shift_editable ? goalLine(cell) : `Planlagt av ${cell.shift_team_name || "annet team"}`}
+          </div>
         </>
       )
       break

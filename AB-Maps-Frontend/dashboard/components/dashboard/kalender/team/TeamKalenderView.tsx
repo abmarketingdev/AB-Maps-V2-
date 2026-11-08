@@ -189,7 +189,7 @@ export function TeamKalenderView() {
   const [copying, setCopying] = React.useState(false)
   // Planned days the view knows about: the cached weeks plus whatever the Planlegg
   // dialog asked for (its whole period, in 42-day chunks = the API's maximum).
-  const [extraKnown, setExtraKnown] = React.useState<Map<string, string>>(new Map())
+  const [extraKnown, setExtraKnown] = React.useState<Map<string, { id: string; editable: boolean }>>(new Map())
   const loadedRanges = React.useRef(new Set<string>())
   const ensureLoaded = React.useCallback((start: string, end: string) => {
     if (!teamId) return
@@ -203,7 +203,7 @@ export function TeamKalenderView() {
       schedulingApi.grid(tid, from, to).then((g) => {
         setExtraKnown((prev) => {
           const n = new Map(prev)
-          for (const m of g.members) for (const c of m.days) if (c.shift_id) n.set(`${m.person_id}|${c.date}`, c.shift_id)
+          for (const m of g.members) for (const c of m.days) if (c.shift_id) n.set(`${m.person_id}|${c.date}`, { id: c.shift_id, editable: c.shift_editable })
           return n
         })
       }).catch(() => loadedRanges.current.delete(key))
@@ -211,19 +211,26 @@ export function TeamKalenderView() {
   }, [teamId])
   React.useEffect(() => { loadedRanges.current.clear(); setExtraKnown(new Map()) }, [teamId])
   const known = React.useMemo(() => {
-    const s = new Map<string, string>(extraKnown)
-    for (const g of cache.current.values()) for (const m of g.members) for (const c of m.days) if (c.shift_id && c.shift_id !== "pending") s.set(`${m.person_id}|${c.date}`, c.shift_id)
+    const s = new Map<string, { id: string; editable: boolean }>(extraKnown)
+    // only this team's cached weeks: another team's grid would carry its own editability
+    for (const [key, g] of cache.current.entries()) {
+      if (!teamId || !key.startsWith(`${teamId}|`)) continue
+      for (const m of g.members) for (const c of m.days) if (c.shift_id && c.shift_id !== "pending") s.set(`${m.person_id}|${c.date}`, { id: c.shift_id, editable: c.shift_editable })
+    }
     return s
-  }, [grid, planOpen, extraKnown]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [grid, planOpen, extraKnown, teamId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const submitPlan = async (shifts: ShiftKey[], goal: { doors: number | null; givers: number | null } | null, removeIds: string[]) => {
     try {
       // days taken out of the plan go first (one call each; the backend cancels pending moves)
       let removed = 0
+      let failed = 0
       for (let i = 0; i < removeIds.length; i += 10) {
         const r = await Promise.allSettled(removeIds.slice(i, i + 10).map((id) => schedulingApi.deleteShift(id)))
         removed += r.filter((x) => x.status === "fulfilled").length
+        failed += r.filter((x) => x.status === "rejected").length
       }
+      if (failed) toast({ title: `${failed} ${failed === 1 ? "vakt" : "vakter"} kunne ikke fjernes`, description: "De er planlagt av et annet team eller allerede borte. Oppdater siden og prøv igjen.", variant: "destructive" })
       const res = shifts.length ? await schedulingApi.createShifts(teamId!, shifts) : { created: 0, skipped: 0, skipped_other_team: 0 }
       if (goal && res.created > 0) {
         // the same goal on every new day: read the grid back and patch the new shifts

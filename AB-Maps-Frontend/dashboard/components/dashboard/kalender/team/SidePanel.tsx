@@ -195,6 +195,11 @@ export function DayDetail({
         </Btn2>
       )}
       {!editable && cell.shift_id && <div className="text-[12px] text-ab-fg-3">Kun lesing. Salgssjefen for teamet endrer kalenderen.</div>}
+      {editable && cell.shift_id && !cell.shift_editable && (
+        <div className="rounded-[12px] border border-ab-line bg-ab-subtle px-3.5 py-3 text-[13px] text-ab-fg-2 dark:bg-[#1C1D21]">
+          Vakten er planlagt av <b className="text-ab-fg">{cell.shift_team_name || "et annet team"}</b>. Bare salgssjefen der (eller en admin) kan endre eller fjerne den.
+        </div>
+      )}
     </>
   )
 }

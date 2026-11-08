@@ -25,8 +25,8 @@ interface Props {
   onOpenChange: (o: boolean) => void
   members: GridMember[]
   today: string
-  /** planned days the view knows, "person|date" → shift id */
-  known: Map<string, string>
+  /** planned days the view knows, "person|date" → shift id + whether this team may change it */
+  known: Map<string, { id: string; editable: boolean }>
   /** ask the view to load the grid for the whole period, so «finnes allerede» is exact */
   ensureLoaded: (start: string, end: string) => void
   onSubmit: (shifts: ShiftKey[], goal: { doors: number | null; givers: number | null } | null, removeIds: string[]) => Promise<void>
@@ -105,8 +105,8 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
     return () => clearTimeout(t)
   }, [open, rangeOk, start, end, ensureLoaded])
 
-  type PersonStat = { newN: number; existN: number; removeN: number; allExisting: Set<number> }
-  const { shifts, skipped, people, stats, removeIds } = React.useMemo(() => {
+  type PersonStat = { newN: number; existN: number; removeN: number; lockedN: number; allExisting: Set<number> }
+  const { shifts, skipped, people, stats, removeIds, lockedTotal } = React.useMemo(() => {
     const out: ShiftKey[] = []
     const removeIds: string[] = []
     let skip = 0
@@ -114,7 +114,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
     const stats = new Map<string, PersonStat>()
     for (const m of members) {
       const set = days.get(m.person_id) ?? new Set<number>()
-      const st: PersonStat = { newN: 0, existN: 0, removeN: 0, allExisting: new Set() }
+      const st: PersonStat = { newN: 0, existN: 0, removeN: 0, lockedN: 0, allExisting: new Set() }
       stats.set(m.person_id, st)
       // unticked weekdays that are planned in the period → those shifts go
       if (on.has(m.person_id)) for (let d = 0; d < 7; d++) {
@@ -123,8 +123,9 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
           const date = addDays(start, w * 7 + d)
           if (date < today || date > end) continue
           if (mode === "range" && date < rFrom) continue
-          const id = known.get(`${m.person_id}|${date}`)
-          if (id) { removeIds.push(id); st.removeN++ }
+          const k = known.get(`${m.person_id}|${date}`)
+          if (k && k.editable) { removeIds.push(k.id); st.removeN++ }
+          else if (k) st.lockedN++
         }
       }
       for (const d of set) {
@@ -143,7 +144,8 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
       }
       if (on.has(m.person_id)) { skip += st.existN; if (st.newN > 0 || st.removeN > 0) ppl.add(m.person_id) }
     }
-    return { shifts: out, skipped: skip, people: ppl.size, stats, removeIds }
+    const lockedTotal = [...stats.values()].reduce((n, x) => n + x.lockedN, 0)
+    return { shifts: out, skipped: skip, people: ppl.size, stats, removeIds, lockedTotal }
   }, [members, on, days, nWeeks, start, end, mode, rFrom, today, known])
 
   const submit = async () => {
@@ -180,6 +182,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
               {shifts.length} nye{removeIds.length > 0 ? `, ${removeIds.length} fjernes` : ""} · {people} av {members.length} promotører
             </span>
             {removeIds.length > 0 && <span className="text-[12px] text-[#B91C1C] dark:text-[#FCA5A5]">Dager du har tatt bort fjernes fra kalenderen ({removeIds.length}). Ventende bytter på de dagene avbrytes.</span>}
+            {lockedTotal > 0 && <span className="text-[12px] text-ab-fg-3">{lockedTotal} {lockedTotal === 1 ? "vakt" : "vakter"} er planlagt av et annet team og kan bare endres der (merket «låst»).</span>}
             {skipped > 0 && shifts.length === 0 && removeIds.length === 0 && <span className="text-[12px] text-[#B45309] dark:text-[#F5B54A]">Ingen endring: planen er allerede slik ({skipped} vakter). Ta bort eller legg til dager for å endre den.</span>}
             {skipped > 0 && (shifts.length > 0 || removeIds.length > 0) && <span className="text-[12px] text-ab-fg-3">{skipped} beholdes som de er (grå ruter)</span>}
           </div>
@@ -298,6 +301,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
                           <span className="text-right text-[11px] leading-tight">
                             <span className={st.newN ? "font-semibold text-ab-fg" : "text-ab-fg-3"}>{st.newN} {st.newN === 1 ? "ny" : "nye"}</span>
                             {st.removeN > 0 && <span className="block font-semibold text-[#B91C1C] dark:text-[#FCA5A5]">{st.removeN} fjernes</span>}
+                            {st.lockedN > 0 && <span className="block text-ab-fg-3" title="Planlagt av et annet team, kan ikke fjernes her">{st.lockedN} låst</span>}
                             {st.existN > 0 && <span className="block text-ab-fg-3">{st.existN} beholdes</span>}
                           </span>
                         )
