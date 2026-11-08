@@ -553,11 +553,22 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
 
         {/* Toggles */}
         <div className="space-y-2.5">
+          {/* A <label> wrapping the button re-dispatched every click (double toggle) and the
+              thumb had no `left`, so it drifted outside the track. Proper switch instead. */}
           {role === "manager" && (
-            <label className="flex items-center justify-between rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 cursor-pointer">
-              <span className="flex items-center gap-2 text-sm text-ab-fg-2"><Star className="h-3.5 w-3.5 text-amber-400" /> Salgssjef</span>
-              <button onClick={() => setSalesChief(s => !s)} className={cn("cursor-pointer relative h-5 w-9 rounded-full transition-colors", salesChief ? "bg-blue-600" : "bg-ab-active")}><span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform", salesChief ? "translate-x-4" : "translate-x-0.5")} /></button>
-            </label>
+            <div className="flex items-center justify-between rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5">
+              <label htmlFor="user-sales-chief" className="flex cursor-pointer items-center gap-2 text-sm text-ab-fg-2"><Star className="h-3.5 w-3.5 text-amber-400" /> Salgssjef</label>
+              <button
+                id="user-sales-chief"
+                type="button"
+                role="switch"
+                aria-checked={salesChief}
+                onClick={() => setSalesChief(s => !s)}
+                className={cn("relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60", salesChief ? "bg-blue-600" : "bg-ab-active")}
+              >
+                <span aria-hidden className={cn("pointer-events-none absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform", salesChief ? "translate-x-4" : "translate-x-0")} />
+              </button>
+            </div>
           )}
         </div>
       </div>
