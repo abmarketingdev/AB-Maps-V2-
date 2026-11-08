@@ -14,8 +14,6 @@ import { MagneticButton } from "./MagneticButton"
 import { LivePulseDot } from "./LivePulseDot"
 import { MonthPicker } from "./MonthPicker"
 import { TopplisterRow } from "./TopplisterRow"
-import { LonnRowPromoter } from "./LonnRowPromoter"
-import { EstimatedSalaryBand } from "./EstimatedSalaryBand"
 import { PromoterMalRow } from "./PromoterMalRow"
 import { TodayLeaderboardCard } from "./TodayDoorLeaderboard"
 
@@ -141,12 +139,9 @@ function PromoterDashboardInner() {
             <PromoterMalRow period={period} campaignId={campaignId} />
           </div>
 
-          {/* ═════════════════ Lønn (Phase 2+5 — feature-flagged real data) ═════════════════ */}
-          <div className="space-y-3">
-            <SectionHeader label={t("Lønn")} accent="teamleder" />
-            <LonnRowPromoter period={period} campaignId={campaignId} campaignName={selectedCampaign?.name} />
-            <EstimatedSalaryBand variant="promoter" period={period} campaignId={campaignId} />
-          </div>
+          {/* LØNN section removed from the promoter dashboard on the client's order
+              (09.11.2026). LonnRowPromoter / EstimatedSalaryBand stay in the repo for the
+              day it comes back. */}
 
           {/* ═════════════════ Topplister ═════════════════ */}
           <div>

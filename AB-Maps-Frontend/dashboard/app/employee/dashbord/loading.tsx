@@ -11,15 +11,6 @@ export default function Loading() {
           <div className="h-4 w-20 rounded bg-ab-elevated animate-pulse" />
           <div className="h-64 w-full rounded-2xl border border-ab-line bg-ab-elevated animate-pulse" />
         </div>
-        {/* LØNN section skeleton */}
-        <div className="space-y-3">
-          <div className="h-4 w-12 rounded bg-ab-elevated animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-28 rounded-2xl border border-ab-line bg-ab-elevated animate-pulse" />
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   )
