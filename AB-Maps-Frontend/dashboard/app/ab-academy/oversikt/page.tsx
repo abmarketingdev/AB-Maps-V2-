@@ -148,7 +148,12 @@ const LearningDashboard = () => {
         );
 
         setSections(sectionsWithLessons);
-        setGroupedData(groupedSections);
+        // The backend labels campaign-less training «General Training»; show it in Norwegian.
+        setGroupedData({
+          ...groupedSections,
+          campaigns: groupedSections.campaigns.map(c =>
+            !c.name || c.name === "General Training" ? { ...c, name: "Generell opplæring" } : c),
+        });
         
         // Set first campaign as active tab
         if (groupedSections.campaigns.length > 0 && activeCampaignTab === null) {
@@ -380,7 +385,14 @@ const LearningDashboard = () => {
   const activeCampaignSections = sections.filter(s => (s.campaign_id ?? 'general') === activeCampaignTab);
   const completedInCampaign = activeCampaignSections.filter(s => completedSections.has(s.id));
   const toCompleteInCampaign = activeCampaignSections.filter(s => !completedSections.has(s.id));
-  const overallPercent = progress?.overall_progress_percent ?? 0;
+  // Every number on this page comes from the sections shown + this learner's completed lessons
+  // (/me/progress/raw/), so the ring, «x av y leksjoner», the campaign list and the module cards agree.
+  const lessonsOf = (list: LearningSection[]) => list.flatMap(s => s.lessons || []);
+  const pctOf = (list: LearningSection[]) => {
+    const ls = lessonsOf(list);
+    return ls.length ? Math.round((100 * ls.filter(l => completedLessons.has(l.id)).length) / ls.length) : 0;
+  };
+  const overallPercent = pctOf(sections);
   const userName = userData?.first_name || userOverview?.first_name || user?.username?.split('.')[0] || 'Bruker';
   
   // Get learning streak and stats from detailed progress
@@ -388,8 +400,8 @@ const LearningDashboard = () => {
   const totalTimeMinutes = currentPath?.total_learning_time_minutes ?? Math.round((detailedProgress?.lesson_progress?.total_time_spent || 0) / 60);
   const lastLearningDate = currentPath?.last_learning_date;
   const quizAvgScore = detailedProgress?.quiz_stats?.avg_score ?? 0;
-  const lessonsCompleted = detailedProgress?.lesson_progress?.completed_lessons ?? 0;
-  const totalLessons = detailedProgress?.lesson_progress?.total_lessons ?? 0;
+  const lessonsCompleted = lessonsOf(sections).filter(l => completedLessons.has(l.id)).length;
+  const totalLessons = lessonsOf(sections).length;
 
   return (
     <div className="h-[100dvh] bg-[#F7F7F5] text-[#0A0A0A] flex flex-col overflow-hidden">
@@ -461,10 +473,10 @@ const LearningDashboard = () => {
               <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Aktive kampanjer</h3>
               {groupedData?.campaigns?.map((c) => {
                 const key = c.id ?? 'general';
-                const cp = progress?.campaigns?.find(x => (x.campaign_id ?? 'general') === key);
-                const pct = cp?.progress_percent ?? 0;
-                const total = cp?.total_sections ?? c.sections?.length ?? 1;
-                const completed = cp?.completed_sections ?? 0;
+                const campSections = sections.filter(s => (s.campaign_id ?? 'general') === key);
+                const pct = pctOf(campSections);
+                const total = campSections.length || c.sections?.length || 0;
+                const completed = campSections.filter(s => completedSections.has(s.id)).length;
                 const isActive = activeCampaignTab === key;
                 return (
                   <button
@@ -559,7 +571,7 @@ const LearningDashboard = () => {
                     )}
                     <div className="text-right px-4 py-2 bg-white rounded-lg border border-black/[0.08] shadow-sm">
                       <span className="block text-xs text-neutral-500 font-medium uppercase">Progresjon</span>
-                      <span className="block text-sm font-bold">{Math.round(campaignProgress?.progress_percent ?? 0)}%</span>
+                      <span className="block text-sm font-bold">{pctOf(activeCampaignSections)}%</span>
                     </div>
                   </div>
                 </div>
@@ -591,7 +603,7 @@ const LearningDashboard = () => {
                   </div>
                 )}
                 
-                <div className="flex gap-1 border-b border-black/[0.08] overflow-x-auto">
+                <div className="flex gap-1 border-b border-black/[0.08] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {(['moduler', 'ressurser', 'diskusjoner', 'sertifikater'] as const).map((t) => (
                     <button key={t} onClick={() => setMainTab(t)} className={cn("px-3 md:px-4 py-2.5 text-sm font-medium relative top-[1px] whitespace-nowrap border-b-2 transition-colors", mainTab === t ? "border-emerald-600 text-[#0A0A0A]" : "border-transparent text-neutral-500 hover:text-[#0A0A0A]")}>
                       {t === 'moduler' && 'Moduler'}
@@ -629,7 +641,7 @@ const LearningDashboard = () => {
                               key={section.id}
                               onClick={() => isUnlocked && handleSectionClick(section)}
                               className={cn(
-                                "group bg-white border rounded-xl p-5 min-h-[13rem] md:h-56 flex flex-col justify-between relative overflow-hidden cursor-pointer transition-all shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-md",
+                                "group bg-white border rounded-xl p-5 min-h-[13rem] h-full flex flex-col justify-between relative overflow-hidden cursor-pointer transition-all shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-md",
                                 isUnlocked ? "border-black/[0.08] hover:border-emerald-300" : "border-black/[0.08] opacity-70 select-none cursor-not-allowed"
                               )}
                             >
@@ -647,7 +659,7 @@ const LearningDashboard = () => {
                                     <span className="material-symbols-outlined text-neutral-400">lock</span>
                                   )}
                                 </div>
-                                <h4 className="text-base md:text-lg font-bold leading-tight mb-2">{section.title}</h4>
+                                <h4 className="text-base md:text-lg font-bold leading-tight mb-2 line-clamp-2">{section.title}</h4>
                                 <p className="text-xs md:text-sm text-neutral-500 line-clamp-2">{section.description || 'Start denne modulen for å lære mer.'}</p>
                               </div>
                               <div className="flex items-center justify-between mt-4 pt-3 md:pt-4 border-t border-dashed border-black/[0.08]">
@@ -687,7 +699,7 @@ const LearningDashboard = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                         {completedInCampaign.map((section) => (
-                          <div key={section.id} onClick={() => handleSectionClick(section)} className="group bg-white border border-black/[0.08] rounded-xl p-4 h-44 md:h-48 flex flex-col justify-between cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-colors">
+                          <div key={section.id} onClick={() => handleSectionClick(section)} className="group bg-white border border-black/[0.08] rounded-xl p-4 min-h-[11rem] h-full flex flex-col justify-between cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-colors">
                             <div>
                               <div className="flex justify-between items-start mb-3">
                                 <div className="size-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
