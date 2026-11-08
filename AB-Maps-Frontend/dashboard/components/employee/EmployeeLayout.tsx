@@ -22,6 +22,7 @@ import {
   Bell,
   Menu,
   BarChart2,
+  CalendarDays,
   MapPinned,
   GraduationCap,
   ChevronsLeft,
@@ -69,6 +70,7 @@ const NAV_ITEM_BASE = cn(
 const WORK_ITEMS: EmpNavItem[] = [
   { href: "/employee/dashbord", title: "Dashbord", icon: <Home className="h-4 w-4" /> },
   { href: "/employee/stats", title: "Min statistikk", icon: <BarChart2 className="h-4 w-4" /> },
+  { href: "/employee/kalender", title: "Kalender", icon: <CalendarDays className="h-4 w-4" /> },
 ];
 
 export function EmployeeLayout({

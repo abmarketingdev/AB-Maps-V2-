@@ -32,6 +32,9 @@ export interface MoveRequestRef {
   status: MoveStatus
   from_date: string
   to_date: string
+  /** only on /week/ days (own calendar) */
+  reason?: string | null
+  decline_reason?: string | null
 }
 
 export interface DayCell {
@@ -184,7 +187,14 @@ interface WireDay {
   shift: { id: string; team_id: string; team_name: string; no_show: boolean; can_edit: boolean } | null
   goals: { doors: number | null; givers: number | null; source: "override" | "default" } | null
   actual: Actual | null
-  move_request: { id: string; status: MoveStatus; from_date: string; to_date: string } | null
+  move_request: {
+    id: string
+    status: MoveStatus
+    from_date: string
+    to_date: string
+    reason?: string
+    decline_reason?: string
+  } | null
 }
 
 interface WireMember {
@@ -235,8 +245,27 @@ function mapDay(d: WireDay): DayCell {
           status: d.move_request.status,
           from_date: d.move_request.from_date,
           to_date: d.move_request.to_date,
+          reason: d.move_request.reason ?? null,
+          decline_reason: d.move_request.decline_reason ?? null,
         }
       : null,
+  }
+}
+
+function mapRequest(r: WireRequest): MoveRequest {
+  return {
+    id: r.id,
+    team_id: r.team_id,
+    team_name: r.team_name,
+    person_id: r.person.person_id,
+    person_name: r.person.name,
+    from_date: r.from_date,
+    to_date: r.to_date,
+    reason: r.reason || null,
+    status: r.status,
+    created_at: r.requested_at,
+    decided_by_name: r.decided_by_name,
+    decline_reason: r.decline_reason || null,
   }
 }
 
@@ -348,20 +377,7 @@ const liveApi: SchedulingApi = {
     const q = new URLSearchParams({ team: teamId })
     if (status) q.set("status", status)
     const rows = await call<WireRequest[]>(`move-requests/?${q}`)
-    return rows.map((r) => ({
-      id: r.id,
-      team_id: r.team_id,
-      team_name: r.team_name,
-      person_id: r.person.person_id,
-      person_name: r.person.name,
-      from_date: r.from_date,
-      to_date: r.to_date,
-      reason: r.reason || null,
-      status: r.status,
-      created_at: r.requested_at,
-      decided_by_name: r.decided_by_name,
-      decline_reason: r.decline_reason || null,
-    }))
+    return rows.map(mapRequest)
   },
 
   approveMove: (id) => call<void>(`move-requests/${encodeURIComponent(id)}/approve/`, { method: "POST" }),
@@ -389,3 +405,43 @@ export const schedulingApi: SchedulingApi = new Proxy({} as SchedulingApi, {
       resolveApi().then((api) => (api[prop] as (...a: unknown[]) => Promise<unknown>)(...args))
   },
 })
+
+// ── Own calendar («Min kalender», promoter): /week/, own requests, own day goal ──
+// Same wire format as above; kept apart from SchedulingApi so the leader mock
+// stays untouched. No mock: the preview page passes its own OwnCalendarApi.
+
+export interface WeekResult {
+  person: { person_type: PersonType; person_id: string; name: string } | null
+  today: string
+  from: string
+  to: string
+  teams: { team_id: string; name: string }[]
+  days: DayCell[]
+}
+
+export interface OwnCalendarApi {
+  week(from: string, days: number): Promise<WeekResult>
+  myRequests(): Promise<MoveRequest[]>
+  requestMove(shiftId: string, toDate: string, reason: string): Promise<MoveRequest>
+  cancelMove(id: string): Promise<void>
+  /** null = back to the default goal. Returns the day as the backend now sees it. */
+  setOwnGoals(shiftId: string, goals: { doors: number | null; givers: number | null } | null): Promise<DayCell>
+}
+
+export const ownCalendarApi: OwnCalendarApi = {
+  week: async (from, days) => {
+    const w = await call<Omit<WeekResult, "days"> & { days: WireDay[] }>(`week/?from=${from}&days=${days}`)
+    return { ...w, days: w.days.map(mapDay) }
+  },
+  myRequests: async () => (await call<WireRequest[]>("move-requests/?mine=1")).map(mapRequest),
+  requestMove: async (shiftId, toDate, reason) =>
+    mapRequest(await call<WireRequest>("move-requests/", json("POST", { shift_id: shiftId, to_date: toDate, reason }))),
+  cancelMove: (id) => call<void>(`move-requests/${encodeURIComponent(id)}/cancel/`, { method: "POST" }),
+  setOwnGoals: async (shiftId, goals) =>
+    mapDay(
+      await call<WireDay>(
+        `shifts/${encodeURIComponent(shiftId)}/`,
+        json("PATCH", { goal_doors: goals?.doors ?? null, goal_givers: goals?.givers ?? null }),
+      ),
+    ),
+}

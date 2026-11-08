@@ -37,7 +37,6 @@ import LoadingIndicator from './components/ui/LoadingIndicator';
 import Toast from './components/ui/Toast';
 import MarkerDeletePopup from './components/ui/MarkerDeletePopup';
 import EmployeeToolbar from './components/ui/EmployeeToolbar';
-import CalendarButton from './components/calendar/CalendarButton';
 import AnimatedSearchBar from './components/ui/AnimatedSearchBar';
 import LocationStatus from './components/ui/LocationStatus';
 import CampaignSelector from './components/ui/CampaignSelector';
@@ -1655,8 +1654,6 @@ function App() {
             loadingCarriers={loadingCarriers}
           />
 
-          {/* Kalender: own week, goals and move requests (lazy chunk, opens over the map) */}
-          <CalendarButton />
           {position ? (
             <MapContainer
               center={position}
