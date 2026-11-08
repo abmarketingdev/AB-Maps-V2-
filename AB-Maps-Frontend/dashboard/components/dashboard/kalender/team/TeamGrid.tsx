@@ -44,9 +44,17 @@ interface TeamGridProps {
   selectedKey: string | null
   onOpen: (member: GridMember, cell: DayCell, el: HTMLElement) => void
   scrollRef?: React.RefObject<HTMLDivElement | null>
+  /** phone: the day whose column is shown as a list */
+  phoneDay: string
+  onPhoneDay: (date: string) => void
 }
 
-export function TeamGrid({ dates, today, members, editable, selectedKey, onOpen, scrollRef }: TeamGridProps) {
+const DOT: Record<string, string> = {
+  done: "bg-[#16A34A] dark:bg-[#3ECF8E]", plan: "bg-[#2563EB] dark:bg-[#3B82F6]", swap: "bg-[#D97706] dark:bg-[#F5A524]",
+  noshow: "bg-[#DC2626] dark:bg-[#EF4444]", today: "bg-[#EA580C] dark:bg-[#F97316]",
+}
+
+export function TeamGrid({ dates, today, members, editable, selectedKey, onOpen, scrollRef, phoneDay, onPhoneDay }: TeamGridProps) {
   const past = dates[0] <= today   // current or past week → results in the totals column
   const colSub = dates.map((d) => {
     let doors = 0, on = 0
@@ -61,7 +69,50 @@ export function TeamGrid({ dates, today, members, editable, selectedKey, onOpen,
   })
 
   return (
-    <div ref={scrollRef} className="overflow-x-auto overscroll-x-contain" role="grid" aria-label="Vaktkalender">
+    <>
+    {/* phone: one day at a time, every person as a row */}
+    <div className="flex flex-col gap-2 px-3 pb-4 pt-3 md:hidden">
+      <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Velg dag">
+        {dates.map((d, i) => {
+          const { day } = cardDate(d)
+          const on = d === phoneDay
+          const dots = members.map((m) => { const c = m.days.find((x) => x.date === d); if (!c) return null; const k = kindOf(c, today); return k === "off" || (k === "today" && !c.shift_id) ? null : k }).filter(Boolean).slice(0, 5) as string[]
+          return (
+            <button key={d} type="button" role="tab" aria-selected={on} onClick={() => onPhoneDay(d)}
+              className={cn("flex min-h-[62px] w-[52px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[12px] border", on ? "border-ab-fg bg-ab-fg text-ab-base" : d === today ? "border-[#EA580C] bg-ab-elevated dark:border-[#F97316]" : "border-ab-line bg-ab-elevated")}>
+              <span className={cn("text-[11px] font-semibold", on ? "opacity-80" : "text-ab-fg-2")}>{day}</span>
+              <span className="text-[15px] font-bold">{Number(d.slice(8, 10))}</span>
+              <span className="flex h-1 gap-[2px]">{dots.map((k, j) => <i key={j} className={cn("block h-1 w-1 rounded-full", on ? "bg-ab-base/70" : DOT[k])} />)}</span>
+            </button>
+          )
+        })}
+      </div>
+      <div className="flex items-baseline justify-between px-0.5 text-[12px] text-ab-fg-2">
+        <span className="font-semibold text-ab-fg">{cardDate(phoneDay).day} {cardDate(phoneDay).date}{phoneDay === today ? " · I dag" : ""}</span>
+        <span>{colSub[dates.indexOf(phoneDay)] ?? ""}</span>
+      </div>
+      {members.map((m) => {
+        const cell = m.days.find((x) => x.date === phoneDay)
+        if (!cell) return null
+        return (
+          <div key={m.person_id} className="flex items-stretch gap-2.5">
+            <div className="flex w-[118px] shrink-0 items-center gap-2 overflow-hidden">
+              <Avatar name={m.name} size={30} />
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-[13px] font-semibold" title={m.name}>{m.name.split(" ")[0]}</span>
+                <span className="truncate text-[11px] text-ab-fg-3">{m.default_goals ? `${fmtNum(m.default_goals.doors)}/${fmtNum(m.default_goals.givers)}` : "Uten mål"}</span>
+              </div>
+            </div>
+            <div className="min-w-0 flex-1">
+              <TeamCell cell={cell} name={m.name} today={today} editable={editable && (cell.shift_id === null || cell.shift_editable)} selected={selectedKey === `${m.person_id}|${cell.date}`} onOpen={(c, el) => onOpen(m, c, el)} />
+            </div>
+          </div>
+        )
+      })}
+      {members.length === 0 && <div className="py-6 text-center text-[13px] text-ab-fg-2">Ingen på teamet.</div>}
+    </div>
+
+    <div ref={scrollRef} className="hidden overflow-x-auto overscroll-x-contain md:block" role="grid" aria-label="Vaktkalender">
       <div className="flex flex-col gap-1.5 px-3.5 pb-4 pt-2 max-lg:min-w-[980px]">
         <div className="sticky top-0 z-10 grid items-end gap-1.5 bg-ab-elevated py-2 pb-1.5" style={GRID} role="row">
           <div className="sticky left-0 z-[6] bg-ab-elevated pl-1.5 text-[12px] text-ab-fg-2" role="columnheader">Promotør og fast mål</div>
@@ -122,6 +173,7 @@ export function TeamGrid({ dates, today, members, editable, selectedKey, onOpen,
         })}
       </div>
     </div>
+    </>
   )
 }
 

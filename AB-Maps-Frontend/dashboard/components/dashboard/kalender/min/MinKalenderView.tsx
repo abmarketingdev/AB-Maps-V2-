@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { AlertTriangle, CalendarDays, ChevronRight, RefreshCw } from "lucide-react"
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import { ownCalendarApi, type DayCell, type MoveRequest, type OwnCalendarApi } from "@/lib/api/scheduling"
@@ -48,8 +48,12 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
   const isMobile = useIsMobile()
   const [today, setToday] = React.useState(() => osloToday())
   const monday = mondayOf(today)
+  // Which three weeks are shown: 0 = this week + two ahead; ‹ › move one week at a time.
+  const [offset, setOffset] = React.useState(0)
+  const windowStart = addDays(monday, offset * 7)
 
-  const [days, setDays] = React.useState<DayCell[] | null>(null)
+  const [days, setDays] = React.useState<DayCell[] | null>(null)         // the shown window
+  const [baseDays, setBaseDays] = React.useState<DayCell[] | null>(null) // this week + two (hero, stats)
   const [person, setPerson] = React.useState<{ name: string } | null | undefined>(undefined)
   const [teams, setTeams] = React.useState<{ team_id: string; name: string }[]>([])
   const [requests, setRequests] = React.useState<MoveRequest[] | null>(null)
@@ -71,13 +75,17 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
     setLoading(true)
     setLoadError(null)
     try {
-      const [w, r] = await Promise.all([
-        api.week(mondayOf(t), WEEKS * 7),
+      const base = mondayOf(t)
+      const start = addDays(base, offset * 7)
+      const [w, win, r] = await Promise.all([
+        api.week(base, WEEKS * 7),
+        offset === 0 ? null : api.week(start, WEEKS * 7),
         api.myRequests().catch(() => null),
       ])
       if (my !== seq.current) return
       if (w.today && w.today !== t) setToday(w.today)
-      setDays(w.days)
+      setBaseDays(w.days)
+      setDays(win ? win.days : w.days)
       setPerson(w.person ? { name: w.person.name } : null)
       setTeams(w.teams)
       setRequests(r)
@@ -87,7 +95,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
     } finally {
       if (my === seq.current) setLoading(false)
     }
-  }, [api])
+  }, [api, offset])
 
   React.useEffect(() => {
     load()
@@ -102,18 +110,18 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
   const cell = selected ? byDate.get(selected) ?? null : null
 
   const defaults = React.useMemo<Defaults>(() => {
-    const d = (days ?? []).find((x) => x.goals?.source === "default")
+    const d = [...(baseDays ?? []), ...(days ?? [])].find((x) => x.goals?.source === "default")
     return d?.goals ? { doors: d.goals.doors, givers: d.goals.givers } : { doors: null, givers: null }
-  }, [days])
+  }, [days, baseDays])
 
-  const weekDays = (days ?? []).filter((d) => d.date >= monday && d.date < addDays(monday, 7))
+  const weekDays = (baseDays ?? []).filter((d) => d.date >= monday && d.date < addDays(monday, 7))
   const shiftsThisWeek = weekDays.filter((d) => d.shift_id !== null).length
   const doorsThisWeek = weekDays.reduce((n, d) => n + (d.actual?.doors ?? 0), 0)
   const giversThisWeek = weekDays.reduce((n, d) => n + (d.actual?.ja ?? 0), 0)
 
-  const todayCell = byDate.get(today) ?? null
+  const todayCell = (baseDays ?? []).find((d) => d.date === today) ?? null
   const nextShift =
-    (days ?? []).find(
+    (baseDays ?? []).find(
       (d) => d.date > today && d.shift_id !== null && !(d.move_request?.status === "venter" && d.move_request.from_date === d.date),
     ) ?? null
   const hero = React.useMemo(() => {
@@ -141,14 +149,15 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
   const weeks = React.useMemo(
     () =>
       Array.from({ length: WEEKS }, (_, i) => {
-        const start = addDays(monday, 7 * i)
+        const start = addDays(windowStart, 7 * i)
         const end = addDays(start, 6)
-        const label = i === 2 ? "Om to uker" : weekLabel(start, today)
+        const rel = weekLabel(start, today)
+        const label = offset === 0 && i === 2 ? "Om to uker" : rel
         const a = cardDate(start).date
         const b = cardDate(end).date
         return { start, label, sub: `Uke ${isoWeek(start)}, ${a} til ${b}`, cells: (days ?? []).filter((d) => d.date >= start && d.date <= end) }
       }),
-    [days, monday, today],
+    [days, windowStart, offset, today],
   )
 
   // ── actions ──────────────────────────────────────────────────────────────
@@ -164,6 +173,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
     setSelected(d.date)
     setMode("day")
   }
+  React.useEffect(() => { setSelected(null); setMode("day"); setChosen(null) }, [offset])
   const close = () => {
     setSelected(null)
     setMode("day")
@@ -219,16 +229,17 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
   const teamText = teams.length ? teams.map((t) => t.name).join(", ") : ""
   const fixedDays = React.useMemo(() => {
     // weekdays that are a shift in every shown week → «Faste dager mandag, tirsdag»
-    if (!days?.length) return ""
+    if (!baseDays?.length) return ""
     const names = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
     const out: string[] = []
     for (let wd = 0; wd < 7; wd++) {
-      const all = weeks.every((w) => w.cells[wd]?.shift_id || (w.cells[wd] && w.cells[wd].date < today && w.cells[wd].state !== "off"))
-      if (all && weeks.length === WEEKS) out.push(names[wd])
+      const col = [0, 1, 2].map((i) => baseDays.find((d) => d.date === addDays(monday, i * 7 + wd)))
+      const all = col.every((c) => c && (c.shift_id || (c.date < today && c.state !== "off")))
+      if (all) out.push(names[wd])
     }
     if (!out.length) return ""
     return `Faste dager ${out.length > 1 ? `${out.slice(0, -1).join(", ")} og ${out[out.length - 1]}` : out[0]}`
-  }, [days, weeks, today])
+  }, [baseDays, monday, today])
 
   const panelProps = {
     mode,
@@ -334,7 +345,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
                 </div>
               )}
               {hero.open && (
-                <Btn className="h-12 w-full md:h-11 md:w-auto md:px-4 md:text-[14px]" onClick={() => { const d = byDate.get(hero.open!); if (d) open(d) }}>
+                <Btn className="h-12 w-full md:h-11 md:w-auto md:px-4 md:text-[14px]" onClick={() => { const d = byDate.get(hero.open!) ?? (baseDays ?? []).find((x) => x.date === hero.open); if (d) { if (!byDate.has(d.date)) setOffset(0); open(d) } }}>
                   <span className="md:hidden">Bytt dag eller endre mål</span><span className="hidden md:inline">Åpne vakten</span>
                 </Btn>
               )}
@@ -363,7 +374,9 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
         {/* phone: week tabs + the days that matter (client screen) */}
         {person !== null && days && (
           <div className="flex flex-col gap-3 md:hidden">
-            <div className="grid grid-cols-3 gap-1 rounded-[14px] border border-ab-line bg-ab-subtle p-1" role="tablist" aria-label="Velg uke">
+            <div className="flex items-center gap-1">
+              <button type="button" aria-label="Forrige uke" onClick={() => setOffset((o) => o - 1)} className="flex h-12 w-10 shrink-0 items-center justify-center rounded-[12px] border border-ab-line bg-ab-elevated text-ab-fg-2"><ChevronLeft className="h-4 w-4" /></button>
+            <div className="grid flex-1 grid-cols-3 gap-1 rounded-[14px] border border-ab-line bg-ab-subtle p-1" role="tablist" aria-label="Velg uke">
               {weeks.map((w, i) => (
                 <button key={w.start} type="button" role="tab" aria-selected={mobWeek === i} onClick={() => setMobWeek(i)}
                   className={cn("flex min-h-[48px] flex-col items-center justify-center rounded-[11px] px-1", mobWeek === i ? "bg-ab-elevated text-ab-fg shadow-sm" : "text-ab-fg-2")}>
@@ -372,6 +385,9 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
                 </button>
               ))}
             </div>
+              <button type="button" aria-label="Neste uke" onClick={() => setOffset((o) => o + 1)} className="flex h-12 w-10 shrink-0 items-center justify-center rounded-[12px] border border-ab-line bg-ab-elevated text-ab-fg-2"><ChevronRight className="h-4 w-4" /></button>
+            </div>
+            {offset !== 0 && <button type="button" onClick={() => setOffset(0)} className="self-center text-[13px] font-semibold text-ab-accent">Tilbake til denne uken</button>}
             <div className="flex flex-col gap-2">
               {(() => {
                 const w = weeks[mobWeek]
@@ -407,6 +423,14 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
                   Velg den nye dagen direkte i kalenderen. Ledige dager er markert med stiplet blå ramme.
                 </div>
               )}
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="text-[12px] text-ab-fg-3">{offset === 0 ? "Denne uken og to uker frem" : `Uke ${isoWeek(windowStart)}–${isoWeek(addDays(windowStart, 14))}`}</span>
+                <div className="flex items-center gap-1">
+                  {offset !== 0 && <button type="button" onClick={() => setOffset(0)} className="h-8 rounded-[10px] border border-ab-line bg-ab-elevated px-2.5 text-[12px] font-semibold text-ab-fg-2 hover:bg-ab-hover">I dag</button>}
+                  <button type="button" aria-label="Forrige uke" onClick={() => setOffset((o) => o - 1)} className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-ab-line bg-ab-elevated text-ab-fg-2 hover:bg-ab-hover"><ChevronLeft className="h-4 w-4" /></button>
+                  <button type="button" aria-label="Neste uke" onClick={() => setOffset((o) => o + 1)} className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-ab-line bg-ab-elevated text-ab-fg-2 hover:bg-ab-hover"><ChevronRight className="h-4 w-4" /></button>
+                </div>
+              </div>
               {loadError && days && (
                 <div role="status" className="mt-2.5 flex items-center gap-2 rounded-[12px] border border-[#F0D28A] bg-[#FFF6E0] px-3.5 py-2 text-[13px] text-[#6B4600] dark:border-[#78350F] dark:bg-[#271A05] dark:text-[#FCD34D]">
                   <AlertTriangle className="h-4 w-4 shrink-0" /> Viser sist hentede data. {loadError}

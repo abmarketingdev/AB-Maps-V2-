@@ -16,7 +16,7 @@ import {
   type TeamGrid as Grid,
   type TeamsResult,
 } from "@/lib/api/scheduling"
-import { addDays, isoWeek, mondayOf, osloToday, range } from "../dates"
+import { addDays, isoWeek, longDate, mondayOf, osloToday, range } from "../dates"
 import { fmtNum, fmtPct } from "../states"
 import { GoalsDialog } from "../GoalsDialog"
 import { Surface } from "../Surface"
@@ -120,6 +120,9 @@ export function TeamKalenderView() {
   const reload = () => { if (teamId) { invalidate(teamId); fetchGrid(teamId, weekStart, { silent: true }) } }
 
   const [onlyActive, setOnlyActive] = React.useState(false)
+  // phone day view: today when it is in the shown week, else Monday
+  const [phoneDay, setPhoneDay] = React.useState(today)
+  React.useEffect(() => { setPhoneDay(dates.includes(today) ? today : dates[0]) }, [dates, today])
   const members = React.useMemo(() => {
     const all = grid?.members ?? []
     if (!onlyActive) return all
@@ -364,7 +367,7 @@ export function TeamKalenderView() {
           <div className="flex flex-wrap items-start gap-5">
             <div className="flex min-w-0 flex-[999_1_960px] flex-col rounded-[16px] border border-ab-line bg-ab-elevated dark:border-[#25272C] dark:bg-[#131416]">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ab-line-1 px-[18px] py-3.5 dark:border-[#222428]">
-                <div className="flex flex-wrap items-center gap-4 text-[12px] text-ab-fg-2">
+                <div className="hidden flex-wrap items-center gap-4 text-[12px] text-ab-fg-2 md:flex">
                   {[["bg-[#16A34A] dark:bg-[#3ECF8E]", "Nådde givermål"], ["bg-[#D97706] dark:bg-[#F5A524]", "Under givermål"], ["bg-ab-subtle border border-ab-line-2 dark:bg-[#2A2D33] dark:border-[#4A4E57]", "Planlagt vakt"], ["border border-dashed border-[#D97706] dark:border-[#F5A524]", "Ønsker bytte"], ["bg-[#DC2626] dark:bg-[#EF4444]", "Ikke møtt"]].map(([c, l]) => (
                     <span key={l} className="flex items-center gap-1.5"><span className={cn("h-2.5 w-2.5 rounded-[3px]", c)} aria-hidden />{l}</span>
                   ))}
@@ -385,6 +388,8 @@ export function TeamKalenderView() {
                   selectedKey={sel ? `${sel.pid}|${sel.date}` : null}
                   onOpen={(m, c) => setSel({ pid: m.person_id, date: c.date })}
                   scrollRef={scrollRef}
+                  phoneDay={phoneDay}
+                  onPhoneDay={setPhoneDay}
                 />
               )}
               <div className="border-t border-ab-line-1 px-[18px] py-3 text-[12px] text-ab-fg-3 dark:border-[#222428]">
@@ -407,7 +412,7 @@ export function TeamKalenderView() {
       </div>
 
       {isMobile && (
-        <Surface open={Boolean(selMember && selCell)} onOpenChange={(o) => { if (!o) setSel(null) }} title={selMember?.name ?? ""} description={selCell ? `${isoWeek(selCell.date) ? `Uke ${isoWeek(selCell.date)}` : ""}` : undefined}>
+        <Surface open={Boolean(selMember && selCell)} onOpenChange={(o) => { if (!o) setSel(null) }} title={selMember?.name ?? ""} description={selCell ? `${longDate(selCell.date).charAt(0).toUpperCase()}${longDate(selCell.date).slice(1)}, uke ${isoWeek(selCell.date)}` : undefined}>
           <div className="flex flex-col gap-3.5"><DayDetail {...detailProps} withHeader={false} /></div>
         </Surface>
       )}
