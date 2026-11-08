@@ -147,6 +147,9 @@ function Stepper({
   onChange: (v: number) => void
   id: string
 }) {
+  // Typed value mirrors `value`; the − / + buttons and a typed number both end in onChange.
+  const [text, setText] = React.useState(String(value))
+  React.useEffect(() => { setText((t) => (t === "" || Number(t) === value ? t : String(value))) }, [value])
   return (
     <div className="flex items-center justify-between gap-2 rounded-[14px] bg-ab-subtle py-1.5 pl-4 pr-1.5">
       <span id={id} className="text-[14px] font-semibold text-ab-fg">{label}</span>
@@ -159,7 +162,22 @@ function Stepper({
         >
           <Minus className="h-4 w-4" />
         </button>
-        <span className="min-w-[48px] text-center text-[20px] font-bold tabular-nums text-ab-fg" aria-live="polite">{value}</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          aria-labelledby={id}
+          value={text}
+          onFocus={(e) => e.currentTarget.select()}
+          onChange={(e) => {
+            // digits only, max 3; empty while typing is fine, it becomes 0 on blur
+            const raw = e.target.value.replace(/\D/g, "").slice(0, 3)
+            setText(raw)
+            if (raw !== "") onChange(Math.min(MAX_GOAL, Number(raw)))
+          }}
+          onBlur={() => { if (text === "") { setText("0"); onChange(0) } }}
+          className="h-11 w-[64px] rounded-[12px] border border-transparent bg-transparent text-center text-[20px] font-bold tabular-nums text-ab-fg focus:border-ab-accent focus:bg-ab-elevated focus:outline-none"
+        />
         <button
           type="button"
           aria-label={`Flere ${label.toLowerCase()}`}
