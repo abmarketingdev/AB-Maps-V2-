@@ -184,11 +184,34 @@ export function TeamKalenderView() {
   const [planOpen, setPlanOpen] = React.useState(false)
   const [goalsOpen, setGoalsOpen] = React.useState(false)
   const [copying, setCopying] = React.useState(false)
+  // Planned days the view knows about: the cached weeks plus whatever the Planlegg
+  // dialog asked for (its whole period, in 42-day chunks = the API's maximum).
+  const [extraKnown, setExtraKnown] = React.useState<Set<string>>(new Set())
+  const loadedRanges = React.useRef(new Set<string>())
+  const ensureLoaded = React.useCallback((start: string, end: string) => {
+    if (!teamId) return
+    const tid = teamId
+    const chunks: [string, string][] = []
+    for (let from = mondayOf(start); from <= end; from = addDays(from, 42)) chunks.push([from, addDays(from, 41) < end ? addDays(from, 41) : addDays(mondayOf(end), 6)])
+    for (const [from, to] of chunks) {
+      const key = `${tid}|${from}|${to}`
+      if (loadedRanges.current.has(key)) continue
+      loadedRanges.current.add(key)
+      schedulingApi.grid(tid, from, to).then((g) => {
+        setExtraKnown((prev) => {
+          const n = new Set(prev)
+          for (const m of g.members) for (const c of m.days) if (c.shift_id) n.add(`${m.person_id}|${c.date}`)
+          return n
+        })
+      }).catch(() => loadedRanges.current.delete(key))
+    }
+  }, [teamId])
+  React.useEffect(() => { loadedRanges.current.clear(); setExtraKnown(new Set()) }, [teamId])
   const known = React.useMemo(() => {
-    const s = new Set<string>()
+    const s = new Set<string>(extraKnown)
     for (const g of cache.current.values()) for (const m of g.members) for (const c of m.days) if (c.shift_id) s.add(`${m.person_id}|${c.date}`)
     return s
-  }, [grid, planOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [grid, planOpen, extraKnown]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const submitPlan = async (shifts: ShiftKey[], goal: { doors: number | null; givers: number | null } | null) => {
     try {
@@ -206,6 +229,7 @@ export function TeamKalenderView() {
       }
       const notes = [res.skipped ? `${res.skipped} var allerede planlagt og ble beholdt.` : "", res.skipped_other_team ? `${res.skipped_other_team} er planlagt av et annet team.` : ""].filter(Boolean)
       toast({ title: `${res.created} ${res.created === 1 ? "vakt" : "vakter"} opprettet`, description: notes.join(" ") || undefined })
+      loadedRanges.current.clear(); setExtraKnown(new Set())
       reload()
     } catch (e) { toast({ title: "Kunne ikke planlegge", description: errMsg(e), variant: "destructive" }); throw e }
   }
@@ -390,7 +414,7 @@ export function TeamKalenderView() {
 
       {grid && (
         <>
-          <PlanWeeksDialog open={planOpen} onOpenChange={setPlanOpen} members={grid.members} today={today} known={known} onSubmit={submitPlan} />
+          <PlanWeeksDialog open={planOpen} onOpenChange={setPlanOpen} members={grid.members} today={today} known={known} ensureLoaded={ensureLoaded} onSubmit={submitPlan} />
           <GoalsDialog open={goalsOpen} onOpenChange={setGoalsOpen} members={grid.members} teamName={team?.name ?? ""} onSubmit={submitGoals} />
         </>
       )}
