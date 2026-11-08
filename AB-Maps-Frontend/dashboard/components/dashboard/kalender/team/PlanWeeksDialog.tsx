@@ -201,11 +201,11 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
             </span>
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-6" role="radiogroup" aria-label="Periode">
-            <button type="button" role="radio" aria-checked={mode === "all"} onClick={() => setMode("all")}
+            <button type="button" role="radio" aria-checked={mode === "all"} onClick={() => { setMode("all"); setTouched(false) }}
               className={cn(TILE, mode === "all" ? TILE_ON : TILE_OFF)}>
               <span className="flex items-center gap-1.5 text-[13px] font-semibold"><InfinityIcon className="h-4 w-4" aria-hidden />Alle uker</span><span className="text-[11px] text-ab-fg-3">{ALL_WEEKS} uker frem, fra denne uken</span>
             </button>
-            <button type="button" role="radio" aria-checked={mode === "range"} onClick={() => setMode("range")}
+            <button type="button" role="radio" aria-checked={mode === "range"} onClick={() => { setMode("range"); setTouched(false) }}
               className={cn(TILE, mode === "range" ? TILE_ON : TILE_OFF)}>
               <span className="flex items-center gap-1.5 text-[13px] font-semibold"><CalendarRange className="h-4 w-4" aria-hidden />Velg datoer</span><span className="text-[11px] text-ab-fg-3">{mode === "range" && rangeOk ? `Uke ${isoWeek(rFrom)} til ${isoWeek(rTo)}` : "Fra en dato til en dato"}</span>
             </button>
@@ -215,7 +215,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
               const on = mode === "weeks" && startOff === o
               const sub = o === 0 ? (passed ? "Passert" : `Denne uken, fra ${shortDate(mon)}`) : o === 1 ? `Neste uke, fra ${shortDate(mon)}` : `fra ${shortDate(mon)}`
               return (
-                <button key={o} type="button" role="radio" aria-checked={on} disabled={passed} onClick={() => { setMode("weeks"); setStartOff(o) }}
+                <button key={o} type="button" role="radio" aria-checked={on} disabled={passed} onClick={() => { setMode("weeks"); setStartOff(o); setTouched(false) }}
                   className={cn(TILE, on ? TILE_ON : TILE_OFF, "disabled:opacity-50")}>
                   <span className="text-[13px] font-semibold">Uke {isoWeek(mon)}</span><span className="text-[11px] text-ab-fg-3">{sub}</span>
                 </button>
@@ -225,19 +225,19 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
           <div className="flex items-center justify-between gap-2">
             <span className="text-[12px] text-ab-fg-3">{mode === "weeks" ? "Antall uker fra valgt uke" : mode === "all" ? `Hele perioden, ${ALL_WEEKS} uker` : "Perioden følger datoene"}</span>
             <div className={cn("flex items-center gap-1.5 rounded-[12px] border border-ab-line bg-ab-elevated p-1 dark:bg-[#1C1D21]", mode !== "weeks" && "opacity-50")}>
-              <button type="button" className={stepBtn} aria-label="Færre uker" disabled={mode !== "weeks"} onClick={() => setWeeks((w) => Math.max(1, w - 1))}><Minus className="h-4 w-4" /></button>
+              <button type="button" className={stepBtn} aria-label="Færre uker" disabled={mode !== "weeks"} onClick={() => { setWeeks((w) => Math.max(1, w - 1)); setTouched(false) }}><Minus className="h-4 w-4" /></button>
               <span className="min-w-[64px] text-center text-[13px] font-semibold">{weeks} {weeks === 1 ? "uke" : "uker"}</span>
-              <button type="button" className={stepBtn} aria-label="Flere uker" disabled={mode !== "weeks"} onClick={() => setWeeks((w) => Math.min(MAX_WEEKS, w + 1))}><Plus className="h-4 w-4" /></button>
+              <button type="button" className={stepBtn} aria-label="Flere uker" disabled={mode !== "weeks"} onClick={() => { setWeeks((w) => Math.min(MAX_WEEKS, w + 1)); setTouched(false) }}><Plus className="h-4 w-4" /></button>
             </div>
           </div>
           {mode === "range" && (
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1 text-[12px] text-ab-fg-2">Fra dato
-                <input type="date" value={rFrom} min={minFrom} max={maxTo} onChange={(e) => setRFrom(e.target.value)} className={DATE} />
+                <input type="date" value={rFrom} min={minFrom} max={maxTo} onChange={(e) => { setRFrom(e.target.value); setTouched(false) }} className={DATE} />
                 {rFrom && <span className="text-[11px] text-ab-fg-3">Uke {isoWeek(rFrom)}</span>}
               </label>
               <label className="flex flex-col gap-1 text-[12px] text-ab-fg-2">Til dato
-                <input type="date" value={rTo} min={rFrom || minFrom} max={maxTo} onChange={(e) => setRTo(e.target.value)} className={DATE} />
+                <input type="date" value={rTo} min={rFrom || minFrom} max={maxTo} onChange={(e) => { setRTo(e.target.value); setTouched(false) }} className={DATE} />
                 {rTo && <span className="text-[11px] text-ab-fg-3">Uke {isoWeek(rTo)}</span>}
               </label>
             </div>

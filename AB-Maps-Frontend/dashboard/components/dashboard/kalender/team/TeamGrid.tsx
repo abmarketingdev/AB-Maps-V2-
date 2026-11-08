@@ -64,7 +64,7 @@ export function TeamGrid({ dates, today, members, editable, selectedKey, onOpen,
       if (c.shift_id) on++
       if (c.actual) doors += c.actual.doors
     }
-    if (d < today) return doors ? `${fmtNum(doors)} dører` : "Ingen vakter"
+    if (d < today) return doors ? `${fmtNum(doors)} dører` : on ? "0 dører" : "Ingen vakter"
     return on ? `${on} på vakt` : "Ingen på vakt"
   })
 
