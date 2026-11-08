@@ -7,7 +7,7 @@ import type { GridMember, ShiftKey } from "@/lib/api/scheduling"
 import { DAY_CHIP, addDays, daysBetween, isoWeek, mondayOf, shortDate } from "../dates"
 import { Surface } from "../Surface"
 import { Avatar } from "./Avatar"
-import { BLUE_BTN, Btn2, GREY_BTN } from "./SidePanel"
+import { BLUE_BTN, Btn2, GREY_BTN, RED_BTN } from "./SidePanel"
 
 // «Planlegg arbeidsdager» after the client's dialog (08 Nov): 1 period (start
 // week + number of weeks), 2 who works which days (presets + one row per
@@ -25,11 +25,11 @@ interface Props {
   onOpenChange: (o: boolean) => void
   members: GridMember[]
   today: string
-  /** dates already planned, "person|date" (what the view has loaded) */
-  known: Set<string>
+  /** planned days the view knows, "person|date" → shift id */
+  known: Map<string, string>
   /** ask the view to load the grid for the whole period, so «finnes allerede» is exact */
   ensureLoaded: (start: string, end: string) => void
-  onSubmit: (shifts: ShiftKey[], goal: { doors: number | null; givers: number | null } | null) => Promise<void>
+  onSubmit: (shifts: ShiftKey[], goal: { doors: number | null; givers: number | null } | null, removeIds: string[]) => Promise<void>
 }
 
 export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ensureLoaded, onSubmit }: Props) {
@@ -41,6 +41,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
   const [weeks, setWeeks] = React.useState(2)
   const [on, setOn] = React.useState<Set<string>>(new Set())
   const [days, setDays] = React.useState<Map<string, Set<number>>>(new Map())
+  const [touched, setTouched] = React.useState(false)
   const [goalMode, setGoalMode] = React.useState<"fast" | "same">("fast")
   const [gDoors, setGDoors] = React.useState("")
   const [gGivers, setGGivers] = React.useState("")
@@ -56,12 +57,13 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
     setStartOff(1)
     setWeeks(2)
     setOn(new Set(ref.current.map((m) => m.person_id)))
-    setDays(new Map(ref.current.map((m) => [m.person_id, new Set([0, 1, 2, 3, 4, 5])])))
+    setTouched(false)
     setGoalMode("fast")
     setGDoors("")
     setGGivers("")
   }, [open])
 
+  const markTouched = () => setTouched(true)
   const rangeOk = mode !== "range" || (rFrom !== "" && rTo !== "" && rFrom <= rTo && rTo >= today)
   const start = mode === "all" ? thisMon : mode === "range" ? (rFrom ? mondayOf(rFrom) : thisMon) : addDays(thisMon, startOff * 7)
   const end = mode === "all" ? addDays(thisMon, ALL_WEEKS * 7 - 1) : mode === "range" ? (rTo && rTo >= start ? rTo : start) : addDays(start, weeks * 7 - 1)
@@ -69,10 +71,29 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
   const minFrom = today
   const maxTo = addDays(today, 365)
 
-  const setAllDays = (set: number[]) => setDays(new Map(members.map((m) => [m.person_id, new Set(set)])))
-  const toggleDay = (pid: string, d: number) =>
-    setDays((prev) => { const n = new Map(prev); const s = new Set(n.get(pid) ?? []); s.has(d) ? s.delete(d) : s.add(d); n.set(pid, s); return n })
+  // Ticks = the current plan for the period (a weekday is on when that person has a shift on it
+  // in any week of the period); people without a plan get Mon–Sat. Recomputed until the user
+  // edits the grid, so the dialog always starts from what the calendar really has.
+  React.useEffect(() => {
+    if (!open || touched) return
+    const next = new Map<string, Set<number>>()
+    for (const m of members) {
+      const set = new Set<number>()
+      for (let w = 0; w < nWeeks; w++) for (let d = 0; d < 7; d++) {
+        const date = addDays(start, w * 7 + d)
+        if (date < today || date > end) continue
+        if (known.has(`${m.person_id}|${date}`)) set.add(d)
+      }
+      next.set(m.person_id, set.size ? set : new Set([0, 1, 2, 3, 4, 5]))
+    }
+    setDays(next)
+  }, [open, touched, members, nWeeks, start, end, today, known])
+
+  const setAllDays = (set: number[]) => { markTouched(); setDays(new Map(members.map((m) => [m.person_id, new Set(set)]))) }
+  const toggleDay = (pid: string, d: number) => { markTouched();
+    setDays((prev) => { const n = new Map(prev); const s = new Set(n.get(pid) ?? []); s.has(d) ? s.delete(d) : s.add(d); n.set(pid, s); return n }) }
   const toggleCol = (d: number) => {
+    markTouched()
     const every = members.every((m) => days.get(m.person_id)?.has(d))
     setDays((prev) => { const n = new Map(prev); for (const m of members) { const s = new Set(n.get(m.person_id) ?? []); every ? s.delete(d) : s.add(d); n.set(m.person_id, s) } return n })
   }
@@ -84,16 +105,28 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
     return () => clearTimeout(t)
   }, [open, rangeOk, start, end, ensureLoaded])
 
-  type PersonStat = { newN: number; existN: number; allExisting: Set<number> }
-  const { shifts, skipped, people, stats } = React.useMemo(() => {
+  type PersonStat = { newN: number; existN: number; removeN: number; allExisting: Set<number> }
+  const { shifts, skipped, people, stats, removeIds } = React.useMemo(() => {
     const out: ShiftKey[] = []
+    const removeIds: string[] = []
     let skip = 0
     const ppl = new Set<string>()
     const stats = new Map<string, PersonStat>()
     for (const m of members) {
       const set = days.get(m.person_id) ?? new Set<number>()
-      const st: PersonStat = { newN: 0, existN: 0, allExisting: new Set() }
+      const st: PersonStat = { newN: 0, existN: 0, removeN: 0, allExisting: new Set() }
       stats.set(m.person_id, st)
+      // unticked weekdays that are planned in the period → those shifts go
+      if (on.has(m.person_id)) for (let d = 0; d < 7; d++) {
+        if (set.has(d)) continue
+        for (let w = 0; w < nWeeks; w++) {
+          const date = addDays(start, w * 7 + d)
+          if (date < today || date > end) continue
+          if (mode === "range" && date < rFrom) continue
+          const id = known.get(`${m.person_id}|${date}`)
+          if (id) { removeIds.push(id); st.removeN++ }
+        }
+      }
       for (const d of set) {
         let inRange = 0, exist = 0
         for (let w = 0; w < nWeeks; w++) {
@@ -108,16 +141,16 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
         st.existN += exist
         st.newN += inRange - exist
       }
-      if (on.has(m.person_id)) { skip += st.existN; if (st.newN > 0) ppl.add(m.person_id) }
+      if (on.has(m.person_id)) { skip += st.existN; if (st.newN > 0 || st.removeN > 0) ppl.add(m.person_id) }
     }
-    return { shifts: out, skipped: skip, people: ppl.size, stats }
+    return { shifts: out, skipped: skip, people: ppl.size, stats, removeIds }
   }, [members, on, days, nWeeks, start, end, mode, rFrom, today, known])
 
   const submit = async () => {
     setBusy(true)
     try {
       const goal = goalMode === "same" && (gDoors !== "" || gGivers !== "") ? { doors: gDoors === "" ? null : Number(gDoors), givers: gGivers === "" ? null : Number(gGivers) } : null
-      await onSubmit(shifts, goal)
+      await onSubmit(shifts, goal, removeIds)
       onOpenChange(false)
     } catch { /* toast by the view */ } finally { setBusy(false) }
   }
@@ -139,17 +172,22 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
       onOpenChange={onOpenChange}
       size="lg"
       title="Planlegg arbeidsdager"
-      description="Legg inn faste vaktdager for teamet ditt, flere uker om gangen."
+      description="Sett vaktdagene for teamet ditt for en periode. Dager du legger til opprettes, dager du tar bort fjernes."
       footer={
         <div className="flex w-full flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col">
-            <span className="text-[14px] font-bold">{shifts.length} nye {shifts.length === 1 ? "vakt" : "vakter"} for {people} av {members.length} promotører</span>
-            {skipped > 0 && shifts.length === 0 && <span className="text-[12px] text-[#B45309] dark:text-[#F5B54A]">Ingenting nytt: de valgte dagene er allerede planlagt ({skipped}). Grå ruter = finnes fra før.</span>}
-            {skipped > 0 && shifts.length > 0 && <span className="text-[12px] text-[#B45309] dark:text-[#F5B54A]">{skipped} finnes allerede og beholdes (grå ruter)</span>}
+            <span className="text-[14px] font-bold">
+              {shifts.length} nye{removeIds.length > 0 ? `, ${removeIds.length} fjernes` : ""} · {people} av {members.length} promotører
+            </span>
+            {removeIds.length > 0 && <span className="text-[12px] text-[#B91C1C] dark:text-[#FCA5A5]">Dager du har tatt bort fjernes fra kalenderen ({removeIds.length}). Ventende bytter på de dagene avbrytes.</span>}
+            {skipped > 0 && shifts.length === 0 && removeIds.length === 0 && <span className="text-[12px] text-[#B45309] dark:text-[#F5B54A]">Ingen endring: planen er allerede slik ({skipped} vakter). Ta bort eller legg til dager for å endre den.</span>}
+            {skipped > 0 && (shifts.length > 0 || removeIds.length > 0) && <span className="text-[12px] text-ab-fg-3">{skipped} beholdes som de er (grå ruter)</span>}
           </div>
           <div className="flex gap-2">
             <Btn2 tone={GREY_BTN} onClick={() => onOpenChange(false)} disabled={busy}>Avbryt</Btn2>
-            <Btn2 tone={BLUE_BTN} onClick={submit} disabled={busy || shifts.length === 0 || !rangeOk}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : `Opprett ${shifts.length || ""} ${shifts.length === 1 ? "vakt" : "vakter"}`}</Btn2>
+            <Btn2 tone={removeIds.length > 0 && shifts.length === 0 ? RED_BTN : BLUE_BTN} onClick={submit} disabled={busy || (shifts.length === 0 && removeIds.length === 0) || !rangeOk}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : removeIds.length > 0 ? "Oppdater planen" : `Opprett ${shifts.length || ""} ${shifts.length === 1 ? "vakt" : "vakter"}`}
+            </Btn2>
           </div>
         </div>
       }
@@ -211,7 +249,11 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
             <Num n={2}>Hvem jobber hvilke dager</Num>
             <div className="flex flex-wrap gap-1.5">{presets.map(([l, set]) => <button key={l} type="button" onClick={() => setAllDays(set)} className="min-h-[32px] rounded-[8px] border border-ab-line bg-ab-elevated px-2.5 text-[12px] font-medium hover:bg-ab-hover dark:bg-[#1C1D21]">{l}</button>)}</div>
           </div>
-          <p className="m-0 text-[12px] text-ab-fg-3">Klikk en ukedag for å slå den av eller på for alle. Klikk en rute for å lage unntak for én person.</p>
+          <p className="m-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ab-fg-3">
+            <span>Rutene viser dagens plan. Slå dager av eller på; det du tar bort, fjernes.</span>
+            <span className="inline-flex items-center gap-1.5"><span className="inline-flex h-4 w-4 items-center justify-center rounded-[5px] bg-[#2563EB] text-white dark:bg-[#1D4F8A]"><Check className="h-2.5 w-2.5" strokeWidth={3} /></span>ny vakt</span>
+            <span className="inline-flex items-center gap-1.5"><span className="inline-flex h-4 w-4 items-center justify-center rounded-[5px] border border-dashed border-[#9CA3AF] bg-[#E5E7EB] text-[#374151] dark:border-[#6B7280] dark:bg-[#3A3D44] dark:text-[#E5E7EB]"><Check className="h-2.5 w-2.5" strokeWidth={3} /></span>finnes fra før</span>
+          </p>
           <div className="overflow-x-auto">
             <div className="min-w-[520px]">
               <div className="grid items-center gap-1" style={{ gridTemplateColumns: "minmax(160px, 1fr) repeat(7, 36px) 72px" }}>
@@ -243,7 +285,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
                               "flex h-8 w-8 items-center justify-center rounded-[8px] border transition-colors disabled:opacity-40",
                               !set.has(d) && "border-ab-line bg-transparent text-transparent hover:bg-ab-hover",
                               set.has(d) && !planned && "border-[#2563EB] bg-[#2563EB] text-white dark:border-[#2F6FB8] dark:bg-[#1D4F8A]",
-                              planned && "border-dashed border-ab-line-2 bg-ab-subtle text-ab-fg-3 dark:bg-[#24262B]",
+                              planned && "border-dashed border-[#9CA3AF] bg-[#E5E7EB] text-[#374151] dark:border-[#6B7280] dark:bg-[#3A3D44] dark:text-[#E5E7EB]",
                             )}>
                             <Check className="h-3.5 w-3.5" strokeWidth={3} />
                           </button>
@@ -255,7 +297,8 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
                         return (
                           <span className="text-right text-[11px] leading-tight">
                             <span className={st.newN ? "font-semibold text-ab-fg" : "text-ab-fg-3"}>{st.newN} {st.newN === 1 ? "ny" : "nye"}</span>
-                            {st.existN > 0 && <span className="block text-ab-fg-3">{st.existN} finnes</span>}
+                            {st.removeN > 0 && <span className="block font-semibold text-[#B91C1C] dark:text-[#FCA5A5]">{st.removeN} fjernes</span>}
+                            {st.existN > 0 && <span className="block text-ab-fg-3">{st.existN} beholdes</span>}
                           </span>
                         )
                       })()}

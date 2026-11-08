@@ -189,7 +189,7 @@ export function TeamKalenderView() {
   const [copying, setCopying] = React.useState(false)
   // Planned days the view knows about: the cached weeks plus whatever the Planlegg
   // dialog asked for (its whole period, in 42-day chunks = the API's maximum).
-  const [extraKnown, setExtraKnown] = React.useState<Set<string>>(new Set())
+  const [extraKnown, setExtraKnown] = React.useState<Map<string, string>>(new Map())
   const loadedRanges = React.useRef(new Set<string>())
   const ensureLoaded = React.useCallback((start: string, end: string) => {
     if (!teamId) return
@@ -202,23 +202,29 @@ export function TeamKalenderView() {
       loadedRanges.current.add(key)
       schedulingApi.grid(tid, from, to).then((g) => {
         setExtraKnown((prev) => {
-          const n = new Set(prev)
-          for (const m of g.members) for (const c of m.days) if (c.shift_id) n.add(`${m.person_id}|${c.date}`)
+          const n = new Map(prev)
+          for (const m of g.members) for (const c of m.days) if (c.shift_id) n.set(`${m.person_id}|${c.date}`, c.shift_id)
           return n
         })
       }).catch(() => loadedRanges.current.delete(key))
     }
   }, [teamId])
-  React.useEffect(() => { loadedRanges.current.clear(); setExtraKnown(new Set()) }, [teamId])
+  React.useEffect(() => { loadedRanges.current.clear(); setExtraKnown(new Map()) }, [teamId])
   const known = React.useMemo(() => {
-    const s = new Set<string>(extraKnown)
-    for (const g of cache.current.values()) for (const m of g.members) for (const c of m.days) if (c.shift_id) s.add(`${m.person_id}|${c.date}`)
+    const s = new Map<string, string>(extraKnown)
+    for (const g of cache.current.values()) for (const m of g.members) for (const c of m.days) if (c.shift_id && c.shift_id !== "pending") s.set(`${m.person_id}|${c.date}`, c.shift_id)
     return s
   }, [grid, planOpen, extraKnown]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const submitPlan = async (shifts: ShiftKey[], goal: { doors: number | null; givers: number | null } | null) => {
+  const submitPlan = async (shifts: ShiftKey[], goal: { doors: number | null; givers: number | null } | null, removeIds: string[]) => {
     try {
-      const res = await schedulingApi.createShifts(teamId!, shifts)
+      // days taken out of the plan go first (one call each; the backend cancels pending moves)
+      let removed = 0
+      for (let i = 0; i < removeIds.length; i += 10) {
+        const r = await Promise.allSettled(removeIds.slice(i, i + 10).map((id) => schedulingApi.deleteShift(id)))
+        removed += r.filter((x) => x.status === "fulfilled").length
+      }
+      const res = shifts.length ? await schedulingApi.createShifts(teamId!, shifts) : { created: 0, skipped: 0, skipped_other_team: 0 }
       if (goal && res.created > 0) {
         // the same goal on every new day: read the grid back and patch the new shifts
         invalidate(teamId!)
@@ -230,9 +236,9 @@ export function TeamKalenderView() {
           for (const m of g.members) for (const c of m.days) if (c.shift_id && shifts.some((k) => k.person_id === m.person_id && k.date === c.date) && c.goals?.source !== "override") await schedulingApi.setShiftGoals(c.shift_id, goal)
         }
       }
-      const notes = [res.skipped ? `${res.skipped} var allerede planlagt og ble beholdt.` : "", res.skipped_other_team ? `${res.skipped_other_team} er planlagt av et annet team.` : ""].filter(Boolean)
-      toast({ title: `${res.created} ${res.created === 1 ? "vakt" : "vakter"} opprettet`, description: notes.join(" ") || undefined })
-      loadedRanges.current.clear(); setExtraKnown(new Set())
+      const notes = [removed ? `${removed} ${removed === 1 ? "vakt" : "vakter"} fjernet.` : "", res.skipped ? `${res.skipped} var allerede planlagt og ble beholdt.` : "", res.skipped_other_team ? `${res.skipped_other_team} er planlagt av et annet team.` : ""].filter(Boolean)
+      toast({ title: res.created ? `${res.created} ${res.created === 1 ? "vakt" : "vakter"} opprettet` : "Planen er oppdatert", description: notes.join(" ") || undefined })
+      loadedRanges.current.clear(); setExtraKnown(new Map())
       reload()
     } catch (e) { toast({ title: "Kunne ikke planlegge", description: errMsg(e), variant: "destructive" }); throw e }
   }
