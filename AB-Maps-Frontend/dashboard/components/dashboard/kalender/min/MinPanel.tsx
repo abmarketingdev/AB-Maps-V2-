@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { ArrowLeftRight, ArrowRight, Check, ChevronLeft, Minus, Plus, Target, X } from "lucide-react"
+import { ArrowLeftRight, ArrowRight, Check, ChevronLeft, ChevronRight, Minus, Plus, Target, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { DayCell } from "@/lib/api/scheduling"
-import { addDays, cardDate, longDate } from "../dates"
+import { addDays, cardDate, isoWeek, longDate, mondayOf, weekLabel } from "../dates"
 import { doorsWord, fmtNum, fmtPct, giversWord } from "../states"
 import { Btn } from "../Surface"
 import { goalText } from "./MinDayCard"
@@ -112,8 +112,25 @@ function ActionRow({
         <span className="text-[14px] font-semibold text-ab-fg">{title}</span>
         <span className="text-[12px] text-ab-fg-2">{sub}</span>
       </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-ab-fg-3" aria-hidden />
     </button>
   )
+}
+
+/** Free days grouped per week: «Neste uke, uke 46», «Uke 47» … */
+function groupWeeks(days: DayCell[], today: string): { monday: string; label: string; days: DayCell[] }[] {
+  const out: { monday: string; label: string; days: DayCell[] }[] = []
+  for (const c of days) {
+    const monday = mondayOf(c.date)
+    let g = out.find((x) => x.monday === monday)
+    if (!g) {
+      const rel = weekLabel(monday, today)
+      g = { monday, label: rel.startsWith("Uke") ? rel : `${rel}, uke ${isoWeek(monday)}`, days: [] }
+      out.push(g)
+    }
+    g.days.push(c)
+  }
+  return out
 }
 
 function Chip({ on, onClick, children, className }: { on: boolean; onClick: () => void; children: React.ReactNode; className?: string }) {
@@ -408,13 +425,35 @@ function MoveBody(p: MinPanelProps) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-[13px] font-semibold text-ab-fg-2">Ledige dager</span>
         {free.length ? (
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Ledige dager">
-            {free.slice(0, 14).map((c) => (
-              <Chip key={c.date} on={to === c.date} onClick={() => p.onChoose(to === c.date ? null : c.date)}>
-                {dayShort(c.date)}
-              </Chip>
+          <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="Ledige dager">
+            {groupWeeks(free.slice(0, 21), today).map((g) => (
+              <div key={g.monday} className="flex flex-col gap-1.5">
+                <span className="text-[13px] font-semibold text-ab-fg-2">{g.label}</span>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {g.days.map((c) => {
+                    const { day, date } = cardDate(c.date)
+                    const on = to === c.date
+                    return (
+                      <button
+                        key={c.date}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => p.onChoose(on ? null : c.date)}
+                        className={cn(
+                          "flex min-h-[52px] flex-col items-center justify-center rounded-[12px] border transition-colors",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ab-accent",
+                          on ? "border-ab-accent bg-ab-accent text-ab-on-accent" : "border-ab-line-2 bg-ab-elevated text-ab-fg hover:bg-ab-hover",
+                        )}
+                      >
+                        <span className="text-[13px] font-bold">{day}</span>
+                        <span className={cn("text-[11px]", on ? "opacity-85" : "text-ab-fg-2")}>{date}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -469,7 +508,7 @@ function MoveBody(p: MinPanelProps) {
       </div>
       <span className="text-[12px] leading-[1.5] text-ab-fg-2">Salgssjefen må godkjenne byttet. Til da står den opprinnelige vakten.</span>
       <Btn variant="primary" className="h-12 md:h-12" disabled={!ok} onClick={() => to && p.onSendMove(to, reasonText)}>
-        {p.busy ? "Sender…" : ok ? "Send bytte til salgssjef" : "Velg ny dag"}
+        {p.busy ? "Sender…" : ok ? "Send bytte til salgssjef" : "Velg ny dag først"}
       </Btn>
     </>
   )

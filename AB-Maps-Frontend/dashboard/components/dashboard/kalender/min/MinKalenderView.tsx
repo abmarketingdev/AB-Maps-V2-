@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { AlertTriangle, CalendarDays, RefreshCw } from "lucide-react"
+import { AlertTriangle, CalendarDays, ChevronRight, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import { ownCalendarApi, type DayCell, type MoveRequest, type OwnCalendarApi } from "@/lib/api/scheduling"
@@ -124,13 +124,15 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
         date: cap(longDate(today)),
         sub: `${goalText(todayCell)} · ${fmtNum(d)} ${doorsWord(d)} så langt`,
         open: today,
+        goals: todayCell.goals,
       }
     }
     if (nextShift) {
-      return { label: "Du er fri i dag, neste vakt", date: cap(longDate(nextShift.date)), sub: goalText(nextShift), open: nextShift.date }
+      return { label: "Du er fri i dag, neste vakt", date: cap(longDate(nextShift.date)), sub: goalText(nextShift), open: nextShift.date, goals: nextShift.goals }
     }
-    return { label: "Ingen planlagte vakter", date: "Ingen vakt", sub: "Salgssjefen legger inn arbeidsdagene dine.", open: null }
+    return { label: "Ingen planlagte vakter", date: "Ingen vakt", sub: "Salgssjefen legger inn arbeidsdagene dine.", open: null, goals: null }
   }, [todayCell, nextShift, today])
+  const [mobWeek, setMobWeek] = React.useState(0)
 
   const picking = mode === "move" && cell
     ? { from: cell.date, chosen, allowed: (d: string) => d <= addDays(today, MOVE_MAX_AHEAD) }
@@ -262,10 +264,10 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
       <div className="mx-auto flex max-w-[1400px] flex-col gap-5">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
+          <div className="flex w-full items-center gap-3.5 md:w-auto">
             <span
               aria-hidden
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1F4A3A] text-[15px] font-bold text-white dark:bg-[#2D6A52]"
+              className="order-2 ml-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1F4A3A] text-[15px] font-bold text-white dark:bg-[#2D6A52] md:order-none md:ml-0"
             >
               {initials(name)}
             </span>
@@ -278,7 +280,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
           </div>
           <div className="flex flex-wrap items-center gap-2 text-[12px] text-ab-fg-2">
             {LEGEND.map((k) => (
-              <span key={k} className="flex items-center gap-1.5 rounded-[16px] border border-ab-line bg-ab-elevated px-2.5 py-1.5">
+              <span key={k} className="hidden items-center gap-1.5 rounded-[16px] border border-ab-line bg-ab-elevated px-2.5 py-1.5 md:flex">
                 <span aria-hidden className={cn("h-2.5 w-2.5 rounded-[3px]", TONES[k].dot)} />
                 {TONES[k].label}
               </span>
@@ -315,40 +317,91 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
         {/* Top cards */}
         {(days || loading) && person !== null && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <div className="col-span-2 flex flex-wrap items-center justify-between gap-3.5 rounded-[16px] border border-ab-line bg-ab-elevated px-[18px] py-4">
+            <div className="col-span-2 flex flex-col gap-3 rounded-[16px] border border-ab-line bg-ab-elevated px-[18px] py-4 md:flex-row md:flex-wrap md:items-center md:justify-between">
               <div className="flex flex-col gap-1">
                 <span className="flex items-center gap-2 text-[12px] font-semibold text-ab-fg-2">
                   <span aria-hidden className="h-2 w-2 rounded-full bg-[#2563EB] dark:bg-[#3B82F6]" />
                   {hero.label}
                 </span>
-                <span className="text-[20px] font-bold leading-tight tracking-tight md:text-[22px]">{hero.date}</span>
-                <span className="text-[13px] text-ab-fg-2">{hero.sub}</span>
+                <span className="text-[22px] font-bold leading-tight tracking-tight">{hero.date}</span>
+                <span className="hidden text-[13px] text-ab-fg-2 md:block">{hero.sub}</span>
               </div>
+              {/* phone: the two goals as tiles (client screen) */}
               {hero.open && (
-                <Btn className="h-11 md:h-11 md:px-4 md:text-[14px]" onClick={() => { const d = byDate.get(hero.open!); if (d) open(d) }}>
-                  Åpne vakten
+                <div className="grid grid-cols-2 gap-2 md:hidden">
+                  <div className="rounded-[12px] bg-ab-subtle px-3.5 py-2.5"><div className="text-[12px] text-ab-fg-2">Mål dører</div><div className="text-[22px] font-bold tabular-nums">{fmtNum(hero.goals?.doors ?? null)}</div></div>
+                  <div className="rounded-[12px] bg-ab-subtle px-3.5 py-2.5"><div className="text-[12px] text-ab-fg-2">Mål givere</div><div className="text-[22px] font-bold tabular-nums">{fmtNum(hero.goals?.givers ?? null)}</div></div>
+                </div>
+              )}
+              {hero.open && (
+                <Btn className="h-12 w-full md:h-11 md:w-auto md:px-4 md:text-[14px]" onClick={() => { const d = byDate.get(hero.open!); if (d) open(d) }}>
+                  <span className="md:hidden">Bytt dag eller endre mål</span><span className="hidden md:inline">Åpne vakten</span>
                 </Btn>
               )}
             </div>
-            <div className="flex flex-col gap-1 rounded-[16px] border border-ab-line bg-ab-elevated px-[18px] py-4">
+            <div className="hidden flex-col gap-1 rounded-[16px] border border-ab-line bg-ab-elevated px-[18px] py-4 md:flex">
               <span className="text-[12px] text-ab-fg-2">Dører uke {isoWeek(monday)}</span>
               <span className="text-[24px] font-bold tabular-nums">{fmtNum(doorsThisWeek)}</span>
               <span className="text-[12px] text-ab-fg-2">{shiftsThisWeek} {shiftsThisWeek === 1 ? "vakt" : "vakter"}</span>
             </div>
-            <div className="flex flex-col gap-1 rounded-[16px] border border-ab-line bg-ab-elevated px-[18px] py-4">
+            <div className="hidden flex-col gap-1 rounded-[16px] border border-ab-line bg-ab-elevated px-[18px] py-4 md:flex">
               <span className="text-[12px] text-ab-fg-2">Givere uke {isoWeek(monday)}</span>
               <span className="text-[24px] font-bold tabular-nums">{fmtNum(giversThisWeek)}</span>
               <span className="text-[12px] text-ab-fg-2">
                 {defaults.givers !== null ? `Mål ${fmtNum(defaults.givers)} per vakt` : "Mål ikke satt"}
               </span>
             </div>
+            {/* phone: three small numbers */}
+            <div className="col-span-2 grid grid-cols-3 gap-2 md:hidden">
+              {[[`Vakter uke ${isoWeek(monday)}`, String(shiftsThisWeek)], ["Dører", fmtNum(doorsThisWeek)], ["Givere", fmtNum(giversThisWeek)]].map(([k, v]) => (
+                <div key={k} className="flex flex-col gap-0.5 rounded-[14px] border border-ab-line bg-ab-elevated px-3 py-2.5"><span className="truncate text-[12px] text-ab-fg-2">{k}</span><span className="text-[20px] font-bold tabular-nums">{v}</span></div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* phone: week tabs + the days that matter (client screen) */}
+        {person !== null && days && (
+          <div className="flex flex-col gap-3 md:hidden">
+            <div className="grid grid-cols-3 gap-1 rounded-[14px] border border-ab-line bg-ab-subtle p-1" role="tablist" aria-label="Velg uke">
+              {weeks.map((w, i) => (
+                <button key={w.start} type="button" role="tab" aria-selected={mobWeek === i} onClick={() => setMobWeek(i)}
+                  className={cn("flex min-h-[48px] flex-col items-center justify-center rounded-[11px] px-1", mobWeek === i ? "bg-ab-elevated text-ab-fg shadow-sm" : "text-ab-fg-2")}>
+                  <span className="text-[13px] font-semibold">{w.label}</span>
+                  <span className="text-[11px] text-ab-fg-3">{w.sub.replace(/^Uke \d+, /, "")}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-col gap-2">
+              {(() => {
+                const w = weeks[mobWeek]
+                const rows = w ? w.cells.filter((c) => c.shift_id || (c.actual?.doors ?? 0) > 0 || c.move_request?.status === "venter" || c.date === today) : []
+                if (!rows.length) return <div className="rounded-[14px] border border-ab-line bg-ab-elevated px-4 py-5 text-center text-[13px] text-ab-fg-2">Ingen vakter denne uken.</div>
+                return rows.map((c) => {
+                  const m = modelFor(c, today, null)
+                  const { day, date } = cardDate(c.date)
+                  const t = TONES[m.tone]
+                  return (
+                    <button key={c.date} type="button" disabled={!m.clickable} onClick={() => open(c)} aria-label={`${longDate(c.date)}, ${m.title}${m.sub ? `, ${m.sub}` : ""}`}
+                      className={cn("flex w-full items-center gap-3 rounded-[12px] border px-3 py-2.5 text-left", t.card, m.clickable ? "active:bg-ab-hover" : "")}>
+                      <span className="flex w-[48px] shrink-0 flex-col leading-tight"><span className="text-[14px] font-bold">{day}</span><span className="text-[12px] text-ab-fg-2">{date}</span></span>
+                      <span aria-hidden className={cn("h-9 w-1 shrink-0 rounded-full", t.stripe, m.tone === "muted" && "bg-ab-line-2")} />
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5"><span className={cn("truncate text-[14px] font-semibold", t.title)}>{m.title}</span>{m.sub && <span className="text-[12px] text-ab-fg-2">{m.sub}</span>}</span>
+                      {m.badge && <span className="rounded-[6px] bg-[#EA580C] px-1.5 py-0.5 text-[10px] font-bold text-white dark:bg-[#F97316]">{m.badge}</span>}
+                      {m.clickable && <ChevronRight className="h-4 w-4 shrink-0 text-ab-fg-3" aria-hidden />}
+                    </button>
+                  )
+                })
+              })()}
+            </div>
+            <p className="m-0 px-1 text-[12px] leading-[1.5] text-ab-fg-2">{fixedDays ? `${fixedDays}. ` : ""}Trykk på en vakt for å bytte dag eller endre dagsmålet.</p>
           </div>
         )}
 
         {person !== null && (
           <div className="flex flex-wrap items-start gap-5">
             {/* Calendar */}
-            <div className="flex min-w-0 flex-[999_1_640px] flex-col rounded-[18px] border border-ab-line bg-ab-elevated px-3 pb-4 pt-2 md:px-[18px] md:pb-[18px]">
+            <div className="hidden min-w-0 flex-[999_1_640px] flex-col rounded-[18px] border border-ab-line bg-ab-elevated px-3 pb-4 pt-2 md:flex md:px-[18px] md:pb-[18px]">
               {picking && (
                 <div className="mt-2.5 hidden rounded-[12px] border border-[#B9D1F7] bg-[#E8F0FD] px-3.5 py-2.5 text-[13px] font-semibold text-[#1650A8] lg:block dark:border-[#1E3A8A] dark:bg-[#0E1A33] dark:text-[#93C5FD]">
                   Velg den nye dagen direkte i kalenderen. Ledige dager er markert med stiplet blå ramme.
