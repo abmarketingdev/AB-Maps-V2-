@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Check, Loader2, Minus, Plus } from "lucide-react"
+import { CalendarRange, Check, Infinity as InfinityIcon, Loader2, Minus, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { GridMember, ShiftKey } from "@/lib/api/scheduling"
-import { DAY_CHIP, addDays, isoWeek, mondayOf, shortDate } from "../dates"
+import { DAY_CHIP, addDays, daysBetween, isoWeek, mondayOf, shortDate } from "../dates"
 import { Surface } from "../Surface"
 import { Avatar } from "./Avatar"
 import { BLUE_BTN, Btn2, GREY_BTN } from "./SidePanel"
@@ -15,6 +15,10 @@ import { BLUE_BTN, Btn2, GREY_BTN } from "./SidePanel"
 // Days already planned are left alone by the backend and reported as skipped.
 
 const MAX_WEEKS = 8
+// «Alle uker»: the pattern for the next half year (the backend takes dates up to a year ahead;
+// a chief re-runs this when the team changes).
+const ALL_WEEKS = 26
+type Mode = "weeks" | "all" | "range"
 
 interface Props {
   open: boolean
@@ -28,6 +32,9 @@ interface Props {
 
 export function PlanWeeksDialog({ open, onOpenChange, members, today, known, onSubmit }: Props) {
   const thisMon = mondayOf(today)
+  const [mode, setMode] = React.useState<Mode>("weeks")
+  const [rFrom, setRFrom] = React.useState("")
+  const [rTo, setRTo] = React.useState("")
   const [startOff, setStartOff] = React.useState(1)
   const [weeks, setWeeks] = React.useState(2)
   const [on, setOn] = React.useState<Set<string>>(new Set())
@@ -41,6 +48,9 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, onS
   ref.current = members
   React.useEffect(() => {
     if (!open) return
+    setMode("weeks")
+    setRFrom("")
+    setRTo("")
     setStartOff(1)
     setWeeks(2)
     setOn(new Set(ref.current.map((m) => m.person_id)))
@@ -50,8 +60,12 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, onS
     setGGivers("")
   }, [open])
 
-  const start = addDays(thisMon, startOff * 7)
-  const end = addDays(start, weeks * 7 - 1)
+  const rangeOk = mode !== "range" || (rFrom !== "" && rTo !== "" && rFrom <= rTo && rTo >= today)
+  const start = mode === "all" ? thisMon : mode === "range" ? (rFrom ? mondayOf(rFrom) : thisMon) : addDays(thisMon, startOff * 7)
+  const end = mode === "all" ? addDays(thisMon, ALL_WEEKS * 7 - 1) : mode === "range" ? (rTo && rTo >= start ? rTo : start) : addDays(start, weeks * 7 - 1)
+  const nWeeks = Math.max(1, Math.ceil((daysBetween(start, end) + 1) / 7))
+  const minFrom = today
+  const maxTo = addDays(today, 365)
 
   const setAllDays = (set: number[]) => setDays(new Map(members.map((m) => [m.person_id, new Set(set)])))
   const toggleDay = (pid: string, d: number) =>
@@ -69,16 +83,17 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, onS
     for (const m of members) {
       if (!on.has(m.person_id)) continue
       const set = days.get(m.person_id) ?? new Set<number>()
-      for (let w = 0; w < weeks; w++) for (const d of set) {
+      for (let w = 0; w < nWeeks; w++) for (const d of set) {
         const date = addDays(start, w * 7 + d)
-        if (date < today) continue
+        if (date < today || date > end) continue
+        if (mode === "range" && date < rFrom) continue
         if (known.has(`${m.person_id}|${date}`)) { skip++; continue }
         out.push({ person_id: m.person_id, person_type: m.person_kind, date })
         ppl.add(m.person_id)
       }
     }
     return { shifts: out, skipped: skip, people: ppl.size }
-  }, [members, on, days, weeks, start, today, known])
+  }, [members, on, days, nWeeks, start, end, mode, rFrom, today, known])
 
   const submit = async () => {
     setBusy(true)
@@ -91,6 +106,10 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, onS
 
   const num = (v: string) => v.replace(/\D/g, "").slice(0, 3)
   const stepBtn = "flex h-10 w-10 items-center justify-center rounded-[10px] border border-ab-line-2 bg-ab-elevated hover:bg-ab-hover dark:border-[#2F3238] dark:bg-[#24262B]"
+  const TILE = "flex min-h-[56px] min-w-0 flex-col items-start justify-center gap-0.5 rounded-[10px] border px-3 text-left"
+  const TILE_ON = "border-[#2563EB] bg-[#EFF6FF] dark:border-[#3B82F6] dark:bg-[#0E1A33]"
+  const TILE_OFF = "border-ab-line bg-ab-elevated hover:bg-ab-hover dark:bg-[#1C1D21]"
+  const DATE = "h-11 rounded-[10px] border border-ab-line-2 bg-ab-elevated px-3 text-[14px] text-ab-fg focus:border-[#3B9EFF] focus:outline-none dark:bg-[#1C1D21]"
   const Num = ({ n, children }: { n: number; children: React.ReactNode }) => (
     <div className="flex items-center gap-2 text-[13px] font-semibold"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-ab-subtle text-[11px] text-ab-fg-2 dark:bg-[#24262B]">{n}</span>{children}</div>
   )
@@ -111,34 +130,61 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, onS
           </div>
           <div className="flex gap-2">
             <Btn2 tone={GREY_BTN} onClick={() => onOpenChange(false)} disabled={busy}>Avbryt</Btn2>
-            <Btn2 tone={BLUE_BTN} onClick={submit} disabled={busy || shifts.length === 0}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : `Opprett ${shifts.length || ""} ${shifts.length === 1 ? "vakt" : "vakter"}`}</Btn2>
+            <Btn2 tone={BLUE_BTN} onClick={submit} disabled={busy || shifts.length === 0 || !rangeOk}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : `Opprett ${shifts.length || ""} ${shifts.length === 1 ? "vakt" : "vakter"}`}</Btn2>
           </div>
         </div>
       }
     >
       <div className="flex flex-col gap-5">
         <section className="flex flex-col gap-2.5">
-          <div className="flex items-center justify-between"><Num n={1}>Periode</Num><span className="text-[12px] font-medium text-[#2563EB] dark:text-[#7CB8FF]">Uke {isoWeek(start)}{weeks > 1 ? ` til ${isoWeek(end)}` : ""}, {shortDate(start)} til {shortDate(end)}</span></div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-1 gap-1.5" role="radiogroup" aria-label="Startuke">
-              {[0, 1, 2, 3].map((o) => {
-                const mon = addDays(thisMon, o * 7)
-                const passed = o === 0 && addDays(mon, 6) < today
-                const sub = o === 0 ? (passed ? "Passert" : `Denne uken, fra ${shortDate(mon)}`) : o === 1 ? `Neste uke, fra ${shortDate(mon)}` : `fra ${shortDate(mon)}`
-                return (
-                  <button key={o} type="button" role="radio" aria-checked={startOff === o} disabled={passed} onClick={() => setStartOff(o)}
-                    className={cn("flex min-h-[48px] flex-1 flex-col items-start justify-center rounded-[10px] border px-3 text-left disabled:opacity-50", startOff === o ? "border-[#2563EB] bg-[#EFF6FF] dark:border-[#3B82F6] dark:bg-[#0E1A33]" : "border-ab-line bg-ab-elevated hover:bg-ab-hover dark:bg-[#1C1D21]")}>
-                    <span className="text-[13px] font-semibold">Uke {isoWeek(mon)}</span><span className="text-[11px] text-ab-fg-3">{sub}</span>
-                  </button>
-                )
-              })}
-            </div>
-            <div className="flex items-center gap-1.5 rounded-[12px] border border-ab-line bg-ab-elevated p-1 dark:bg-[#1C1D21]">
-              <button type="button" className={stepBtn} aria-label="Færre uker" onClick={() => setWeeks((w) => Math.max(1, w - 1))}><Minus className="h-4 w-4" /></button>
+          <div className="flex items-center justify-between gap-2">
+            <Num n={1}>Periode</Num>
+            <span className="text-right text-[12px] font-medium text-[#2563EB] dark:text-[#7CB8FF]">
+              {mode === "range" && !rangeOk ? "Velg fra- og til-dato" : `Uke ${isoWeek(start)}${nWeeks > 1 ? ` til ${isoWeek(end)}` : ""}, ${shortDate(mode === "range" ? rFrom : start)} til ${shortDate(end)}`}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-6" role="radiogroup" aria-label="Periode">
+            <button type="button" role="radio" aria-checked={mode === "all"} onClick={() => setMode("all")}
+              className={cn(TILE, mode === "all" ? TILE_ON : TILE_OFF)}>
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold"><InfinityIcon className="h-4 w-4" aria-hidden />Alle uker</span><span className="text-[11px] text-ab-fg-3">{ALL_WEEKS} uker frem, fra denne uken</span>
+            </button>
+            <button type="button" role="radio" aria-checked={mode === "range"} onClick={() => setMode("range")}
+              className={cn(TILE, mode === "range" ? TILE_ON : TILE_OFF)}>
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold"><CalendarRange className="h-4 w-4" aria-hidden />Velg datoer</span><span className="text-[11px] text-ab-fg-3">{mode === "range" && rangeOk ? `Uke ${isoWeek(rFrom)} til ${isoWeek(rTo)}` : "Fra en dato til en dato"}</span>
+            </button>
+            {[0, 1, 2, 3].map((o) => {
+              const mon = addDays(thisMon, o * 7)
+              const passed = o === 0 && addDays(mon, 6) < today
+              const on = mode === "weeks" && startOff === o
+              const sub = o === 0 ? (passed ? "Passert" : `Denne uken, fra ${shortDate(mon)}`) : o === 1 ? `Neste uke, fra ${shortDate(mon)}` : `fra ${shortDate(mon)}`
+              return (
+                <button key={o} type="button" role="radio" aria-checked={on} disabled={passed} onClick={() => { setMode("weeks"); setStartOff(o) }}
+                  className={cn(TILE, on ? TILE_ON : TILE_OFF, "disabled:opacity-50")}>
+                  <span className="text-[13px] font-semibold">Uke {isoWeek(mon)}</span><span className="text-[11px] text-ab-fg-3">{sub}</span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[12px] text-ab-fg-3">{mode === "weeks" ? "Antall uker fra valgt uke" : mode === "all" ? `Hele perioden, ${ALL_WEEKS} uker` : "Perioden følger datoene"}</span>
+            <div className={cn("flex items-center gap-1.5 rounded-[12px] border border-ab-line bg-ab-elevated p-1 dark:bg-[#1C1D21]", mode !== "weeks" && "opacity-50")}>
+              <button type="button" className={stepBtn} aria-label="Færre uker" disabled={mode !== "weeks"} onClick={() => setWeeks((w) => Math.max(1, w - 1))}><Minus className="h-4 w-4" /></button>
               <span className="min-w-[64px] text-center text-[13px] font-semibold">{weeks} {weeks === 1 ? "uke" : "uker"}</span>
-              <button type="button" className={stepBtn} aria-label="Flere uker" onClick={() => setWeeks((w) => Math.min(MAX_WEEKS, w + 1))}><Plus className="h-4 w-4" /></button>
+              <button type="button" className={stepBtn} aria-label="Flere uker" disabled={mode !== "weeks"} onClick={() => setWeeks((w) => Math.min(MAX_WEEKS, w + 1))}><Plus className="h-4 w-4" /></button>
             </div>
           </div>
+          {mode === "range" && (
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex flex-col gap-1 text-[12px] text-ab-fg-2">Fra dato
+                <input type="date" value={rFrom} min={minFrom} max={maxTo} onChange={(e) => setRFrom(e.target.value)} className={DATE} />
+                {rFrom && <span className="text-[11px] text-ab-fg-3">Uke {isoWeek(rFrom)}</span>}
+              </label>
+              <label className="flex flex-col gap-1 text-[12px] text-ab-fg-2">Til dato
+                <input type="date" value={rTo} min={rFrom || minFrom} max={maxTo} onChange={(e) => setRTo(e.target.value)} className={DATE} />
+                {rTo && <span className="text-[11px] text-ab-fg-3">Uke {isoWeek(rTo)}</span>}
+              </label>
+            </div>
+          )}
         </section>
 
         <section className="flex flex-col gap-2.5">
