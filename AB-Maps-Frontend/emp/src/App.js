@@ -37,6 +37,7 @@ import LoadingIndicator from './components/ui/LoadingIndicator';
 import Toast from './components/ui/Toast';
 import MarkerDeletePopup from './components/ui/MarkerDeletePopup';
 import EmployeeToolbar from './components/ui/EmployeeToolbar';
+import CalendarLink from './components/ui/CalendarLink';
 import AnimatedSearchBar from './components/ui/AnimatedSearchBar';
 import LocationStatus from './components/ui/LocationStatus';
 import CampaignSelector from './components/ui/CampaignSelector';
@@ -1654,6 +1655,8 @@ function App() {
             loadingCarriers={loadingCarriers}
           />
 
+          {/* Kalender: the own calendar lives in the dashboard (/employee/kalender) */}
+          <CalendarLink />
           {position ? (
             <MapContainer
               center={position}

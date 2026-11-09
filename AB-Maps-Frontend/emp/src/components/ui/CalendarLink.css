@@ -1,0 +1,27 @@
+/* Bottom-right, clear of the locate button (bottom-left) and the desktop rotation control
+   (bottom 88 / right 24); above Leaflet's attribution. Same spot the old map calendar button used. */
+.calx-link {
+  position: absolute;
+  right: calc(24px + env(safe-area-inset-right, 0px));
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 16px 0 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: #fff;
+  color: #0f172a;
+  font: 600 15px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.16), 0 1px 3px rgba(15, 23, 42, 0.10);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.calx-link:hover { box-shadow: 0 8px 24px rgba(15, 23, 42, 0.20), 0 1px 3px rgba(15, 23, 42, 0.10); }
+.calx-link:active { transform: scale(0.97); }
+.calx-link:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.45); outline-offset: 2px; }
+.calx-link__icon { color: #2563eb; font-size: 18px; flex: none; }
+@media (prefers-reduced-motion: reduce) { .calx-link, .calx-link:active { transition: none; transform: none; } }
