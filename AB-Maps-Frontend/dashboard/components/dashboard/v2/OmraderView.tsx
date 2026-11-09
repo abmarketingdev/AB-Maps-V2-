@@ -177,9 +177,13 @@ export function OmraderView() {
 
   // Areas are campaign-scoped server-side; filter by the search box client-side
   // (the backend returns the campaign's full area list in one call).
+  // P5: newest first. The server already orders campaign_areas by created_at DESC;
+  // sorting here too keeps the order right for any cached/older payload.
   const filteredAreas = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return q ? areas.filter(a => (a.name || "").toLowerCase().includes(q)) : areas
+    const hits = q ? areas.filter(a => (a.name || "").toLowerCase().includes(q)) : areas
+    const t = (a: MockArea) => Date.parse(a.assigned_at || a.created_at || "") || 0
+    return [...hits].sort((a, b) => t(b) - t(a) || (a.name || "").localeCompare(b.name || "", "nb"))
   }, [areas, search])
   const totalPages = Math.max(1, Math.ceil(filteredAreas.length / PAGE_SIZE))
   // Only the current page is rendered — thousands of animated rows froze the tab.
@@ -318,6 +322,12 @@ export function OmraderView() {
                       <div className="flex items-center gap-2">
                         <span className="h-2.5 w-2.5 rounded-sm shrink-0" style={{ background: area.color }} />
                         <span className="text-sm font-semibold text-ab-fg truncate">{area.name}</span>
+                        {area.is_new && (
+                          <span title="Opprettet de siste 3 dagene"
+                            className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-emerald-500">
+                            Ny
+                          </span>
+                        )}
                       </div>
                       <span className="text-xs text-ab-fg-3 ml-4.5">{area.campaign?.name ?? "Uten kampanje"}</span>
                     </div>

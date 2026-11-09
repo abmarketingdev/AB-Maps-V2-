@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaMap, FaChevronDown, FaChevronUp, FaUser, FaCheckCircle, FaSignal } from 'react-icons/fa';
 import { getCampaignById } from '../../services/campaignFormService';
 import './EmployeeToolbar.css';
+import { sortAreasNewestFirst, isNewArea } from '../../utils/areaOrder';
 
 /**
  * Employee Toolbar Component - Shows assigned areas for navigation help (optional)
@@ -154,7 +155,7 @@ const EmployeeToolbar = ({ employee, assignedAreas, allAreas, onAreaSelect, sele
         )}
         {assignedAreas && assignedAreas.length > 0 ? (
           <div className="areas-list">
-            {assignedAreas.map((area) => {
+            {sortAreasNewestFirst(assignedAreas).map((area) => {
               const isLoading = loadingCarriers && loadingCarriers.has(area.id);
               return (
                 <div
@@ -165,7 +166,10 @@ const EmployeeToolbar = ({ employee, assignedAreas, allAreas, onAreaSelect, sele
                 >
                   <div className="area-color-indicator" style={{ backgroundColor: area.color }}></div>
                   <div className="area-details">
-                    <div className="area-name">{area.name}</div>
+                    <div className="area-name">
+                      {area.name}
+                      {isNewArea(area) && <span className="area-new-pill" title="Tildelt deg de siste 3 dagene">Ny</span>}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button

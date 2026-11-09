@@ -586,3 +586,18 @@
 }
 .campaign-select:focus { outline: none; border-color: #4f9cff; }
 .campaign-select option { color: #111; }
+
+/* P5: «Ny» marker for areas created in the last 3 days */
+.area-new-pill {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  vertical-align: 1px;
+  letter-spacing: 0.02em;
+}

@@ -1760,7 +1760,9 @@ function AppContent() {
       <MapContainer
         center={position}
         zoom={13}
-        maxZoom={19}
+        // P4: 2 levels closer than before. OSM's sharpest tiles are z19; beyond that
+        // Leaflet scales them up (maxNativeZoom) instead of going blank.
+        maxZoom={21}
         maxZoomAnimation={!isMobile}
         fadeAnimation={!isMobile}
         markerZoomAnimation={!isMobile}
@@ -1789,7 +1791,7 @@ function AppContent() {
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          maxZoom={19}
+          maxZoom={21}
           maxNativeZoom={19}
           tileSize={256}
           zoomOffset={0}

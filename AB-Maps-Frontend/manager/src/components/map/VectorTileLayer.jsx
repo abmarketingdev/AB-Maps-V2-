@@ -245,7 +245,9 @@ export default function VectorTileLayer({
       pane: PANE_NAME,
       minZoom,
       maxZoom,
-      maxNativeZoom: 18,                  // CRITICAL: Backend only supports zoom 16-18, cap tile requests at 18
+      // P4: the backend serves raw points up to z22, so fetch marker tiles natively up to
+      // the map max (21). Overzooming a z18 tile instead would scale every marker 2x–8x.
+      maxNativeZoom: 21,
       interactive: true,                  // 🔑 feature events enabled
       rendererFactory: L.svg.tile,        // SVG for easier hit testing & debug
       tolerance: 12,                      // Further increased for better boundary handling
@@ -356,7 +358,7 @@ export default function VectorTileLayer({
     // Enhanced tile debugging for cluster boundary issues
     layer.on('tileloadstart', (e) => {
       if (debugMode) {
-        const backendZoom = Math.min(e.coords.z, 18);
+        const backendZoom = Math.min(e.coords.z, 21);
         const tileUrl = urlTemplate
           .replace('{z}', backendZoom)
           .replace('{x}', e.coords.x)
@@ -366,7 +368,7 @@ export default function VectorTileLayer({
           backendZoom: backendZoom,
           coords: e.coords,
           url: tileUrl,
-          maxNativeZoom: 18,
+          maxNativeZoom: 21,
           buffer: 256,
           padding: 0.5
         });
@@ -474,7 +476,7 @@ export default function VectorTileLayer({
         }
       }, 100);
       
-      const backendZoom = Math.min(e.coords.z, 18);
+      const backendZoom = Math.min(e.coords.z, 21);
       const tileUrl = urlTemplate
         .replace('{z}', backendZoom)
         .replace('{x}', e.coords.x)

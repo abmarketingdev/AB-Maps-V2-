@@ -92,6 +92,7 @@ export function AdminDemographicsMap() {
               type: "raster",
               tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
               tileSize: 256,
+              maxzoom: 19, // OSM's sharpest level; MapLibre scales it beyond (P4)
               attribution: "© OpenStreetMap contributors",
             },
           },
@@ -106,7 +107,7 @@ export function AdminDemographicsMap() {
         center: [10.7522, 59.9139], // Oslo, Norway
         zoom: 4, // Start at fylke level
         minZoom: 4,
-        maxZoom: 18,
+        maxZoom: 20,
       });
     } catch (err) {
       console.error("[AdminDemographicsMap] Failed to initialize map (WebGL?):", err);

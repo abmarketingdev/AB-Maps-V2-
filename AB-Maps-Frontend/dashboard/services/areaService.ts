@@ -20,6 +20,8 @@ export interface Area {
   apartment_count?: number;
   doors?: number; // = house_count + apartment_count, auto-computed (Module 1)
   bbox?: [number, number, number, number]; // [minx,miny,maxx,maxy] WGS84 (lightweight list rows)
+  is_new?: boolean; // P5: created (or assigned to me) within the last 3 days — computed by maps-service
+  assigned_at?: string | null; // P5: when the area was assigned to the viewer (my-areas endpoints only)
   campaign?: {
     id: string;
     name: string;

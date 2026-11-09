@@ -13,6 +13,7 @@ import { SAFE_RENDER_MODE, DISABLE_ROTATION_ON_MOBILE } from './config/mapFlags.
 // Vector tiles components  
 import CanvasPolygonLayer from './components/map/CanvasPolygonLayer';
 import VectorTileLayer from './components/map/VectorTileLayer';
+import { isNewArea } from './utils/areaOrder';
 import OptimisticMarkerOverlay from './components/map/OptimisticMarkerOverlay';
 import TalkmoreMarkersLayer from './components/map/TalkmoreMarkersLayer';
 import useMapClickGuard from './hooks/useMapClickGuard';
@@ -124,9 +125,11 @@ function App() {
       return assignedAreas;
     }
     
-    // Only include assigned areas that are also in nearby campaign areas
+    // Only include assigned areas that are also in nearby campaign areas — except a
+    // NEW assignment (P5): a chief may give a promoter an area far from where they are
+    // standing, and it must still be at the top of their list (tap → fly to it).
     const filtered = assignedAreas.filter(assigned =>
-      campaignAreas.some(campaign => campaign.id === assigned.id)
+      isNewArea(assigned) || campaignAreas.some(campaign => campaign.id === assigned.id)
     );
     
     console.log('[App] Filtered assigned areas:', {
@@ -1661,7 +1664,9 @@ function App() {
             <MapContainer
               center={position}
               zoom={13}
-              maxZoom={18}
+              // P4: 3 levels closer than before. OSM's sharpest tiles are z19; beyond that
+              // Leaflet scales them up (maxNativeZoom) instead of going blank.
+              maxZoom={21}
               maxZoomAnimation={!isMobile}
               fadeAnimation={!isMobile}
               markerZoomAnimation={!isMobile}
@@ -1678,8 +1683,8 @@ function App() {
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                maxZoom={18}
-                maxNativeZoom={18}
+                maxZoom={21}
+                maxNativeZoom={19}
                 tileSize={256}
                 zoomOffset={0}
               />

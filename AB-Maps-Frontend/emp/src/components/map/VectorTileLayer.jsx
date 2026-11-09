@@ -26,7 +26,10 @@ function VectorTileLayer({
   onFeatureClick,  // (props, latlng) => void
   styles,          // vectorTileLayerStyles
   minZoom = 16,
-  maxZoom = 18,
+  // P4: marker tiles are fetched natively up to z21 (the backend serves raw points to
+  // z22), so at close zoom the markers keep their size and spread apart instead of
+  // disappearing past z18.
+  maxZoom = 21,
   onReady,         // (layer) => void - exposes layer for external access
 }) {
   const map = useMap();

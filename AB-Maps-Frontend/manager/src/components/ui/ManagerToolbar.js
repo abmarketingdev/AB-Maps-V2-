@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { areaService } from '../../services/areaService';
 import { getCampaignById, getCampaigns } from '../../services/campaignFormService';
 import './ManagerToolbar.css';
+import { sortAreasNewestFirst, isNewArea } from '../../utils/areaOrder';
 
 // Compact "Tegnet <d. mmm>" for the sidebar area cards.
 // Users have been putting the drawn-date into the area title so they could
@@ -157,7 +158,7 @@ const ManagerSummaryDropdown = ({
         setLoading(true);
         try {
           const areas = await areaService.getManagerAreas();
-          setManagerAreas(areas);
+          setManagerAreas(sortAreasNewestFirst(areas));
           
           // Calculate total online employees across all areas (unique employees only)
           // Use employee data directly from my_areas response instead of making additional API calls
@@ -319,7 +320,10 @@ const ManagerSummaryDropdown = ({
                         }}
                       >
                         <div className="mobile-area-info">
-                          <span className="mobile-area-name">{area.name}</span>
+                          <span className="mobile-area-name">
+                            {area.name}
+                            {isNewArea(area) && <span className="area-new-pill" title="Opprettet de siste 3 dagene">Ny</span>}
+                          </span>
                           <span className="mobile-area-stats">{area.house_count} boliger</span>
                           {formatDrawnShort(area.created_at) && (
                             <span className="mobile-area-drawn" style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
@@ -442,7 +446,10 @@ const ManagerSummaryDropdown = ({
                     onClick={() => onAreaSelect(area)}
                   >
                     <div className="area-info">
-                      <span className="area-name">{area.name}</span>
+                      <span className="area-name">
+                        {area.name}
+                        {isNewArea(area) && <span className="area-new-pill" title="Opprettet de siste 3 dagene">Ny</span>}
+                      </span>
                       <span className="area-stats">
                         {area.house_count} boliger
                       </span>
