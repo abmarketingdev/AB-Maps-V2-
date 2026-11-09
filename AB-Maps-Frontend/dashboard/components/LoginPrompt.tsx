@@ -23,9 +23,8 @@ export default function LoginPrompt({ onLoginSuccess }: LoginPromptProps) {
 
     try {
       await authService.login({
-        username,
+        username: username.trim(),
         password,
-        user_type: 'manager' // or 'employee'
       })
       onLoginSuccess()
     } catch (error) {
@@ -49,6 +48,10 @@ export default function LoginPrompt({ onLoginSuccess }: LoginPromptProps) {
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 required
               />
             </div>

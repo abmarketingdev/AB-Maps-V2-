@@ -4,8 +4,8 @@ import * as React from "react"
 import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/components/ui/use-mobile"
-import { ownCalendarApi, type DayCell, type MoveRequest, type OwnCalendarApi } from "@/lib/api/scheduling"
-import { addDays, cardDate, isoWeek, longDate, mondayOf, osloToday, weekLabel } from "../dates"
+import { FALLBACK_MESSAGES, SchedulingError, ownCalendarApi, type DayCell, type MoveRequest, type OwnCalendarApi } from "@/lib/api/scheduling"
+import { WORK_DAYS, addDays, calendarAnchor, cardDate, isSunday, isoWeek, longDate, mondayOf, osloToday, range, weekLabel } from "../dates"
 import { doorsWord, fmtNum, giversWord, initials } from "../states"
 import { Btn, Surface } from "../Surface"
 import { LEGEND, MinDayCard, TONES, goalText, modelFor } from "./MinDayCard"
@@ -24,6 +24,23 @@ const REFRESH_MS = 5 * 60 * 1000
 
 function errMsg(e: unknown): string {
   return e instanceof Error && e.message ? e.message : "Noe gikk galt. Prøv igjen."
+}
+
+/** Loading the own calendar: the shared fallbacks talk about shifts/teams, so give this page its own text. */
+function loadErrMsg(e: unknown): string {
+  if (e instanceof SchedulingError && e.message === FALLBACK_MESSAGES[e.status]) {
+    if (e.status === 403) return "Du har ikke tilgang til kalenderen akkurat nå."
+    if (e.status === 404) return "Fant ikke kalenderen din. Prøv igjen om litt."
+  }
+  return errMsg(e)
+}
+
+/** No person behind the login (no plan yet): an ordinary week with every day «Fri». */
+function freeDays(from: string, count: number, today: string): DayCell[] {
+  return range(from, count).map((date) => ({
+    date, state: date === today ? "today" : "off", shift_id: null, shift_editable: false,
+    shift_team_name: null, goals: null, actual: null, move_request: null,
+  }))
 }
 
 function cap(s: string): string {
@@ -47,7 +64,8 @@ interface MinKalenderViewProps {
 export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: MinKalenderViewProps) {
   const isMobile = useIsMobile()
   const [today, setToday] = React.useState(() => osloToday())
-  const monday = mondayOf(today)
+  // Mon–Sat only; on a Sunday the calendar opens on the coming week
+  const monday = mondayOf(calendarAnchor(today))
   // Which three weeks are shown: 0 = this week + two ahead; ‹ › move one week at a time.
   const [offset, setOffset] = React.useState(0)
   const windowStart = addDays(monday, offset * 7)
@@ -75,7 +93,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
     setLoading(true)
     setLoadError(null)
     try {
-      const base = mondayOf(t)
+      const base = mondayOf(calendarAnchor(t))
       const start = addDays(base, offset * 7)
       const [w, win, r] = await Promise.all([
         api.week(base, WEEKS * 7),
@@ -83,15 +101,17 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
         api.myRequests().catch(() => null),
       ])
       if (my !== seq.current) return
-      if (w.today && w.today !== t) setToday(w.today)
-      setBaseDays(w.days)
-      setDays(win ? win.days : w.days)
+      const now = w.today || t
+      if (now !== t) setToday(now)
+      const own = (r: { person: unknown; days: DayCell[] }, from: string) => (r.person ? r.days : freeDays(from, WEEKS * 7, now))
+      setBaseDays(own(w, base))
+      setDays(win ? own(win, start) : own(w, base))
       setPerson(w.person ? { name: w.person.name } : null)
       setTeams(w.teams)
       setRequests(r)
     } catch (e) {
       if (my !== seq.current) return
-      setLoadError(errMsg(e))
+      setLoadError(loadErrMsg(e))
     } finally {
       if (my === seq.current) setLoading(false)
     }
@@ -114,7 +134,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
     return d?.goals ? { doors: d.goals.doors, givers: d.goals.givers } : { doors: null, givers: null }
   }, [days, baseDays])
 
-  const weekDays = (baseDays ?? []).filter((d) => d.date >= monday && d.date < addDays(monday, 7))
+  const weekDays = (baseDays ?? []).filter((d) => d.date >= monday && d.date < addDays(monday, WORK_DAYS))
   const shiftsThisWeek = weekDays.filter((d) => d.shift_id !== null).length
   const doorsThisWeek = weekDays.reduce((n, d) => n + (d.actual?.doors ?? 0), 0)
   const giversThisWeek = weekDays.reduce((n, d) => n + (d.actual?.ja ?? 0), 0)
@@ -122,7 +142,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
   const todayCell = (baseDays ?? []).find((d) => d.date === today) ?? null
   const nextShift =
     (baseDays ?? []).find(
-      (d) => d.date > today && d.shift_id !== null && !(d.move_request?.status === "venter" && d.move_request.from_date === d.date),
+      (d) => d.date > today && !isSunday(d.date) && d.shift_id !== null && !(d.move_request?.status === "venter" && d.move_request.from_date === d.date),
     ) ?? null
   const hero = React.useMemo(() => {
     if (todayCell?.shift_id) {
@@ -143,14 +163,14 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
   const [mobWeek, setMobWeek] = React.useState(0)
 
   const picking = mode === "move" && cell
-    ? { from: cell.date, chosen, allowed: (d: string) => d <= addDays(today, MOVE_MAX_AHEAD) }
+    ? { from: cell.date, chosen, allowed: (d: string) => d <= addDays(today, MOVE_MAX_AHEAD) && !isSunday(d) }
     : null
 
   const weeks = React.useMemo(
     () =>
       Array.from({ length: WEEKS }, (_, i) => {
         const start = addDays(windowStart, 7 * i)
-        const end = addDays(start, 6)
+        const end = addDays(start, WORK_DAYS - 1)   // Saturday
         const rel = weekLabel(start, today)
         const label = offset === 0 && i === 2 ? "Om to uker" : rel
         const a = cardDate(start).date
@@ -230,9 +250,9 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
   const fixedDays = React.useMemo(() => {
     // weekdays that are a shift in every shown week → «Faste dager mandag, tirsdag»
     if (!baseDays?.length) return ""
-    const names = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
+    const names = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"]
     const out: string[] = []
-    for (let wd = 0; wd < 7; wd++) {
+    for (let wd = 0; wd < WORK_DAYS; wd++) {
       const col = [0, 1, 2].map((i) => baseDays.find((d) => d.date === addDays(monday, i * 7 + wd)))
       const all = col.every((c) => c && (c.shift_id || (c.date < today && c.state !== "off")))
       if (all) out.push(names[wd])
@@ -319,14 +339,13 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
         )}
 
         {person === null && (
-          <div className="flex flex-col items-start gap-2 rounded-[16px] border border-ab-line bg-ab-elevated p-5">
-            <span className="flex items-center gap-2 text-[14px] font-semibold"><CalendarDays className="h-4 w-4" /> Ingen kalender ennå</span>
-            <span className="text-[13px] text-ab-fg-2">Kontoen din er ikke koblet til en ansatt. Ta kontakt med salgssjefen din.</span>
+          <div role="status" className="flex items-center gap-2 rounded-[14px] border border-ab-line bg-ab-elevated px-4 py-3 text-[13px] text-ab-fg-2">
+            <CalendarDays className="h-4 w-4 shrink-0" /> Ingen vakter planlagt ennå. Salgssjefen legger inn arbeidsdagene dine.
           </div>
         )}
 
         {/* Top cards */}
-        {(days || loading) && person !== null && (
+        {(days || loading) && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <div className="col-span-2 flex flex-col gap-3 rounded-[16px] border border-ab-line bg-ab-elevated px-[18px] py-4 md:flex-row md:flex-wrap md:items-center md:justify-between">
               <div className="flex flex-col gap-1">
@@ -372,7 +391,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
         )}
 
         {/* phone: week tabs + the days that matter (client screen) */}
-        {person !== null && days && (
+        {days && (
           <div className="flex flex-col gap-3 md:hidden">
             <div className="flex items-center gap-1">
               <button type="button" aria-label="Forrige uke" onClick={() => setOffset((o) => o - 1)} className="flex h-12 w-10 shrink-0 items-center justify-center rounded-[12px] border border-ab-line bg-ab-elevated text-ab-fg-2"><ChevronLeft className="h-4 w-4" /></button>
@@ -414,7 +433,6 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
           </div>
         )}
 
-        {person !== null && (
           <div className="flex flex-wrap items-start gap-5">
             {/* Calendar */}
             <div className="hidden min-w-0 flex-[999_1_640px] flex-col rounded-[18px] border border-ab-line bg-ab-elevated px-3 pb-4 pt-2 md:flex md:px-[18px] md:pb-[18px]">
@@ -441,8 +459,8 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
                   {Array.from({ length: WEEKS }).map((_, i) => (
                     <div key={i} className="flex flex-col gap-2">
                       <div className="h-4 w-40 animate-pulse rounded bg-ab-subtle" />
-                      <div className="grid grid-cols-1 gap-2 md:grid-cols-7">
-                        {Array.from({ length: 7 }).map((_, j) => (
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
+                        {Array.from({ length: WORK_DAYS }).map((_, j) => (
                           <div key={j} className="h-[60px] animate-pulse rounded-[12px] bg-ab-subtle md:h-[104px]" />
                         ))}
                       </div>
@@ -456,7 +474,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
                       <span className="text-[15px] font-bold">{w.label}</span>
                       <span className="text-[12px] text-ab-fg-2">{w.sub}</span>
                     </div>
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-7">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
                       {w.cells.map((c) => {
                         const m = modelFor(c, today, picking)
                         return (
@@ -521,7 +539,6 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
               </div>
             </div>
           </div>
-        )}
       </div>
 
       {/* Phone: the panel is a bottom sheet */}

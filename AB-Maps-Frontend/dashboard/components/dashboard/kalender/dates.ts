@@ -4,6 +4,8 @@
 
 export const DAY_SHORT = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"] as const
 export const DAY_CHIP = ["Ma", "Ti", "On", "To", "Fr", "Lø", "Sø"] as const
+/** Weekday chips for planning: Monday–Saturday. */
+export const WORK_DAY_CHIP = DAY_CHIP.slice(0, 6) as readonly string[]
 export const DAY_LONG = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"] as const
 const MONTH_SHORT = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"] as const
 const MONTH_LONG = [
@@ -44,6 +46,24 @@ export function weekdayIndex(iso: string): number {
 
 export function mondayOf(iso: string): string {
   return addDays(iso, -weekdayIndex(iso))
+}
+
+/** Calendars show Monday–Saturday only (client 09.11: no Sunday anywhere). */
+export const WORK_DAYS = 6
+
+export function isSunday(iso: string): boolean {
+  return weekdayIndex(iso) === 6
+}
+
+/** The day that decides which week a calendar opens on: today, or the coming
+ *  Monday when today is a Sunday (Sunday is not shown, so show next week). */
+export function calendarAnchor(today: string): string {
+  return isSunday(today) ? addDays(today, 1) : today
+}
+
+/** Mon–Sat of the week starting at `monday`. */
+export function workWeek(monday: string): string[] {
+  return range(monday, WORK_DAYS)
 }
 
 export function daysBetween(fromIso: string, toIso: string): number {
@@ -96,7 +116,7 @@ export function rangeLabel(fromIso: string, toIso: string): string {
 
 /** Relative label for a week starting at `monday`, seen from today. */
 export function weekLabel(monday: string, today: string): string {
-  const diff = daysBetween(mondayOf(today), monday) / 7
+  const diff = daysBetween(mondayOf(calendarAnchor(today)), monday) / 7
   if (diff === 0) return "Denne uken"
   if (diff === 1) return "Neste uke"
   if (diff === -1) return "Forrige uke"

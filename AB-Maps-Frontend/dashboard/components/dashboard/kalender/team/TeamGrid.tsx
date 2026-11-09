@@ -8,14 +8,14 @@ import { doorsWord, fmtNum, giversWord } from "../states"
 import { Avatar } from "./Avatar"
 import { TeamCell, kindOf } from "./TeamCell"
 
-// One week of the team: name + fast mål | 7 day cells | «Uken» totals.
+// One week of the team: name + fast mål | 6 day cells (Mon–Sat) | «Uken» totals.
 // Column header carries the day's sum (doors for a past week, people on shift
 // for a planning week). Scrolls sideways on narrow screens; the name column
 // and the header stay put.
 
 // Fits the card on a normal screen (no sideways scroll); below ~1024 px the
 // wrapper gets a minimum width and the card scrolls instead.
-const GRID: React.CSSProperties = { gridTemplateColumns: "minmax(168px, 200px) repeat(7, minmax(0, 1fr)) 96px" }
+const GRID: React.CSSProperties = { gridTemplateColumns: "minmax(168px, 200px) repeat(6, minmax(0, 1fr)) 96px" }   // Mon–Sat
 
 export interface RowTotal {
   main: string
@@ -183,12 +183,12 @@ export function GridSkeleton({ rows = 7 }: { rows?: number }) {
     <div className="overflow-hidden" aria-busy="true" aria-label="Laster kalender">
       <div className="flex flex-col gap-1.5 px-3.5 pb-4 pt-2 max-lg:min-w-[980px]">
         <div className="grid gap-1.5 py-2" style={GRID}>
-          {Array.from({ length: 9 }, (_, i) => <div key={i} className={cn(bar, "h-3 w-16")} />)}
+          {Array.from({ length: 8 }, (_, i) => <div key={i} className={cn(bar, "h-3 w-16")} />)}
         </div>
         {Array.from({ length: rows }, (_, r) => (
           <div key={r} className="grid items-center gap-1.5" style={GRID}>
             <div className="flex items-center gap-2.5 px-1.5"><div className={cn(bar, "h-[34px] w-[34px] rounded-full")} /><div className="space-y-1.5"><div className={cn(bar, "h-3 w-28")} /><div className={cn(bar, "h-2.5 w-20")} /></div></div>
-            {Array.from({ length: 7 }, (_, i) => <div key={i} className={cn(bar, "h-[80px] rounded-[10px]")} style={{ animationDelay: `${(r * 7 + i) * 15}ms` }} />)}
+            {Array.from({ length: 6 }, (_, i) => <div key={i} className={cn(bar, "h-[80px] rounded-[10px]")} style={{ animationDelay: `${(r * 6 + i) * 15}ms` }} />)}
             <div className={cn(bar, "ml-auto h-3 w-16")} />
           </div>
         ))}

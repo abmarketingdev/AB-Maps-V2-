@@ -16,7 +16,7 @@ import {
   type TeamGrid as Grid,
   type TeamsResult,
 } from "@/lib/api/scheduling"
-import { addDays, isoWeek, longDate, mondayOf, osloToday, range } from "../dates"
+import { addDays, calendarAnchor, isSunday, isoWeek, longDate, mondayOf, osloToday, workWeek } from "../dates"
 import { fmtNum, fmtPct } from "../states"
 import { GoalsDialog } from "../GoalsDialog"
 import { Surface } from "../Surface"
@@ -33,7 +33,7 @@ import { TeamLog } from "./TeamLog"
 // GET /api/scheduling/teams/ decides who may edit; the backend checks every write.
 
 const TEAM_KEY = "kalender_team"
-const DAYS = 7
+const DAYS = 7   // fetched per week (Mon–Sun); only Mon–Sat are shown
 
 function readStoredTeam(): string | null {
   try { return localStorage.getItem(TEAM_KEY) } catch { return null }
@@ -50,7 +50,8 @@ export function TeamKalenderView() {
   const { toast } = useToast()
   const isMobile = useIsMobile()
   const today = React.useMemo(() => osloToday(), [])
-  const thisMon = mondayOf(today)
+  // on a Sunday (not shown) the calendar opens on the coming week
+  const thisMon = mondayOf(calendarAnchor(today))
 
   // ── teams ────────────────────────────────────────────────────────────────
   const [teams, setTeams] = React.useState<TeamsResult | null>(null)
@@ -83,8 +84,8 @@ export function TeamKalenderView() {
   const cache = React.useRef(new Map<string, Grid>())
   const seq = React.useRef(0)
   const scrollRef = React.useRef<HTMLDivElement>(null)
-  const dates = React.useMemo(() => range(weekStart, DAYS), [weekStart])
-  const past = dates[6] < today          // week finished
+  const dates = React.useMemo(() => workWeek(weekStart), [weekStart])   // Mon–Sat
+  const past = dates[dates.length - 1] < today          // week finished
   const results = dates[0] <= today      // current or past week: show results, not plans
 
   const fetchGrid = React.useCallback(async (tid: string, from: string, opts: { silent?: boolean } = {}) => {
@@ -269,7 +270,7 @@ export function TeamKalenderView() {
       for (const m of prev.members) for (const c of m.days) {
         if (!c.shift_id) continue
         const date = addDays(c.date, 7)
-        if (date < today) continue
+        if (date < today || isSunday(date)) continue
         const cur = grid.members.find((x) => x.person_id === m.person_id)?.days.find((x) => x.date === date)
         if (cur?.shift_id) continue
         shifts.push({ person_id: m.person_id, person_type: m.person_kind, date })

@@ -4,7 +4,7 @@ import * as React from "react"
 import { ArrowLeftRight, ArrowRight, Check, ChevronLeft, ChevronRight, Minus, Plus, Target, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { DayCell } from "@/lib/api/scheduling"
-import { addDays, cardDate, isoWeek, longDate, mondayOf, weekLabel } from "../dates"
+import { addDays, cardDate, isSunday, isoWeek, longDate, mondayOf, weekLabel } from "../dates"
 import { doorsWord, fmtNum, fmtPct, giversWord } from "../states"
 import { Btn } from "../Surface"
 import { goalText } from "./MinDayCard"
@@ -396,10 +396,11 @@ function MoveBody(p: MinPanelProps) {
   )
   const workDates = React.useMemo(() => new Set(cells.filter((c) => c.shift_id).map((c) => c.date)), [cells])
   const free = React.useMemo(
-    () => cells.filter((c) => c.date > today && c.date <= maxDate && !c.shift_id && !pendingTargets.has(c.date)),
+    () => cells.filter((c) => c.date > today && c.date <= maxDate && !isSunday(c.date) && !c.shift_id && !pendingTargets.has(c.date)),
     [cells, today, maxDate, pendingTargets],
   )
-  const otherBad = other !== "" && (other < minDate || other > maxDate || workDates.has(other) || pendingTargets.has(other))
+  const badOther = (v: string) => v !== "" && (v < minDate || v > maxDate || isSunday(v) || workDates.has(v) || pendingTargets.has(v))
+  const otherBad = badOther(other)
   const to = chosen
   const reasonText = reason === "Annet" ? text.trim() : reason ?? ""
   const ok = !!to && !p.busy
@@ -471,14 +472,13 @@ function MoveBody(p: MinPanelProps) {
             onChange={(e) => {
               const v = e.target.value
               setOther(v)
-              const bad = v !== "" && (v < minDate || v > maxDate || workDates.has(v) || pendingTargets.has(v))
-              p.onChoose(v && !bad ? v : null)
+              p.onChoose(v && !badOther(v) ? v : null)
             }}
             className="h-11 rounded-[12px] border border-ab-line-2 bg-ab-elevated px-3 text-[14px] text-ab-fg focus:border-ab-accent focus:outline-none"
           />
           {otherBad && (
             <span className="text-[12px] text-[#B91C1C] dark:text-[#FCA5A5]">
-              {workDates.has(other) ? "Du jobber allerede den dagen." : pendingTargets.has(other) ? "Du har allerede bedt om den dagen." : "Velg en dato fra i morgen og 8 uker frem."}
+              {isSunday(other) && other >= minDate && other <= maxDate ? "Søndag er ikke en arbeidsdag. Velg mandag til lørdag." : workDates.has(other) ? "Du jobber allerede den dagen." : pendingTargets.has(other) ? "Du har allerede bedt om den dagen." : "Velg en dato fra i morgen og 8 uker frem."}
             </span>
           )}
         </label>

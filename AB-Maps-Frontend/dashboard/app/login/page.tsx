@@ -52,7 +52,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type Phase = "login" | "auth" | "loading";
 
 const LoginPage: React.FC = () => {
-  const [userType, setUserType] = useState<"manager" | "employee">("manager");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -104,8 +103,8 @@ const LoginPage: React.FC = () => {
       const response = await login({
         username: username.trim(),
         password: password.trim(),
-        user_type: userType,
       });
+      // Auth decides the account type; leaders/admins → dashboard, promoters → employee dashboard.
       targetRef.current = response.user_type === "employee" ? "/employee" : "/";
       // brief "Autentiserer…" beat then move to the progress loader
       setTimeout(() => setPhase("loading"), 700);
@@ -339,7 +338,7 @@ const LoginPage: React.FC = () => {
                   <label className="block text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">E-post</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ab-fg-3 pointer-events-none z-10" />
-                    <input type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="navn@firma.no" autoFocus required className="ab-input" style={{ paddingLeft: 36 }} />
+                    <input type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="navn@firma.no" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoFocus required className="ab-input" style={{ paddingLeft: 36 }} />
                   </div>
                 </div>
                 {forgotError && (
@@ -372,27 +371,6 @@ const LoginPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">
-              Kontotype
-            </label>
-            <div className="grid grid-cols-2 gap-1 p-1 bg-ab-elevated border border-ab-line rounded-ab-md">
-              {(["manager", "employee"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setUserType(t)}
-                  className={cn(
-                    "h-8 text-[12px] font-medium rounded-[4px] transition-colors cursor-pointer",
-                    userType === t ? "bg-ab-hover text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg",
-                  )}
-                >
-                  {t === "manager" ? "Leder" : "Ansatt"}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="space-y-1.5">
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-ab-fg-3">
               Brukernavn eller e-post
@@ -404,6 +382,10 @@ const LoginPage: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="brukernavn eller e-post"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 autoFocus
                 required
                 className="ab-input"

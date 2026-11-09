@@ -2,7 +2,7 @@
 
 // Full-screen notice for a person who must finish an assigned course before using the map.
 // Self-contained: checks Learning on mount and on every route change; hidden on the course
-// pages themselves so the person can finish the course. Renders nothing for everyone else.
+// pages themselves so the person can finish the course, and on the own calendar (Min kalender). Renders nothing for everyone else.
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { BookOpen } from "lucide-react"
@@ -20,7 +20,9 @@ export function CourseGateNotice() {
   }, [pathname])
 
   const onCoursePage = pathname === "/ab-academy" || pathname.startsWith("/ab-academy/")
-  if (!state?.blocked || onCoursePage) return null
+  // Reading your own calendar is not field work: the promoter keeps «Kalender» while a course is open.
+  const onOwnCalendar = pathname === "/employee/kalender" || pathname.startsWith("/employee/kalender/")
+  if (!state?.blocked || onCoursePage || onOwnCalendar) return null
 
   const plural = state.sections.length > 1
   return (

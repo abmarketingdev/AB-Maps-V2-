@@ -4,7 +4,7 @@ import * as React from "react"
 import { CalendarRange, Check, Infinity as InfinityIcon, Loader2, Minus, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { GridMember, ShiftKey } from "@/lib/api/scheduling"
-import { DAY_CHIP, addDays, daysBetween, isoWeek, mondayOf, shortDate } from "../dates"
+import { DAY_CHIP, WORK_DAYS, WORK_DAY_CHIP, addDays, calendarAnchor, daysBetween, isoWeek, mondayOf, shortDate } from "../dates"
 import { Surface } from "../Surface"
 import { Avatar } from "./Avatar"
 import { BLUE_BTN, Btn2, GREY_BTN, RED_BTN } from "./SidePanel"
@@ -33,7 +33,7 @@ interface Props {
 }
 
 export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ensureLoaded, onSubmit }: Props) {
-  const thisMon = mondayOf(today)
+  const thisMon = mondayOf(calendarAnchor(today))   // Sunday → the coming week
   const [mode, setMode] = React.useState<Mode>("weeks")
   const [rFrom, setRFrom] = React.useState("")
   const [rTo, setRTo] = React.useState("")
@@ -79,7 +79,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
     const next = new Map<string, Set<number>>()
     for (const m of members) {
       const set = new Set<number>()
-      for (let w = 0; w < nWeeks; w++) for (let d = 0; d < 7; d++) {
+      for (let w = 0; w < nWeeks; w++) for (let d = 0; d < WORK_DAYS; d++) {
         const date = addDays(start, w * 7 + d)
         if (date < today || date > end) continue
         if (known.has(`${m.person_id}|${date}`)) set.add(d)
@@ -116,8 +116,9 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
       const set = days.get(m.person_id) ?? new Set<number>()
       const st: PersonStat = { newN: 0, existN: 0, removeN: 0, lockedN: 0, allExisting: new Set() }
       stats.set(m.person_id, st)
-      // unticked weekdays that are planned in the period → those shifts go
-      if (on.has(m.person_id)) for (let d = 0; d < 7; d++) {
+      // unticked weekdays that are planned in the period → those shifts go.
+      // Mon–Sat only: Sunday is not offered, so an existing Sunday shift is never removed here.
+      if (on.has(m.person_id)) for (let d = 0; d < WORK_DAYS; d++) {
         if (set.has(d)) continue
         for (let w = 0; w < nWeeks; w++) {
           const date = addDays(start, w * 7 + d)
@@ -129,6 +130,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
         }
       }
       for (const d of set) {
+        if (d >= WORK_DAYS) continue   // never create a Sunday shift
         let inRange = 0, exist = 0
         for (let w = 0; w < nWeeks; w++) {
           const date = addDays(start, w * 7 + d)
@@ -166,7 +168,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
   const Num = ({ n, children }: { n: number; children: React.ReactNode }) => (
     <div className="flex items-center gap-2 text-[13px] font-semibold"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-ab-subtle text-[11px] text-ab-fg-2 dark:bg-[#24262B]">{n}</span>{children}</div>
   )
-  const presets: [string, number[]][] = [["Hverdager", [0, 1, 2, 3, 4]], ["Man til lør", [0, 1, 2, 3, 4, 5]], ["Helg", [5, 6]], ["Tøm", []]]
+  const presets: [string, number[]][] = [["Hverdager", [0, 1, 2, 3, 4]], ["Man til lør", [0, 1, 2, 3, 4, 5]], ["Kun lørdag", [5]], ["Tøm", []]]
 
   return (
     <Surface
@@ -214,7 +216,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
             </button>
             {[0, 1, 2, 3].map((o) => {
               const mon = addDays(thisMon, o * 7)
-              const passed = o === 0 && addDays(mon, 6) < today
+              const passed = o === 0 && addDays(mon, 5) < today   // Saturday is the last shown day
               const on = mode === "weeks" && startOff === o
               const sub = o === 0 ? (passed ? "Passert" : `Denne uken, fra ${shortDate(mon)}`) : o === 1 ? `Neste uke, fra ${shortDate(mon)}` : `fra ${shortDate(mon)}`
               return (
@@ -259,9 +261,9 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
           </p>
           <div className="overflow-x-auto">
             <div className="min-w-[520px]">
-              <div className="grid items-center gap-1" style={{ gridTemplateColumns: "minmax(160px, 1fr) repeat(7, 36px) 72px" }}>
+              <div className="grid items-center gap-1" style={{ gridTemplateColumns: "minmax(160px, 1fr) repeat(6, 36px) 72px" }}>
                 <button type="button" onClick={() => setOn(on.size === members.length ? new Set() : new Set(members.map((m) => m.person_id)))} className="text-left text-[12px] font-medium text-[#2563EB] dark:text-[#7CB8FF]">{on.size === members.length ? "Fjern alle" : "Velg alle"}</button>
-                {DAY_CHIP.map((d, i) => {
+                {WORK_DAY_CHIP.map((d, i) => {
                   const every = members.every((m) => days.get(m.person_id)?.has(i))
                   return <button key={d} type="button" onClick={() => toggleCol(i)} aria-pressed={every} className={cn("h-8 rounded-[8px] text-[12px] font-semibold", every ? "bg-[#2563EB] text-white dark:bg-[#1D4F8A]" : "bg-ab-subtle text-ab-fg-2 dark:bg-[#24262B]")}>{d}</button>
                 })}
@@ -276,7 +278,7 @@ export function PlanWeeksDialog({ open, onOpenChange, members, today, known, ens
                         <Avatar name={m.name} size={24} />
                         <span className="truncate text-[13px] font-medium">{m.name}</span>
                       </label>
-                      {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+                      {[0, 1, 2, 3, 4, 5].map((d) => {
                         const st = stats.get(m.person_id)
                         const planned = set.has(d) && !!st?.allExisting.has(d)
                         return (

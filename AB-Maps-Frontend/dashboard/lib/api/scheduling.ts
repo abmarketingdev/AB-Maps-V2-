@@ -158,7 +158,7 @@ export class SchedulingError extends Error {
   }
 }
 
-const FALLBACK_MESSAGES: Record<number, string> = {
+export const FALLBACK_MESSAGES: Record<number, string> = {
   400: "Ugyldig forespørsel.",
   403: "Du har ikke tilgang til å endre dette teamet.",
   404: "Fant ikke vakten. Den kan være slettet.",
