@@ -56,7 +56,7 @@ function view(d: DayCell): View {
   if (d.state === "today") {
     const left = goal !== null ? Math.max(0, goal - doors) : null
     return d.shift_id
-      ? { tone: "orange", label: "I dag", center: fmtNum(doors), progress: prog, dashed: false, detail: `${fmtNum(doors)}${of} dører så langt`, big: fmtNum(doors), of: ofGoal, line: null, sub: left === null ? "så langt" : left === 0 ? "Mål nådd!" : `${fmtNum(left)} igjen` }
+      ? { tone: "orange", label: "I dag", center: fmtNum(doors), progress: prog, dashed: false, detail: `${fmtNum(doors)}${of} dører så langt`, big: fmtNum(doors), of: ofGoal, line: null, sub: mr && mr.from_date === d.date ? `Bytte til ${dm(mr.to_date)} venter` : left === null ? "så langt" : left === 0 ? "Mål nådd!" : `${fmtNum(left)} igjen` }
       : { tone: "muted", label: "Fri i dag", center: doors ? fmtNum(doors) : "–", progress: null, dashed: false, detail: doors ? `${fmtNum(doors)} dører` : "Ingen vakt", big: doors ? fmtNum(doors) : null, of: doors ? "dører" : null, line: doors ? null : "Ingen vakt", sub: null }
   }
   if (d.state === "worked") {

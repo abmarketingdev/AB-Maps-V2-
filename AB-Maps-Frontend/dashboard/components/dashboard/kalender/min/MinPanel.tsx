@@ -464,7 +464,7 @@ function MoveBody(p: MinPanelProps) {
         ) : (
           <span className="text-[13px] text-ab-fg-2">Ingen ledige dager i de neste ukene.</span>
         )}
-        <span className="hidden text-[13px] text-[#1650A8] dark:text-[#93C5FD] lg:block">Du kan også klikke på en ledig dag i kalenderen.</span>
+        {p.withHeader && <span className="hidden text-[13px] text-[#1650A8] dark:text-[#93C5FD] lg:block">Du kan også klikke på en ledig dag i kalenderen.</span>}
         <label className="flex flex-col gap-1">
           <span className="text-[12px] font-medium text-ab-fg-2">Annen dato</span>
           <input
