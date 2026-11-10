@@ -23,6 +23,8 @@ interface SurfaceProps {
   /** desktop placement */
   side?: "center" | "right"
   initialFocus?: React.RefObject<HTMLElement | null>
+  /** phones: a centred card instead of a bottom sheet */
+  phoneCenter?: boolean
 }
 
 const WIDTH = { sm: "md:max-w-[400px]", md: "md:max-w-[520px]", lg: "md:max-w-[680px]" }
@@ -37,10 +39,17 @@ export function Surface({
   size = "md",
   side = "center",
   initialFocus,
+  phoneCenter = false,
 }: SurfaceProps) {
   const isMobile = useIsMobile()
+  const sheet = isMobile && !phoneCenter
 
-  const placement = isMobile
+  const placement = isMobile && phoneCenter
+    ? cn(
+        "left-1/2 top-1/2 w-[calc(100vw-24px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 max-h-[calc(100dvh-32px)] rounded-[20px] border",
+        "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+      )
+    : isMobile
     ? cn(
         "inset-x-0 bottom-0 max-h-[92dvh] w-full rounded-t-[16px] border-t",
         "data-[state=open]:slide-in-from-bottom-8 data-[state=closed]:slide-out-to-bottom-8",
@@ -82,12 +91,12 @@ export function Surface({
             placement,
           )}
         >
-          {isMobile && (
+          {sheet && (
             <div className="flex justify-center pt-2" aria-hidden>
               <div className="h-1 w-10 rounded-full bg-ab-line-2" />
             </div>
           )}
-          <div className={cn("flex items-start gap-3 px-5", isMobile ? "pt-3 pb-3" : "pt-5 pb-4")}>
+          <div className={cn("flex items-start gap-3 px-5", sheet ? "pt-3 pb-3" : isMobile ? "pt-4 pb-3" : "pt-5 pb-4")}>
             <div className="min-w-0 flex-1">
               <DialogPrimitive.Title className="font-display text-[17px] font-semibold leading-6 tracking-tight text-ab-fg">
                 {title}
@@ -114,7 +123,7 @@ export function Surface({
           <div
             className={cn(
               "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5",
-              isMobile && !footer && "pb-[max(20px,env(safe-area-inset-bottom))]",
+              sheet && !footer && "pb-[max(20px,env(safe-area-inset-bottom))]",
             )}
           >
             {children}
@@ -123,7 +132,7 @@ export function Surface({
             <div
               className={cn(
                 "flex flex-col-reverse gap-2 border-t border-ab-line-1 px-5 py-4 md:flex-row md:items-center md:justify-end",
-                isMobile && "pb-[max(16px,env(safe-area-inset-bottom))]",
+                sheet && "pb-[max(16px,env(safe-area-inset-bottom))]",
               )}
             >
               {footer}

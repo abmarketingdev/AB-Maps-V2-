@@ -227,7 +227,7 @@ export function MinUkeCard({ api = ownCalendarApi }: { api?: OwnCalendarApi }) {
         </ol>
       )}
 
-      <Surface open={!!cell} onOpenChange={(o) => { if (!o) close() }} size="sm" title={heading.title} description={heading.sub || undefined}>
+      <Surface open={!!cell} onOpenChange={(o) => { if (!o) close() }} size="sm" phoneCenter title={heading.title} description={heading.sub || undefined}>
         {cell && (
           <div className="flex flex-col gap-4">
             {mode === "day" && <DayHero days={days} cell={cell} today={today} onPick={openDay} />}
