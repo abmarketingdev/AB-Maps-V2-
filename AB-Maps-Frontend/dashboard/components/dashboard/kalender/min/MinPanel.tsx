@@ -231,6 +231,8 @@ export interface MinPanelProps {
   onClose: () => void
   /** phone: the sheet has its own header; desktop renders one here */
   withHeader: boolean
+  /** the dashboard popup shows doors/givers in its own header */
+  hideStats?: boolean
 }
 
 export function MinPanel(p: MinPanelProps) {
@@ -319,7 +321,7 @@ function DayBody(p: MinPanelProps) {
 
   return (
     <>
-      {(cell.state === "worked" || cell.state === "today" || cell.state === "no_show") && a && (hasShift || a.doors > 0) && (
+      {!p.hideStats && (cell.state === "worked" || cell.state === "today" || cell.state === "no_show") && a && (hasShift || a.doors > 0) && (
         <div className="grid grid-cols-3 gap-2">
           <Stat label="Dører" value={fmtNum(a.doors)} />
           <Stat label="Givere" value={fmtNum(a.ja)} />
