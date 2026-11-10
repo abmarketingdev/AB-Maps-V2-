@@ -57,6 +57,9 @@ export const STATE_STYLES: Record<DayState, StateStyle> = {
   },
 }
 
+/** A planned day that is over with fewer doors than this is «Ikke jobbet» (server rule, boss 10.11). */
+export const NOT_WORKED_DOORS = 50
+
 export const LEGEND_ORDER: DayState[] = ["worked", "today", "planned", "no_show", "off"]
 
 export function initials(name: string): string {

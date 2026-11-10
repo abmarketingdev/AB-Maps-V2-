@@ -74,7 +74,7 @@ export const TONES: Record<Tone, ToneStyle> = {
     title: "text-[#B91C1C] dark:text-[#FCA5A5]",
     day: "text-ab-fg",
     dot: "bg-[#DC2626]",
-    label: "Ikke møtt",
+    label: "Ikke møtt / jobbet",
   },
   muted: {
     card: "border-ab-line-1 bg-ab-subtle",

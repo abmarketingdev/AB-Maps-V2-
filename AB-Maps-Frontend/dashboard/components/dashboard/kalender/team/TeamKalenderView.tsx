@@ -17,7 +17,7 @@ import {
   type TeamsResult,
 } from "@/lib/api/scheduling"
 import { addDays, calendarAnchor, isSunday, isoWeek, longDate, mondayOf, osloToday, workWeek } from "../dates"
-import { fmtNum, fmtPct } from "../states"
+import { fmtNum, fmtPct, NOT_WORKED_DOORS } from "../states"
 import { GoalsDialog } from "../GoalsDialog"
 import { Surface } from "../Surface"
 import { TeamPicker } from "../TeamPicker"
@@ -41,9 +41,13 @@ function readStoredTeam(): string | null {
 function errMsg(e: unknown): string {
   return e instanceof Error && e.message ? e.message : "Noe gikk galt. Prøv igjen."
 }
-function workState(date: string, today: string, noShow = false): DayState {
-  if (noShow) return "no_show"
+function workState(date: string, today: string, noShow = false, doors = 0): DayState {
+  if (noShow || notWorked(date, today, doors)) return "no_show"
   return date < today ? "worked" : date === today ? "today" : "planned"
+}
+/** same rule as the server: a planned day that is over with under 50 doors */
+function notWorked(date: string, today: string, doors: number): boolean {
+  return date < today && doors < NOT_WORKED_DOORS
 }
 
 export function TeamKalenderView() {
@@ -161,16 +165,16 @@ export function TeamKalenderView() {
 
   const actions: DayActions = {
     createShift: (m, date) => mutate(
-      () => patchCell(m.person_id, date, (c) => ({ ...c, state: workState(date, today), shift_id: "pending", shift_editable: true, goals: m.default_goals ? { ...m.default_goals, source: "default" } : { doors: null, givers: null, source: "none" } })),
+      () => patchCell(m.person_id, date, (c) => ({ ...c, state: workState(date, today, false, c.actual?.doors ?? 0), not_worked: notWorked(date, today, c.actual?.doors ?? 0), shift_id: "pending", shift_editable: true, goals: m.default_goals ? { ...m.default_goals, source: "default" } : { doors: null, givers: null, source: "none" } })),
       () => schedulingApi.createShifts(teamId!, [{ person_id: m.person_id, person_type: m.person_kind, date }]), "Vakt lagt til").catch(() => {}),
     deleteShift: (m, cell) => mutate(
-      () => patchCell(m.person_id, cell.date, (c) => ({ ...c, state: c.date === today ? "today" : c.date < today && (c.actual?.doors ?? 0) > 0 ? "worked" : "off", shift_id: null, goals: null, move_request: null })),
+      () => patchCell(m.person_id, cell.date, (c) => ({ ...c, state: c.date === today ? "today" : c.date < today && (c.actual?.doors ?? 0) > 0 ? "worked" : "off", shift_id: null, goals: null, move_request: null, not_worked: false })),
       () => schedulingApi.deleteShift(cell.shift_id!), "Vakten er fjernet").then(() => setSel(null)).catch(() => {}),
     setGoals: (m, cell, goals) => mutate(
       () => patchCell(m.person_id, cell.date, (c) => ({ ...c, goals: goals ? { ...goals, source: "override" } : m.default_goals ? { ...m.default_goals, source: "default" } : { doors: null, givers: null, source: "none" } })),
       () => schedulingApi.setShiftGoals(cell.shift_id!, goals), goals ? "Dagsmål lagret" : "Bruker fast mål").catch(() => {}),
     setNoShow: (m, cell, value) => mutate(
-      () => patchCell(m.person_id, cell.date, (c) => ({ ...c, state: workState(c.date, today, value) })),
+      () => patchCell(m.person_id, cell.date, (c) => ({ ...c, state: workState(c.date, today, value, c.actual?.doors ?? 0), not_worked: !value && notWorked(c.date, today, c.actual?.doors ?? 0) })),
       () => schedulingApi.setNoShow(cell.shift_id!, value), value ? "Markert som ikke møtt" : "«Ikke møtt» fjernet").catch(() => {}),
     approve: async (r) => {
       try { await schedulingApi.approveMove(r.id) } catch (e) { toast({ title: "Kunne ikke godkjenne", description: errMsg(e), variant: "destructive" }); throw e }
@@ -384,7 +388,7 @@ export function TeamKalenderView() {
             <div className="flex min-w-0 flex-[999_1_960px] flex-col rounded-[16px] border border-ab-line bg-ab-elevated dark:border-[#25272C] dark:bg-[#131416]">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ab-line-1 px-[18px] py-3.5 dark:border-[#222428]">
                 <div className="hidden flex-wrap items-center gap-4 text-[12px] text-ab-fg-2 md:flex">
-                  {[["bg-[#16A34A] dark:bg-[#3ECF8E]", "Nådde givermål"], ["bg-[#D97706] dark:bg-[#F5A524]", "Under givermål"], ["bg-ab-subtle border border-ab-line-2 dark:bg-[#2A2D33] dark:border-[#4A4E57]", "Planlagt vakt"], ["border border-dashed border-[#D97706] dark:border-[#F5A524]", "Ønsker bytte"], ["bg-[#DC2626] dark:bg-[#EF4444]", "Ikke møtt"]].map(([c, l]) => (
+                  {[["bg-[#16A34A] dark:bg-[#3ECF8E]", "Nådde givermål"], ["bg-[#D97706] dark:bg-[#F5A524]", "Under givermål"], ["bg-ab-subtle border border-ab-line-2 dark:bg-[#2A2D33] dark:border-[#4A4E57]", "Planlagt vakt"], ["border border-dashed border-[#D97706] dark:border-[#F5A524]", "Ønsker bytte"], ["bg-[#DC2626] dark:bg-[#EF4444]", "Ikke møtt / jobbet"]].map(([c, l]) => (
                     <span key={l} className="flex items-center gap-1.5"><span className={cn("h-2.5 w-2.5 rounded-[3px]", c)} aria-hidden />{l}</span>
                   ))}
                 </div>

@@ -192,13 +192,15 @@ function cell(t: (typeof TEAMS)[number], p: MockPerson, date: string, today: str
     givers: override ? s.goalGivers : p.defGivers,
     source: override ? ("override" as const) : p.defDoors === null && p.defGivers === null ? ("none" as const) : ("default" as const),
   }
-  const state = s.noShow ? "no_show" : date < today ? "worked" : date === today ? "today" : "planned"
   const actual =
     date < today && !s.noShow ? actualFor(p.id, date, goals.doors)
       : date === today ? { doors: Math.round((goals.doors ?? 50) * 0.4), ja: 1, ja_pct: 4.5 }
       : null
+  // same rule as the server: a planned day that is over with under 50 doors = «Ikke jobbet»
+  const not_worked = date < today && !s.noShow && (actual?.doors ?? 0) < 50
+  const state = s.noShow || not_worked ? "no_show" : date < today ? "worked" : date === today ? "today" : "planned"
   return {
-    date, state, shift_id: s.id, shift_editable: true, shift_team_name: t.name, goals, actual,
+    date, state, not_worked, shift_id: s.id, shift_editable: true, shift_team_name: t.name, goals, actual,
     move_request: req ? { id: req.id, status: req.status, from_date: req.from_date, to_date: req.to_date } : null,
   }
 }
