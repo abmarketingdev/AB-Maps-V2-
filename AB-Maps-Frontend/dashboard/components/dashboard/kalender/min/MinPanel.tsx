@@ -43,7 +43,7 @@ export function panelHeading(mode: PanelMode, cell: DayCell | null, today: strin
   if (!cell) return { title: "Velg en dag", sub: "" }
   const title = cap(longDate(cell.date))
   const mr = cell.move_request
-  if (cell.state === "no_show") return { title, sub: "Ikke møtt" }
+  if (cell.state === "no_show") return { title, sub: cell.not_worked ? "Ikke jobbet" : "Ikke møtt" }
   if (cell.state === "worked") return { title, sub: "Gjennomført vakt" }
   if (cell.state === "today") return { title, sub: cell.shift_id ? `I dag, ${goalText(cell).toLowerCase()}` : "Fri i dag" }
   if (cell.state === "planned") {
@@ -326,7 +326,9 @@ function DayBody(p: MinPanelProps) {
           <Stat label="Ja %" value={fmtPct(a.ja_pct ?? 0)} />
         </div>
       )}
-      {cell.state === "no_show" && <Note tone="red" title="Markert som ikke møtt" text="Salgssjefen har satt dette. Snakk med salgssjefen hvis det er feil." />}
+      {cell.state === "no_show" && (cell.not_worked
+        ? <Note tone="red" title="Ikke jobbet" text="Under 50 dører denne dagen, så dagen telles som ikke jobbet. Det settes automatisk når dagen er over." />
+        : <Note tone="red" title="Markert som ikke møtt" text="Salgssjefen har satt dette. Snakk med salgssjefen hvis det er feil." />)}
       {cell.state === "worked" && cell.goals && (
         <span className="text-[13px] text-ab-fg-2">{goalText(cell)}</span>
       )}

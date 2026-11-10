@@ -135,7 +135,7 @@ export function DayDetail({
         </>
       )}
 
-      {k === "noshow" && <div className="rounded-[12px] border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-3 text-[13px] text-[#B91C1C] dark:border-[#7F1D1D] dark:bg-[#2A1215] dark:text-[#FCA5A5]">Markert som ikke møtt. Dagen vises rød for promotøren også.</div>}
+      {k === "noshow" && <div className="rounded-[12px] border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-3 text-[13px] text-[#B91C1C] dark:border-[#7F1D1D] dark:bg-[#2A1215] dark:text-[#FCA5A5]">{cell.not_worked ? "Ikke jobbet: under 50 dører denne dagen. Settes automatisk, og vises rød for promotøren også." : "Markert som ikke møtt. Dagen vises rød for promotøren også."}</div>}
 
       {req && (
         <>
@@ -176,7 +176,7 @@ export function DayDetail({
         </div>
       )}
 
-      {cell.shift_id && editable && cell.date <= today && (
+      {cell.shift_id && editable && cell.date <= today && !cell.not_worked && (
         <div className="flex items-center justify-between gap-3 rounded-[12px] bg-ab-subtle px-3.5 py-2.5 dark:bg-[#1C1D21]">
           <div><div className="text-[13px] font-semibold">Ikke møtt</div><div className="text-[12px] text-ab-fg-2">{k === "noshow" ? "Slå av hvis det var feil" : `Marker hvis ${member.name.split(" ")[0]} ikke jobbet`}</div></div>
           <button

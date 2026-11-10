@@ -10,6 +10,8 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Small laptops (wide but short): used to fit the promoter dashboard's first screen.
+      screens: { short: { raw: "(min-width: 1024px) and (max-height: 860px)" } },
       colors: {
         // shadcn / radix tokens (mapped to AB palette in globals.css)
         background: "hsl(var(--background))",

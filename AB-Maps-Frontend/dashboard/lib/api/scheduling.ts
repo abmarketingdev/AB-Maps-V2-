@@ -40,6 +40,8 @@ export interface MoveRequestRef {
 export interface DayCell {
   date: string
   state: DayState
+  /** «Ikke jobbet»: a planned day that is over with under 50 doors (set by the server, not by a leader) */
+  not_worked?: boolean
   shift_id: string | null
   /** false when the shift was planned by another team (read-only here) */
   shift_editable: boolean
@@ -197,6 +199,7 @@ const json = (method: string, body: unknown): RequestInit => ({
 interface WireDay {
   date: string
   state: DayState
+  not_worked?: boolean
   shift: { id: string; team_id: string; team_name: string; no_show: boolean; can_edit: boolean } | null
   goals: { doors: number | null; givers: number | null; source: "override" | "default" } | null
   actual: Actual | null
@@ -247,6 +250,7 @@ function mapDay(d: WireDay): DayCell {
   return {
     date: d.date,
     state: d.state,
+    not_worked: !!d.not_worked,
     shift_id: d.shift?.id ?? null,
     shift_editable: d.shift ? d.shift.can_edit : true,
     shift_team_name: d.shift?.team_name ?? null,

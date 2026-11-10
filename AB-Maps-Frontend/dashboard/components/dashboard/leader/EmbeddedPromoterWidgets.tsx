@@ -14,7 +14,7 @@
  * primary action — same modal, same POST, same refetch trigger.
  */
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Loader2, TrendingUp, TrendingDown, Zap } from "lucide-react"
 import { RoyMascot } from "@/components/gamification/RoyMascot"
@@ -33,8 +33,23 @@ const moodGlow: Record<string, string> = {
   concerned: "#f43f5e", greeting: "#ec4899", ready: "#3b82f6",
 }
 
-export function EmbeddedPromoterWidgets() {
+// Small laptops: same query as the «short» Tailwind screen.
+function useShortScreen() {
+  const [short, setShort] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px) and (max-height: 860px)")
+    const on = () => setShort(mq.matches)
+    on()
+    mq.addEventListener("change", on)
+    return () => mq.removeEventListener("change", on)
+  }, [])
+  return short
+}
+
+/** `afterTop` renders right under the goal ring / streak cards (used for «Min uke»). */
+export function EmbeddedPromoterWidgets({ afterTop }: { afterTop?: ReactNode } = {}) {
   const reduced = useReducedMotion()
+  const short = useShortScreen()
   const { t } = useLang()
   const { data, status } = useEmployeeToday()
 
@@ -68,14 +83,14 @@ export function EmbeddedPromoterWidgets() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 short:space-y-3">
       {/* «Registrer en dør nå» removed (client 2026-11-08): doors are registered in the map app. */}
 
       {/* Hero: goal ring + Roy + streak + ja-rate side by side */}
       <motion.section {...fade(0.05)} className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4">
-        <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated p-6">
+        <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated p-6 short:p-3">
           <div className="flex flex-col sm:flex-row items-center gap-6">
-            <GoalRing value={data.doorsToday} goal={data.doorGoal} size={200} />
+            <GoalRing value={data.doorsToday} goal={data.doorGoal} size={short ? 150 : 200} />
             <div className="flex flex-col items-center">
               <motion.div
                 animate={reduced ? {} : { y: [0, -6, 0] }}
@@ -83,7 +98,7 @@ export function EmbeddedPromoterWidgets() {
                 className="relative"
               >
                 <div className="absolute inset-0 rounded-full blur-2xl -z-10" style={{ background: `${glow}2e`, transform: "scale(1.4)" }} />
-                <RoyMascot state={mascot} size={80} accent={glow} />
+                <RoyMascot state={mascot} size={short ? 64 : 80} accent={glow} />
               </motion.div>
               <p className="mt-3 max-w-[180px] text-center text-xs text-ab-fg-3 leading-snug">
                 {mascot === "win-big" ? t("Du knuser det i dag!") : aheadOfPace ? t("Du ligger foran ditt eget snitt.") : t("Hold tempoet — du nærmer deg.")}
@@ -92,11 +107,11 @@ export function EmbeddedPromoterWidgets() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4 short:gap-3">
           <StreakFlame days={data.streakDays} atRisk={data.streakAtRisk} minDoors={data.streakMinDoors} doorsToday={data.doorsToday} />
 
           {/* Ja-rate tile */}
-          <div className="rounded-2xl border border-ab-line bg-ab-elevated p-5">
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated p-5 short:p-4">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15">
                 <Zap className="h-5 w-5 text-emerald-400" />
@@ -106,13 +121,15 @@ export function EmbeddedPromoterWidgets() {
                 <p className="mt-0.5 text-[11px] text-ab-fg-3">{t("ja-rate i dag")}</p>
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium" style={{ color: data.jaProsentDelta >= 0 ? "#10b981" : "#f43f5e" }}>
+            <div className="mt-3 short:mt-2 flex items-center gap-1.5 text-[11px] font-medium" style={{ color: data.jaProsentDelta >= 0 ? "#10b981" : "#f43f5e" }}>
               {data.jaProsentDelta >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
               {data.jaProsentDelta >= 0 ? "+" : ""}{data.jaProsentDelta.toFixed(1)}{t("pp vs ditt snitt")}
             </div>
           </div>
         </div>
       </motion.section>
+
+      {afterTop}
 
       {/* Pace strip */}
       <motion.div {...fade(0.1)} className="flex items-center gap-3 rounded-2xl border border-ab-line bg-ab-elevated px-5 py-4">

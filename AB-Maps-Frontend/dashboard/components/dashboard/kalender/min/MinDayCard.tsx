@@ -151,6 +151,7 @@ export function modelFor(
   }
 
   if (cell.state === "no_show") {
+    if (cell.not_worked) return { tone: "red", title: "Ikke jobbet", sub: `${fmtNum(cell.actual?.doors ?? 0)} ${doorsWord(cell.actual?.doors ?? 0)}, under 50`, clickable: !picking }
     return { tone: "red", title: "Ikke møtt", sub: cell.actual ? `${fmtNum(cell.actual.doors)} ${doorsWord(cell.actual.doors)}` : "Satt av salgssjefen", clickable: !picking }
   }
   if (cell.state === "today") {

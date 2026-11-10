@@ -16,20 +16,22 @@ import { MonthPicker } from "./MonthPicker"
 import { TopplisterRow } from "./TopplisterRow"
 import { PromoterMalRow } from "./PromoterMalRow"
 import { TodayLeaderboardCard } from "./TodayDoorLeaderboard"
+import { MinUkeCard } from "./MinUkeCard"
+import type { OwnCalendarApi } from "@/lib/api/scheduling"
 
 // Promotør dashboard — Aurora Nordic redesign.
 // Route: /employee/dashbord.
-export function PromoterDashboard() {
+export function PromoterDashboard({ calendarApi }: { calendarApi?: OwnCalendarApi } = {}) {
   const { user } = useAuth()
   const firstName = (user?.user_info?.name?.split(" ")[0]) || (user?.username?.split(" ")[0]) || "der"
   return (
     <EmployeeTodayProvider firstName={firstName}>
-      <PromoterDashboardInner />
+      <PromoterDashboardInner calendarApi={calendarApi} />
     </EmployeeTodayProvider>
   )
 }
 
-function PromoterDashboardInner() {
+function PromoterDashboardInner({ calendarApi }: { calendarApi?: OwnCalendarApi }) {
   const { user } = useAuth()
   const { t, lang } = useLang()
   const { selectedCampaign } = useSelectedCampaign()
@@ -78,15 +80,15 @@ function PromoterDashboardInner() {
           initial={reduced ? false : { opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="relative overflow-hidden mx-4 sm:mx-6 mt-6 sm:mt-8 rounded-[28px] border border-ab-line"
+          className="relative overflow-hidden mx-4 sm:mx-6 mt-6 sm:mt-8 short:mt-4 rounded-[28px] border border-ab-line"
         >
           <AuroraBg intensity="normal" />
-          <div className="relative px-6 sm:px-10 py-8 sm:py-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="relative px-6 sm:px-10 py-8 sm:py-10 short:py-5 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
               <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-ab-fg-3">
                 {now.toLocaleDateString(lang === "no" ? "nb-NO" : "en-GB", { weekday: "long", day: "numeric", month: "long" })}
               </p>
-              <h1 className="mt-2 font-instrument text-4xl sm:text-6xl leading-[1.02] text-ab-fg">
+              <h1 className="mt-2 short:mt-1 font-instrument text-4xl sm:text-6xl short:text-5xl leading-[1.02] text-ab-fg">
                 {greeting}, <span className="italic text-aurora-amber">{firstName}</span> <span className="not-italic">👋</span>
               </h1>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ab-fg-2">
@@ -112,7 +114,7 @@ function PromoterDashboardInner() {
           </div>
         </motion.section>
 
-        <div className="relative px-4 sm:px-6 py-6 sm:py-8 space-y-8">
+        <div className="relative px-4 sm:px-6 py-6 sm:py-8 short:py-4 space-y-8 short:space-y-6">
           {/* ═════════════════ MÅL MÅNED + MÅL UKE + LØNN + EstimatedSalaryBand ═════════════════
               Hidden until Phase D (goals endpoint) and Phase 2+5 (salary endpoint) ship.
               Per boss constraint 2026-08-05: no fake data. Din dag + Topplister remain
@@ -122,8 +124,8 @@ function PromoterDashboardInner() {
           {/* ═════════════════ Din dag — live widgets from prod employee view ═════════════════ */}
           <div id="din-dag">
             <SectionHeader label={t("Din dag")} accent="teamleder" right={<LivePulseDot label={t("Live")} />} />
-            <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">{t("Sanntid — oppdateres hvert 20. sekund")}</p>
-            <EmbeddedPromoterWidgets />
+            <p className="pb-2 pl-4 text-[11px] text-ab-fg-3 short:hidden">{t("Sanntid — oppdateres hvert 20. sekund")}</p>
+            <EmbeddedPromoterWidgets afterTop={<MinUkeCard api={calendarApi} />} />
           </div>
 
           {/* Today's leaderboards — 2-col grid (doors + recruits) between

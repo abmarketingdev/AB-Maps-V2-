@@ -27,7 +27,7 @@ export function StreakFlame({ days, atRisk, minDoors, doorsToday }: StreakFlameP
 
   return (
     <div
-      className="relative flex flex-col overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5"
+      className="relative flex flex-col overflow-hidden rounded-2xl border border-ab-line bg-ab-elevated backdrop-blur-xl p-5 short:p-4"
       style={atRisk ? { borderColor: "rgba(245,158,11,0.35)", boxShadow: "0 0 24px -10px rgba(245,158,11,0.5)" } : undefined}
     >
       <div className="flex items-center gap-3">

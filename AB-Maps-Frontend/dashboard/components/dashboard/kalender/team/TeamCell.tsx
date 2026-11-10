@@ -49,7 +49,7 @@ export function describe(name: string, cell: DayCell, today: string): string {
   if (k === "done" && cell.actual) parts.push(`${cell.actual.doors} ${doorsWord(cell.actual.doors)}, ${cell.actual.ja} ${giversWord(cell.actual.ja)}`)
   if (k === "plan") parts.push(cell.shift_editable ? `vakt, mål ${goalLine(cell)}` : `vakt planlagt av ${cell.shift_team_name || "annet team"}`)
   if (k === "swap" && cell.move_request) parts.push(`ønsker bytte til ${longDate(cell.move_request.to_date)}`)
-  if (k === "noshow") parts.push("ikke møtt")
+  if (k === "noshow") parts.push(cell.not_worked ? "ikke jobbet, under 50 dører" : "ikke møtt")
   if (k === "today") parts.push(cell.shift_id ? "i dag, på vakt" : "i dag, fri")
   if (k === "off") parts.push("fri")
   return parts.join(", ")
@@ -138,8 +138,8 @@ export const TeamCell = React.memo(function TeamCell({ cell, name, today, editab
       look = "bg-[#FEF2F2] border-[#FCA5A5] dark:bg-[#2A1215] dark:border-[#7F1D1D]"
       body = (
         <>
-          <span className="text-[13px] font-semibold text-[#B91C1C] dark:text-[#FCA5A5]">Ikke møtt</span>
-          <span className="text-[11px] text-ab-fg-2">{a && a.doors ? `${a.doors} ${doorsWord(a.doors)}` : "Satt av salgssjef"}</span>
+          <span className="text-[13px] font-semibold text-[#B91C1C] dark:text-[#FCA5A5]">{cell.not_worked ? "Ikke jobbet" : "Ikke møtt"}</span>
+          <span className="text-[11px] text-ab-fg-2">{cell.not_worked ? `${a?.doors ?? 0} ${doorsWord(a?.doors ?? 0)}, under 50` : a && a.doors ? `${a.doors} ${doorsWord(a.doors)}` : "Satt av salgssjef"}</span>
         </>
       )
       break
