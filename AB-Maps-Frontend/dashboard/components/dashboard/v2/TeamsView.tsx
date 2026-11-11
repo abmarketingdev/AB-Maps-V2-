@@ -505,9 +505,13 @@ function PickerModal({ team, members, picker, onClose, onPick }: {
   const leadRows = picker.kind === "lead"
     ? [
         ...members.filter(m => m.person_type === "manager" && (!q || m.name.toLowerCase().includes(q.toLowerCase())))
-          .map(m => ({ id: m.id, name: m.name, sub: "Medlem av teamet" })),
+          .map(m => ({ id: m.id, name: m.name, sub: "Medlem av teamet", hint: undefined as string | undefined })),
         ...(people ?? []).filter(p => p.type === "manager")
-          .map(p => ({ id: p.id, name: p.name, sub: p.teams.length ? p.teams.map(t => t.name).join(", ") : "Ikke i noe team" })),
+          .map(p => {
+            const foreign = p.teams.find(t => !t.owned)
+            return { id: p.id, name: p.name, sub: p.teams.length ? p.teams.map(t => t.name).join(", ") : "Ikke i noe team",
+              hint: foreign ? `Med i ${foreign.name} – kontakt HR/admin` : undefined }
+          }),
       ].filter(r => r.id !== team.owner?.id && r.id !== team.co_leader?.id)   // same person can't hold both
     : []
 
@@ -549,7 +553,7 @@ function PickerModal({ team, members, picker, onClose, onPick }: {
           ))}
           {picker.kind === "lead" && (people === null ? <PanelLoading label="Laster ledere…" /> : (
             leadRows.length === 0 ? <p className="text-sm text-ab-fg-4">Ingen ledere funnet. Bare ledere (lederkonto) kan være {ROLE_LABEL[picker.field]}.</p> :
-              leadRows.slice(0, 60).map(r => <Row key={r.id} name={r.name} sub={r.sub} onClick={() => onPick({ kind: "lead", field: picker.field, person: { id: r.id, name: r.name } })} />)
+              leadRows.slice(0, 60).map(r => <Row key={r.id} name={r.name} sub={r.sub} hint={r.hint} disabled={!!r.hint} onClick={() => onPick({ kind: "lead", field: picker.field, person: { id: r.id, name: r.name } })} />)
           ))}
         </div>
       )}
