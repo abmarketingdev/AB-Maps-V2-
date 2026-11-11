@@ -58,6 +58,7 @@ import CampaignSelector from "@/components/CampaignSelector"
 import { CampaignPicker, getStoredCampaign } from "@/components/dashboard/v2/CampaignPicker"
 import StandaloneCampaignModal from "@/components/campaign/StandaloneCampaignModal"
 import { useAuth } from "@/lib/auth/AuthContext"
+import { fetchOrgAccess } from "@/lib/api/teams"
 import { launchMap, currentCampaignId } from "@/lib/maps/launchMap"
 import type { Campaign } from "../services/campaignService"
 import { useLang } from "@/lib/i18n"
@@ -102,7 +103,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/analytics": "Analytics",
   "/admin/tasks": "Tildel oppgaver",
   "/uploaded-addresses": "Legg til adresse",
-  "/teams": "Team",
+  "/teams": "Salgsorganisasjon",
   "/mal-innstillinger": "Mål-innstillinger",
   "/kalender": "Kalender",
 }
@@ -367,6 +368,27 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // Role-based launch (this layout renders for manager/admin/superuser -> MANAGER map).
   const openAbMaps = () => launchMap(user, { campaignId: currentCampaignId() })
 
+  // Salgsorganisasjon (S-ORG): HR says who may open it (super admins + sales chiefs by
+  // team data). Asked once per login and cached for the session; hidden on any error.
+  const [orgAllowed, setOrgAllowed] = useState(false)
+  useEffect(() => {
+    if (!isAuthenticated || !user?.user_id || !(isStaff || isSuperuser || isSalesChief)) { setOrgAllowed(false); return }
+    const key = `ab:org-access:${user.user_id}`
+    try {
+      const hit = sessionStorage.getItem(key)
+      if (hit !== null) { setOrgAllowed(hit === "1"); return }
+    } catch { /* storage blocked */ }
+    let alive = true
+    fetchOrgAccess()
+      .then(a => {
+        if (!alive) return
+        setOrgAllowed(!!a.allowed)
+        try { sessionStorage.setItem(key, a.allowed ? "1" : "0") } catch { /* ignore */ }
+      })
+      .catch(() => { if (alive) setOrgAllowed(false) })
+    return () => { alive = false }
+  }, [isAuthenticated, user?.user_id, isStaff, isSuperuser, isSalesChief])
+
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
       { href: "/dashbord",  title: "Dashbord",  icon: <Home className="h-4 w-4" />,        group: "ARBEIDSFLATE" },
@@ -386,8 +408,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       { href: "/campaigns",            title: "Kampanje",             icon: <MapPinned className="h-4 w-4" />, group: "TERRITORIUM" },
     )
     // Campaign teams — managers (own teams), sales chiefs + admins (all teams).
+    // Salgsorganisasjon — only super admins and sales chiefs (HR `org-access`, S-ORG).
+    if (orgAllowed) {
+      items.push({ href: "/teams", title: "Salgsorganisasjon", icon: <Users className="h-4 w-4" />, group: "TEAM" })
+    }
     if (isStaff || isSuperuser || isSalesChief) {
-      items.push({ href: "/teams", title: "Team", icon: <Users className="h-4 w-4" />, group: "TEAM" })
       // Goal-settings — same audience as Team management. Server-side per-row
       // permission still enforces who can actually write (leader/chief/HR-staff).
       items.push({ href: "/mal-innstillinger", title: "Mål-innstillinger", icon: <Target className="h-4 w-4" />, group: "TEAM" })
@@ -410,7 +435,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       items.push({ href: "/uploaded-addresses", title: "Legg til adresse", icon: <Plus className="h-4 w-4" />, group: "ADMIN" })
     }
     return items
-  }, [isSuperuser, isSalesChief, isStaff])
+  }, [isSuperuser, isSalesChief, isStaff, orgAllowed])
 
   const groupedNav = useMemo(() => {
     const groups = new Map<NavGroup, NavItem[]>()

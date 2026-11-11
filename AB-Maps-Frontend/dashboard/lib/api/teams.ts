@@ -349,3 +349,57 @@ export function moveTeamMember(teamId: string, personId: string, toTeamId: strin
 export function setTeamLeaders(teamId: string, body: { leader_id?: string | null; co_leader_id?: string | null }): Promise<void> {
   return structWrite(`/api/hr/teams/${teamId}/leaders/`, 'PATCH', body, 'Kunne ikke endre leder');
 }
+
+// ─── Salgsorganisasjon (S-ORG, kunden 11.11) ──────────────────────────────────
+// Same HR endpoint as the HR «Salgsorganisasjon» page: GET /api/hr/teams/org/.
+// On maps HR answers only for super admins (whole org) and sales chiefs by team data
+// (their own teams); everyone else gets 403 `no_org_access`. No provisjon on maps.
+
+export type OrgWarning = 'mangler_by' | 'mangler_teamleder' | 'lederprovisjon_ikke_satt' | 'salgssjef_som_selger';
+export const ORG_AVVIK: OrgWarning[] = ['mangler_teamleder', 'lederprovisjon_ikke_satt', 'salgssjef_som_selger'];
+export const ORG_WARNING_LABEL: Record<OrgWarning, string> = {
+  mangler_by: 'Mangler by',
+  mangler_teamleder: 'Mangler teamleder',
+  lederprovisjon_ikke_satt: 'Lederprovisjon ikke satt',
+  salgssjef_som_selger: 'Salgssjef står som selger',
+};
+export const ORG_UTEN_BY = 'uten_by';
+
+export interface OrgPerson { person_id: string; name: string | null; ab_id: string | null }
+export interface OrgMember extends OrgPerson {
+  type: 'leder' | 'ansatt';
+  is_leader: boolean; is_co_leader: boolean; is_chief_duplicate: boolean;
+}
+export interface OrgTeam {
+  id: string; name: string; city: string;
+  campaign: { id: string; name: string | null } | null;
+  leader: OrgPerson | null; co_leader: OrgPerson | null;
+  sales_chief_id: string | null;
+  count: number; warnings: OrgWarning[]; members: OrgMember[];
+  can_restructure?: boolean;
+}
+export interface OrgChief {
+  chief_id: string | null; name: string; ab_id: string | null;
+  team_count: number; seller_count: number; warning_count: number; teams: OrgTeam[];
+}
+export interface OrgTree {
+  kpi: { sjefer: number; team: number; selgere: number; avvik: number };
+  city_counts: { city: string; label: string; count: number }[];
+  cities: { city: string; label: string; chiefs: OrgChief[] }[];
+  sees_all: boolean; is_chief?: boolean;
+}
+export interface OrgAccess { allowed: boolean; sees_all: boolean; is_chief: boolean }
+
+/** Thrown when HR refuses the org view (team leaders, employees). */
+export class OrgNoAccessError extends Error {}
+
+export async function fetchOrg(opts: { city?: string; search?: string; onlyWarnings?: boolean } = {}): Promise<OrgTree> {
+  const res = await fetchWithAuth(`/api/hr/teams/org/${qp({ city: opts.city, search: opts.search, only_warnings: opts.onlyWarnings ? 1 : undefined })}`);
+  if (res.status === 403) throw new OrgNoAccessError('Ingen tilgang');
+  if (!res.ok) throw new Error(`Request failed (${res.status})`);
+  return res.json();
+}
+
+export function fetchOrgAccess(): Promise<OrgAccess> {
+  return getJSON<OrgAccess>('/api/hr/teams/org-access/');
+}
