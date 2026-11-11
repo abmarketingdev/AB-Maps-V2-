@@ -1560,10 +1560,10 @@ function DeleteLessonDialog({
                       <span className="ml-1 text-slate-600">aktivitetslogger</span>
                     </div>
                   )}
-                  {preview.media.associated_media_files > 0 && (
+                  {(preview.media?.associated_media_files ?? 0) > 0 && (
                     <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                       <span className="font-bold text-slate-900">
-                        {preview.media.associated_media_files}
+                        {(preview.media?.associated_media_files ?? 0)}
                       </span>
                       <span className="ml-1 text-slate-600">mediafiler</span>
                     </div>
@@ -1595,7 +1595,7 @@ function DeleteLessonDialog({
               )}
 
               {/* Cleanup media option */}
-              {preview.media.associated_media_files > 0 && (
+              {(preview.media?.associated_media_files ?? 0) > 0 && (
                 <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 hover:bg-slate-50">
                   <input
                     type="checkbox"
@@ -1608,7 +1608,7 @@ function DeleteLessonDialog({
                       Slett tilknyttede mediafiler
                     </p>
                     <p className="text-xs text-slate-500">
-                      Fjerner {preview.media.associated_media_files} mediafil(er) permanent
+                      Fjerner {(preview.media?.associated_media_files ?? 0)} mediafil(er) permanent
                     </p>
                   </div>
                 </label>

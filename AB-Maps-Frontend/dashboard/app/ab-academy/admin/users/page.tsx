@@ -21,6 +21,16 @@ import { cn } from "@/lib/utils";
 import { CourseAssignmentDialog } from "@/components/learning/CourseAssignmentDialog";
 import type { UserProgressData, AllUsersProgressResponse, IndividualUserProgressResponse, LearningSection, LearningLesson } from "@/services/learningTypes";
 
+// LRN-SEARCH: learning-service sends one `name`; older payloads had first_name/last_name.
+type NamedUser = { name?: string; first_name?: string; last_name?: string; username?: string };
+function fullName(u: NamedUser): string {
+  return (u.name || [u.first_name, u.last_name].filter(Boolean).join(" ")).trim();
+}
+function initials(u: NamedUser): string {
+  const parts = (fullName(u) || u.username || "").split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -406,15 +416,13 @@ const UserProgressManagement = () => {
     });
   };
 
-  // Filter users by search
+  // Filter users by search (LRN-SEARCH: the API sends `name`, not first/last name)
   const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return userProgress;
-    const query = searchQuery.toLowerCase();
-    return userProgress.filter(user => 
-      user.user.first_name.toLowerCase().includes(query) ||
-      user.user.last_name.toLowerCase().includes(query) ||
-      user.user.email.toLowerCase().includes(query) ||
-      user.user.username.toLowerCase().includes(query)
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return userProgress;
+    return userProgress.filter(user =>
+      [fullName(user.user), user.user.email, user.user.username]
+        .some(v => (v ?? "").toLowerCase().includes(query))
     );
   }, [userProgress, searchQuery]);
 
@@ -539,11 +547,11 @@ const UserProgressManagement = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold shrink-0">
-                      {user.user.first_name?.[0]}{user.user.last_name?.[0]}
+                      {initials(user.user)}
                     </div>
                     <div className="min-w-0">
                       <CardTitle className={cn("truncate", isMobile ? "text-base" : "text-lg")}>
-                        {user.user.first_name} {user.user.last_name}
+                        {fullName(user.user) || user.user.username}
                       </CardTitle>
                       <CardDescription className={cn("truncate", isMobile ? "text-xs" : "text-sm")}>
                         {user.user.email}
@@ -551,7 +559,7 @@ const UserProgressManagement = () => {
                     </div>
                   </div>
                   <Badge className={cn(getStatusColor(user.status), "shrink-0 border")}>
-                    {user.status === "active" ? "Aktiv" : user.status === "inactive" ? "Inaktiv" : "Venter"}
+                    {user.status?.toLowerCase() === "active" ? "Aktiv" : user.status?.toLowerCase() === "inactive" ? "Inaktiv" : "Venter"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -695,7 +703,7 @@ const UserProgressManagement = () => {
           if (!open) resetResetDialogState();
         }}
         title="Nullstill progresjon"
-        description={`Nullstill progresjon for ${selectedUser?.user.first_name} ${selectedUser?.user.last_name}`}
+        description={`Nullstill progresjon for ${selectedUser ? fullName(selectedUser.user) || selectedUser.user.username : ""}`}
         maxWidth="max-w-lg"
         footer={
           <>
@@ -803,7 +811,7 @@ const UserProgressManagement = () => {
         open={isCourseDialogOpen}
         onOpenChange={setIsCourseDialogOpen}
         userId={selectedUser?.user.id ?? null}
-        userName={selectedUser ? (`${selectedUser.user.first_name} ${selectedUser.user.last_name}`.trim() || selectedUser.user.username) : ""}
+        userName={selectedUser ? (fullName(selectedUser.user) || selectedUser.user.username) : ""}
         sections={sectionsWithLessons}
       />
 
@@ -817,7 +825,7 @@ const UserProgressManagement = () => {
           if (!open) resetOverrideDialogState();
         }}
         title="Overstyr progresjon"
-        description={`Overstyr progresjon for ${selectedUser?.user.first_name} ${selectedUser?.user.last_name}`}
+        description={`Overstyr progresjon for ${selectedUser ? fullName(selectedUser.user) || selectedUser.user.username : ""}`}
         maxWidth="max-w-lg"
         footer={
           <>
@@ -959,7 +967,7 @@ const UserProgressManagement = () => {
         open={isDetailDialogOpen}
         onOpenChange={setIsDetailDialogOpen}
         title="Detaljert progresjon"
-        description={`${selectedUser?.user.first_name} ${selectedUser?.user.last_name}`}
+        description={selectedUser ? fullName(selectedUser.user) || selectedUser.user.username : ""}
         maxWidth="max-w-4xl"
         footer={
           <Button

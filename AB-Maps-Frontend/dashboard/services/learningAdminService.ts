@@ -378,8 +378,20 @@ export class LearningAdminService {
       const error = await response.json().catch(() => ({ error: 'Failed to delete lesson' }));
       throw new Error(error.error || error.detail || 'Failed to delete lesson');
     }
-    
-    return response.json();
+
+    // LRN-DEL: the learning-service answers 204 No Content; a body is optional
+    const text = response.status === 204 ? "" : await response.text();
+    if (text) return JSON.parse(text);
+    return {
+      success: true,
+      message: "Leksjonen er slettet",
+      deleted_lesson: { id, title: "", kind: "", section_id: 0, section_title: "", order: 0 },
+      affected_data: {
+        progress_records_deleted: 0, quiz_attempts_deleted: 0, quiz_questions_deleted: 0,
+        activity_logs_updated: 0, prerequisites_cleaned: 0, media_unlinked: 0,
+        users_progress_recalculated: 0, learning_paths_updated: 0,
+      },
+    };
   }
 
   // Helper to check if deletion response is a warning

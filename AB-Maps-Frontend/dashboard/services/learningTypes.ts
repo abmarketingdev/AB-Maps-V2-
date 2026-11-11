@@ -162,8 +162,9 @@ export interface UserProgressData {
     id: string;  // Changed: UUID string instead of number
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    name?: string;          // learning-service sends one full name (LRN-SEARCH)
+    first_name?: string;    // legacy backend
+    last_name?: string;     // legacy backend
     role: string;
   };
   progress_summary: UserProgressSummary;
@@ -363,18 +364,18 @@ export interface LessonDeletionPreview {
   };
   will_be_updated: {
     activity_logs_set_to_null: number;
-    learning_paths_set_to_null: number;
+    learning_paths_set_to_null?: number;
   };
   users_affected: {
     with_progress: number;
     with_quiz_attempts: number;
-    with_current_lesson: number;
+    with_current_lesson?: number;
   };
-  prerequisites: {
+  prerequisites?: {
     used_as_prerequisite_by: number;
     has_prerequisites: number;
   };
-  media: {
+  media?: {
     associated_media_files: number;
   };
   warnings: Array<{ level: string; message: string }>;
