@@ -6,9 +6,10 @@
 //   - plain employee       → 403 (no team access).
 // Provisjon (rate) fields are stripped from responses for non-HR-staff.
 //
-// READ-ONLY in Maps (2026-11-05): teams are created and edited only in the HR
-// system. The only team write left here is `saveTeamGoal` (PUT goals/), which
-// HR keeps open for maps tokens.
+// Teams are created, deleted and priced only in the HR system (2026-11-05). Maps
+// writes: `saveTeamGoal` (PUT goals/) and — M-TEAM, kunden 11.11 — a sales chief's
+// structure changes on their OWN teams (members, move, leader / co-leader). HR
+// decides per team in `can_restructure`; the UI only shows the buttons then.
 //
 // HR returns a richer shape than the old monolith `/api/teams/`; this adapter
 // maps it back onto the dashboard's existing DTOs so the UI is unchanged.
@@ -38,6 +39,8 @@ export interface TeamListItem {
   // Undefined when the backend hasn't shipped the field yet — callers should
   // treat undefined as "unknown" and fall back to expanded-detail summing.
   recruited_total?: number;
+  /** HR: may the caller change members / leaders of this team from maps (M-TEAM). */
+  can_restructure?: boolean;
 }
 
 export interface TeamMember {
@@ -113,6 +116,7 @@ interface HrTeam {
   members?: HrMember[];
   created_at: string; updated_at: string;
   recruited_total?: number;
+  can_restructure?: boolean;
 }
 
 const mapRef = (p: { id: string; name: string | null } | null): TeamRef | null =>
@@ -143,12 +147,13 @@ const mapListItem = (t: HrTeam): TeamListItem => ({
   created_at: t.created_at,
   updated_at: t.updated_at,
   recruited_total: t.recruited_total,      // undefined when backend hasn't shipped yet
+  can_restructure: t.can_restructure === true,
 });
 
 const mapDetail = (t: HrTeam): TeamDetail => ({
   ...mapListItem(t),
   members: (t.members ?? []).map(mapMember),
-  can_edit: false,             // Maps is read-only for teams; edit in HR
+  can_edit: false,             // team CRUD/rates stay in HR; structure → can_restructure
 });
 
 // ─── List ────────────────────────────────────────────────────────────
@@ -295,4 +300,52 @@ function errMsg(data: unknown, fallback: string): string {
     if (parts.length) return parts.join(' · ');
   }
   return fallback;
+}
+
+// ─── Structure writes for a sales chief's own teams (M-TEAM, kunden 11.11) ────
+// HR checks ownership per team (team.sales_chief = caller, or admin); a foreign
+// team answers 403/404 with a Norwegian `detail` that the UI shows as-is.
+
+export interface AssignablePerson {
+  id: string; type: PersonType; name: string; ab_person_id: string | null;
+  /** Teams (other than this one) the person already sits in; owned = caller may change it. */
+  teams: { id: string; name: string; owned: boolean }[];
+}
+
+function structErr(data: unknown, fallback: string): string {
+  if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.detail === 'string') return obj.detail;
+    const msgs = Object.values(obj).flatMap(v => (Array.isArray(v) ? v : [v])).filter(v => typeof v === 'string');
+    if (msgs.length) return (msgs as string[]).join(' ');
+  }
+  return fallback;
+}
+
+async function structWrite(url: string, method: string, body: unknown, fallback: string): Promise<void> {
+  const res = await fetchWithAuth(url, { method, body: body === undefined ? undefined : JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(structErr(data, `${fallback} (${res.status})`));
+}
+
+export function fetchAssignablePeople(teamId: string, search?: string): Promise<AssignablePerson[]> {
+  return getJSON<AssignablePerson[]>(`/api/hr/teams/${teamId}/assignable-members/${qp({ search })}`)
+    .then(rows => (rows ?? []).map(r => ({ ...r, teams: r.teams ?? [] })));
+}
+
+export function addTeamMember(teamId: string, personId: string, role: PersonType): Promise<void> {
+  return structWrite(`/api/hr/teams/${teamId}/members/`, 'POST', { person_id: personId, role }, 'Kunne ikke legge til');
+}
+
+export function removeTeamMember(teamId: string, personId: string): Promise<void> {
+  return structWrite(`/api/hr/teams/${teamId}/members/${personId}/`, 'DELETE', undefined, 'Kunne ikke fjerne');
+}
+
+export function moveTeamMember(teamId: string, personId: string, toTeamId: string): Promise<void> {
+  return structWrite(`/api/hr/teams/${teamId}/members/${personId}/move/`, 'POST', { to_team_id: toTeamId }, 'Kunne ikke flytte');
+}
+
+/** Set (id) or clear (null) the leader and/or co-leader; omit a key to leave it. */
+export function setTeamLeaders(teamId: string, body: { leader_id?: string | null; co_leader_id?: string | null }): Promise<void> {
+  return structWrite(`/api/hr/teams/${teamId}/leaders/`, 'PATCH', body, 'Kunne ikke endre leder');
 }
