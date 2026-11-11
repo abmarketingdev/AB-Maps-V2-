@@ -246,8 +246,8 @@ export class LearningAdminService {
     });
     
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to reorder sections' }));
-      throw new Error(error.error || 'Failed to reorder sections');
+      const error = await response.json().catch(() => ({ error: 'Kunne ikke lagre rekkefølgen på seksjonene.' }));
+      throw new Error(error.error || error.detail || 'Kunne ikke lagre rekkefølgen på seksjonene.');
     }
   }
 
@@ -404,14 +404,18 @@ export class LearningAdminService {
     return 'success' in response && response.success === true;
   }
 
-  async reorderLessons(lessonIds: number[]): Promise<void> {
+  // L-ORD: full 1..N list of ONE section's lessons (backend validates same section, no duplicates)
+  async reorderLessons(lessonOrders: { id: number; order: number }[]): Promise<void> {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/learning/admin/lessons/reorder/`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
-      body: JSON.stringify({ lesson_ids: lessonIds }),
+      body: JSON.stringify({ lesson_orders: lessonOrders }),
     });
-    
-    if (!response.ok) throw new Error('Failed to reorder lessons');
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Kunne ikke lagre rekkefølgen på leksjonene.' }));
+      throw new Error(error.error || error.detail || 'Kunne ikke lagre rekkefølgen på leksjonene.');
+    }
   }
 
   async duplicateLesson(lessonId: number): Promise<{ message: string; new_lesson_id: number }> {

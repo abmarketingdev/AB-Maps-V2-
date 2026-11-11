@@ -30,7 +30,28 @@ import {
   X,
   AlertTriangle,
   Loader2,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type Announcements,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { toast } from "@/hooks/use-toast";
 import type {
   LearningSection,
   LearningLesson,
@@ -85,6 +106,121 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 }
 
 // =============================================================================
+// REORDER (L-ORD): drag handle + keyboard + «Flytt opp/ned»
+// =============================================================================
+
+const sectionDndId = (id: number) => `section-${id}`;
+const lessonDndId = (id: number) => `lesson-${id}`;
+const dndNumericId = (id: string | number) => Number(String(id).replace(/^\D+-/, ""));
+
+function useTreeSensors() {
+  return useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+}
+
+const dndScreenReader = {
+  draggable:
+    "Trykk mellomrom for å løfte. Bruk piltastene opp og ned for å flytte, mellomrom for å slippe, Escape for å avbryte.",
+};
+
+function dndAnnouncements(kind: "seksjonen" | "leksjonen"): Announcements {
+  return {
+    onDragStart: () => `Løftet ${kind}.`,
+    onDragOver: ({ over }) => (over ? `Over ny plass.` : `Utenfor listen.`),
+    onDragEnd: ({ over }) => (over ? `Slapp ${kind}. Rekkefølgen lagres.` : `Slapp ${kind} utenfor listen.`),
+    onDragCancel: () => `Flytting avbrutt.`,
+  };
+}
+
+function DragHandle({
+  label,
+  disabled,
+  isSelected,
+  handleRef,
+  handleProps,
+}: {
+  label: string;
+  disabled: boolean;
+  isSelected: boolean;
+  handleRef: (el: HTMLElement | null) => void;
+  handleProps: Record<string, any>;
+}) {
+  return (
+    <button
+      type="button"
+      ref={handleRef}
+      {...(disabled ? {} : handleProps)}
+      disabled={disabled}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={label}
+      title={disabled ? "Fjern søket for å endre rekkefølge" : label}
+      data-testid="drag-handle"
+      className={cn(
+        "-ml-1 shrink-0 rounded p-0.5 touch-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
+        disabled
+          ? "cursor-not-allowed opacity-30"
+          : "cursor-grab active:cursor-grabbing hover:bg-black/10",
+        isSelected ? "text-white/80" : "text-slate-400"
+      )}
+    >
+      <GripVertical className="h-4 w-4" />
+    </button>
+  );
+}
+
+function MoveMenuItems({
+  canMoveUp,
+  canMoveDown,
+  disabled,
+  onMoveUp,
+  onMoveDown,
+  close,
+}: {
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  disabled: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  close: () => void;
+}) {
+  const item =
+    "flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent";
+  return (
+    <>
+      <button
+        type="button"
+        disabled={disabled || !canMoveUp}
+        onClick={(e) => {
+          e.stopPropagation();
+          close();
+          onMoveUp();
+        }}
+        className={item}
+      >
+        <ArrowUp className="h-4 w-4" />
+        Flytt opp
+      </button>
+      <button
+        type="button"
+        disabled={disabled || !canMoveDown}
+        onClick={(e) => {
+          e.stopPropagation();
+          close();
+          onMoveDown();
+        }}
+        className={item}
+      >
+        <ArrowDown className="h-4 w-4" />
+        Flytt ned
+      </button>
+      <div className="my-1 border-t border-slate-100" />
+    </>
+  );
+}
+
+// =============================================================================
 // TREE ITEM COMPONENTS
 // =============================================================================
 
@@ -102,6 +238,13 @@ interface SectionTreeItemProps {
   onDelete: () => void;
   onDuplicateLesson?: (lessonId: number) => void;
   onDeleteLesson?: (lessonId: number) => void;
+  reorderDisabled: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onReorderLesson: (activeLessonId: number, overLessonId: number) => void;
+  onMoveLesson: (lessonId: number, direction: -1 | 1) => void;
 }
 
 function SectionTreeItem({
@@ -118,11 +261,38 @@ function SectionTreeItem({
   onDelete,
   onDuplicateLesson,
   onDeleteLesson,
+  reorderDisabled,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  onReorderLesson,
+  onMoveLesson,
 }: SectionTreeItemProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sectionDndId(section.id), disabled: reorderDisabled });
+  const lessonSensors = useTreeSensors();
+
+  const handleLessonDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    onReorderLesson(dndNumericId(active.id), dndNumericId(over.id));
+  };
 
   return (
-    <div className="select-none">
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn("select-none", isDragging && "relative z-10 rounded-lg bg-white opacity-80 shadow-lg ring-1 ring-emerald-300")}
+      data-testid={`section-item-${section.id}`}
+    >
       {/* Section row */}
       <div
         className={cn(
@@ -136,6 +306,13 @@ function SectionTreeItem({
         aria-expanded={isExpanded}
         aria-selected={isSelected}
       >
+        <DragHandle
+          label={`Dra for å flytte seksjonen «${section.title}»`}
+          disabled={reorderDisabled}
+          isSelected={isSelected}
+          handleRef={setActivatorNodeRef}
+          handleProps={{ ...attributes, ...listeners }}
+        />
         <button
           type="button"
           onClick={(e) => {
@@ -181,7 +358,8 @@ function SectionTreeItem({
               setShowMenu((p) => !p);
             }}
             className={cn(
-              "p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity",
+              "p-1 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity",
+            isSelected && "opacity-100",
               isSelected ? "hover:bg-white/20" : "hover:bg-slate-200"
             )}
             aria-label="Section actions"
@@ -195,6 +373,14 @@ function SectionTreeItem({
                 onClick={() => setShowMenu(false)}
               />
               <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                <MoveMenuItems
+                  canMoveUp={canMoveUp}
+                  canMoveDown={canMoveDown}
+                  disabled={reorderDisabled}
+                  onMoveUp={onMoveUp}
+                  onMoveDown={onMoveDown}
+                  close={() => setShowMenu(false)}
+                />
                 <button
                   type="button"
                   onClick={() => {
@@ -237,16 +423,31 @@ function SectionTreeItem({
       {/* Lessons (children) */}
       {isExpanded && lessons.length > 0 && (
         <div className="ml-4 mt-1 space-y-0.5 border-l border-slate-200 pl-2">
-          {lessons.map((lesson) => (
-            <LessonTreeItem
-              key={lesson.id}
-              lesson={lesson}
-              isSelected={selectedLessonId === lesson.id}
-              onSelect={() => onSelectLesson(lesson.id)}
-              onDuplicate={onDuplicateLesson ? () => onDuplicateLesson(lesson.id) : undefined}
-              onDelete={onDeleteLesson ? () => onDeleteLesson(lesson.id) : undefined}
-            />
-          ))}
+          {/* Own DndContext per section → lessons can only move within their section */}
+          <DndContext
+            sensors={lessonSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleLessonDragEnd}
+            accessibility={{ screenReaderInstructions: dndScreenReader, announcements: dndAnnouncements("leksjonen") }}
+          >
+            <SortableContext items={lessons.map((l) => lessonDndId(l.id))} strategy={verticalListSortingStrategy}>
+              {lessons.map((lesson, idx) => (
+                <LessonTreeItem
+                  key={lesson.id}
+                  lesson={lesson}
+                  isSelected={selectedLessonId === lesson.id}
+                  onSelect={() => onSelectLesson(lesson.id)}
+                  onDuplicate={onDuplicateLesson ? () => onDuplicateLesson(lesson.id) : undefined}
+                  onDelete={onDeleteLesson ? () => onDeleteLesson(lesson.id) : undefined}
+                  reorderDisabled={reorderDisabled}
+                  canMoveUp={idx > 0}
+                  canMoveDown={idx < lessons.length - 1}
+                  onMoveUp={() => onMoveLesson(lesson.id, -1)}
+                  onMoveDown={() => onMoveLesson(lesson.id, 1)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       )}
     </div>
@@ -259,23 +460,59 @@ interface LessonTreeItemProps {
   onSelect: () => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
+  reorderDisabled: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }
 
-function LessonTreeItem({ lesson, isSelected, onSelect, onDuplicate, onDelete }: LessonTreeItemProps) {
+function LessonTreeItem({
+  lesson,
+  isSelected,
+  onSelect,
+  onDuplicate,
+  onDelete,
+  reorderDisabled,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+}: LessonTreeItemProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: lessonDndId(lesson.id), disabled: reorderDisabled });
 
   return (
     <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "group flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer transition-colors",
         isSelected
           ? "bg-emerald-600 text-white"
-          : "hover:bg-slate-100 text-slate-600"
+          : "hover:bg-slate-100 text-slate-600",
+        isDragging && "relative z-10 bg-white opacity-80 shadow-lg ring-1 ring-emerald-300"
       )}
       onClick={onSelect}
       role="treeitem"
       aria-selected={isSelected}
+      data-testid={`lesson-item-${lesson.id}`}
     >
+      <DragHandle
+        label={`Dra for å flytte leksjonen «${lesson.title}»`}
+        disabled={reorderDisabled}
+        isSelected={isSelected}
+        handleRef={setActivatorNodeRef}
+        handleProps={{ ...attributes, ...listeners }}
+      />
       {getLessonIcon(lesson.kind)}
       <span className="flex-1 truncate text-sm">{lesson.title}</span>
       <StatusBadge isActive={lesson.is_active} />
@@ -288,7 +525,8 @@ function LessonTreeItem({ lesson, isSelected, onSelect, onDuplicate, onDelete }:
             setShowMenu((p) => !p);
           }}
           className={cn(
-            "p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity",
+            "p-1 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity",
+            isSelected && "opacity-100",
             isSelected ? "hover:bg-white/20" : "hover:bg-slate-200"
           )}
           aria-label="Lesson actions"
@@ -305,6 +543,14 @@ function LessonTreeItem({ lesson, isSelected, onSelect, onDuplicate, onDelete }:
               }}
             />
             <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+              <MoveMenuItems
+                canMoveUp={canMoveUp}
+                canMoveDown={canMoveDown}
+                disabled={reorderDisabled}
+                onMoveUp={onMoveUp}
+                onMoveDown={onMoveDown}
+                close={() => setShowMenu(false)}
+              />
               {onDuplicate && (
                 <button
                   type="button"
@@ -1744,6 +1990,11 @@ export default function CourseBuilderPage() {
     new Set()
   );
   const [searchQuery, setSearchQuery] = useState("");
+  // L-ORD: one reorder request in flight at a time; reordering is off while searching
+  const [reordering, setReordering] = useState(false);
+  const searchActive = searchQuery.trim().length > 0;
+  const reorderDisabled = searchActive || reordering;
+  const sectionSensors = useTreeSensors();
   const [creatingSection, setCreatingSection] = useState(false);
   const [creatingLessonInSection, setCreatingLessonInSection] = useState<
     number | null
@@ -1946,6 +2197,109 @@ export default function CourseBuilderPage() {
         console.error("Failed to load full lesson:", e);
       }
     }
+  };
+
+  // ---------------------------------------------
+  // REORDER (L-ORD)
+  // ---------------------------------------------
+  const reorderFailed = (e: any) => {
+    toast({
+      variant: "destructive",
+      title: "Kunne ikke endre rekkefølgen",
+      description: `${e?.message ? `${e.message} ` : ""}Endringen er angret.`,
+    });
+  };
+
+  // Optimistic: renumber 1..N locally, ONE reorder call with the full list, roll back on error.
+  const persistSectionOrder = async (newList: LearningSection[], movedId: number) => {
+    if (reorderDisabled || !groupedSections) return;
+    const campaignKey = (s: LearningSection) => s.campaign_id ?? (s as any).campaign ?? null;
+    const moved = newList.find((s) => s.id === movedId);
+    if (!moved) return;
+    // Sections are unique per campaign → number only those of the moved section's campaign
+    const payload = newList
+      .filter((s) => campaignKey(s) === campaignKey(moved))
+      .map((s, i) => ({ id: s.id, order: i + 1 }));
+    const orderById = new Map(payload.map((p) => [p.id, p.order]));
+    const snapshot = groupedSections;
+    setGroupedSections({
+      ...snapshot,
+      campaigns: snapshot.campaigns.map((cg) => ({
+        ...cg,
+        sections: cg.sections.map((s) =>
+          orderById.has(s.id) ? { ...s, order: orderById.get(s.id)! } : s
+        ),
+      })),
+    });
+    setReordering(true);
+    try {
+      await LearningAdminService.getInstance().reorderSections(payload);
+      setFullSectionCache((prev) => {
+        const next = new Map(prev);
+        for (const [id, order] of orderById) {
+          const cached = next.get(id);
+          if (cached) next.set(id, { ...cached, order });
+        }
+        return next;
+      });
+    } catch (e: any) {
+      console.error("Failed to reorder sections:", e);
+      setGroupedSections(snapshot);
+      reorderFailed(e);
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const persistLessonOrder = async (newList: LearningLesson[]) => {
+    if (reorderDisabled || newList.length === 0) return;
+    const payload = newList.map((l, i) => ({ id: l.id, order: i + 1 }));
+    const orderById = new Map(payload.map((p) => [p.id, p.order]));
+    const snapshot = lessons;
+    setLessons(snapshot.map((l) => (orderById.has(l.id) ? { ...l, order: orderById.get(l.id)! } : l)));
+    setReordering(true);
+    try {
+      await LearningAdminService.getInstance().reorderLessons(payload);
+      setFullLessonCache((prev) => {
+        const next = new Map(prev);
+        for (const [id, order] of orderById) {
+          const cached = next.get(id);
+          if (cached) next.set(id, { ...cached, order });
+        }
+        return next;
+      });
+    } catch (e: any) {
+      console.error("Failed to reorder lessons:", e);
+      setLessons(snapshot);
+      reorderFailed(e);
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const handleSectionDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    const list = currentCampaignSections;
+    const from = list.findIndex((s) => s.id === dndNumericId(active.id));
+    const to = list.findIndex((s) => s.id === dndNumericId(over.id));
+    if (from < 0 || to < 0) return;
+    persistSectionOrder(arrayMove(list, from, to), list[from].id);
+  };
+
+  const handleMoveSection = (sectionId: number, direction: -1 | 1) => {
+    const list = currentCampaignSections;
+    const from = list.findIndex((s) => s.id === sectionId);
+    const to = from + direction;
+    if (from < 0 || to < 0 || to >= list.length) return;
+    persistSectionOrder(arrayMove(list, from, to), sectionId);
+  };
+
+  const moveLessonWithinSection = (sectionId: number, lessonId: number, to: (from: number) => number) => {
+    const list = lessonsBySectionId.get(sectionId) || [];
+    const from = list.findIndex((l) => l.id === lessonId);
+    const target = from < 0 ? -1 : to(from);
+    if (from < 0 || target < 0 || target >= list.length || target === from) return;
+    persistLessonOrder(arrayMove(list, from, target));
   };
 
   const handleCreateSection = () => {
@@ -2444,8 +2798,27 @@ export default function CourseBuilderPage() {
               )}
             </div>
 
+            {searchActive && filteredSections.length > 0 && (
+              <p
+                className="mb-2 rounded-md bg-slate-50 px-2 py-1.5 text-[11px] text-slate-500"
+                data-testid="reorder-search-hint"
+              >
+                Fjern søket for å endre rekkefølge
+              </p>
+            )}
+
             {/* Tree */}
-            <div className="space-y-1" role="tree">
+            <DndContext
+              sensors={sectionSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleSectionDragEnd}
+              accessibility={{ screenReaderInstructions: dndScreenReader, announcements: dndAnnouncements("seksjonen") }}
+            >
+            <SortableContext
+              items={filteredSections.map((s) => sectionDndId(s.id))}
+              strategy={verticalListSortingStrategy}
+            >
+            <div className="space-y-1" role="tree" aria-busy={reordering}>
               {filteredSections.length === 0 ? (
                 <div className="py-8 text-center">
                   <FolderOpen className="mx-auto h-10 w-10 text-slate-300" />
@@ -2463,7 +2836,7 @@ export default function CourseBuilderPage() {
                   </Button>
                 </div>
               ) : (
-                filteredSections.map((section) => (
+                filteredSections.map((section, idx) => (
                   <SectionTreeItem
                     key={section.id}
                     section={section}
@@ -2484,10 +2857,25 @@ export default function CourseBuilderPage() {
                     onDelete={() => handleDeleteSection(section.id)}
                     onDuplicateLesson={handleDuplicateLesson}
                     onDeleteLesson={handleOpenDeleteLessonDialog}
+                    reorderDisabled={reorderDisabled}
+                    canMoveUp={idx > 0}
+                    canMoveDown={idx < filteredSections.length - 1}
+                    onMoveUp={() => handleMoveSection(section.id, -1)}
+                    onMoveDown={() => handleMoveSection(section.id, 1)}
+                    onReorderLesson={(activeId, overId) =>
+                      moveLessonWithinSection(section.id, activeId, () =>
+                        (lessonsBySectionId.get(section.id) || []).findIndex((l) => l.id === overId)
+                      )
+                    }
+                    onMoveLesson={(lessonId, direction) =>
+                      moveLessonWithinSection(section.id, lessonId, (from) => from + direction)
+                    }
                   />
                 ))
               )}
             </div>
+            </SortableContext>
+            </DndContext>
 
             {/* Bottom action */}
             {filteredSections.length > 0 && (
