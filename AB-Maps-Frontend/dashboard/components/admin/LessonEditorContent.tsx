@@ -165,7 +165,8 @@ export function LessonEditorContent({
       const admin = LearningAdminService.getInstance();
       // Generate base slug from title, append timestamp to ensure uniqueness within section
       const baseSlug = form.title?.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim() || "lesson";
-      const slug = `${baseSlug}-${Date.now()}`;
+      // LRN-SLUG: cap the title part so title + suffix stays well under the API slug limit
+      const slug = `${baseSlug.slice(0, 36).replace(/-+$/, "")}-${Date.now().toString(36)}`;
       const nextOrder = Math.max(0, ...allLessons.filter((l) => l.section === form.section).map((l) => l.order)) + 1;
       const payload: LearningLessonCreate = {
         title: form.title || "Untitled",

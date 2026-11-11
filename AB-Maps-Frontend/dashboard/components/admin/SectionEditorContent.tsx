@@ -156,7 +156,7 @@ export function SectionEditorContent({
           .replace(/\s+/g, "-")
           .replace(/-+/g, "-")
           .trim();
-      const payload: Record<string, unknown> = { ...form, slug: slug || "section-" + Date.now() };
+      const payload: Record<string, unknown> = { ...form, slug: (slug || "section-" + Date.now()).slice(0, 48).replace(/-+$/, "") }; // LRN-SLUG
       if (payload.campaign == null) delete payload.campaign;
       const created = await admin.createSection(payload as LearningSectionCreate);
       setSavedAt(new Date());
