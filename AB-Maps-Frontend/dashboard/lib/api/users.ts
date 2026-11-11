@@ -87,6 +87,53 @@ export async function deleteUser(_userType: 'employee' | 'manager', id: string):
   return fetchWithAuth(`/api/users/users/${id}/`, { method: 'DELETE' });
 }
 
+export interface BulkDeleteResult { id: string; name: string; ok: boolean; error: string | null }
+
+/**
+ * Delete several users (M-DEL). One call to POST /users/users/bulk-delete/ (admin only, max 200,
+ * same tombstone path as single delete). If that endpoint is not deployed yet (404/405), falls
+ * back to the single DELETE with concurrency 3. `onProgress(done, total)` drives the progress bar.
+ */
+export async function bulkDeleteUsers(
+  users: { id: string; name: string }[],
+  onProgress?: (done: number, total: number) => void,
+): Promise<BulkDeleteResult[]> {
+  const total = users.length
+  const nameOf = new Map(users.map(u => [u.id, u.name]))
+  onProgress?.(0, total)
+  const res = await post('/api/users/users/bulk-delete/', { ids: users.map(u => u.id) })
+  if (res.ok) {
+    const body = await res.json() as { results: BulkDeleteResult[] }
+    onProgress?.(total, total)
+    return body.results.map(r => ({ ...r, name: r.name || nameOf.get(r.id) || r.id }))
+  }
+  if (res.status !== 404 && res.status !== 405) {
+    let msg = `Feil ${res.status}`
+    try { const b = await res.json(); if (b?.detail) msg = String(b.detail) } catch { /* keep status */ }
+    throw new Error(msg)
+  }
+  // Fallback: loop the single DELETE, 3 at a time.
+  const out: BulkDeleteResult[] = new Array(total)
+  let next = 0, done = 0
+  const worker = async () => {
+    while (next < total) {
+      const i = next++
+      const u = users[i]
+      try {
+        const r = await deleteUser('employee', u.id)
+        out[i] = { id: u.id, name: u.name, ok: r.ok,
+          error: r.ok ? null : r.status === 404 ? 'Fant ikke brukeren (allerede slettet?)'
+            : r.status === 403 ? 'Ingen tilgang' : `Feil ${r.status}` }
+      } catch {
+        out[i] = { id: u.id, name: u.name, ok: false, error: 'Nettverksfeil' }
+      }
+      onProgress?.(++done, total)
+    }
+  }
+  await Promise.all([worker(), worker(), worker()])
+  return out
+}
+
 export async function updateUser(_userType: 'employee' | 'manager', id: string, body: Record<string, unknown>): Promise<Response> {
   return fetchWithAuth(`/api/users/users/${id}/`, { method: 'PATCH', body: JSON.stringify(body) });
 }

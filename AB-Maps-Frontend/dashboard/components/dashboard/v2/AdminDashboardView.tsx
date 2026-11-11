@@ -12,15 +12,16 @@ import { createPortal } from "react-dom"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
   Plus, Search, Shield, Users, UserCog, MoreHorizontal, Pencil, Trash2,
-  ChevronUp, ChevronDown, X, Mail, Phone, Star, Crown,
+  ChevronUp, ChevronDown, X, Mail, Phone, Star, Crown, Check, Minus, AlertTriangle, CheckCircle2, XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { RoyMascot, type RoyState } from "@/components/gamification/RoyMascot"
 import {
-  fetchDirectory, fetchUserStats, registerUser, deleteUser, updateUser,
+  fetchDirectory, fetchUserStats, registerUser, deleteUser, updateUser, bulkDeleteUsers,
   promoteEmployeeToManager, promoteManagerToSuperuser, demoteSuperuserToManager,
-  type FlatUser, type DirectoryRole, type UserStats,
+  type FlatUser, type DirectoryRole, type UserStats, type BulkDeleteResult,
 } from "@/lib/api/users"
+import { useAuth } from "@/lib/auth/AuthContext"
 import { PanelLoading, PanelEmpty, PanelError } from "./_states"
 
 // ─── Types & mock data ────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ interface User {
   dept?: Dept            // platform: maps / qc / hr (from employee_type / admin_type)
   abId?: string
   isSalesChief?: boolean
+  hasAdminType?: boolean // platform admin (admin_type) — never bulk-deletable
   online: boolean
 }
 
@@ -73,6 +75,7 @@ function flatToUser(f: FlatUser): User {
     dept,
     abId: f.ab_person_id ?? undefined,
     isSalesChief: f.is_sales_chief,
+    hasAdminType: Boolean(f.admin_type),
     online: f.online,
   }
 }
@@ -158,6 +161,16 @@ export function AdminDashboardView() {
   const [loading, setLoading] = useState(true)
   const [errored, setErrored] = useState(false)
 
+  // Bulk delete (M-DEL): selection survives paging/search; keyed by auth user id.
+  const { user: me } = useAuth()
+  const [selected, setSelected] = useState<Map<string, User>>(() => new Map())
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const lockReason = useCallback((u: User): string | null => {
+    if (me?.user_id && u.id === me.user_id) return "Du kan ikke slette deg selv"
+    if (u.role === "admin" || u.hasAdminType) return "Administratorer kan ikke slettes her"
+    return null
+  }, [me?.user_id])
+
   // Debounce search input → query param.
   useEffect(() => {
     const t = setTimeout(() => { setDebounced(search); setPage(1) }, 350)
@@ -188,6 +201,22 @@ export function AdminDashboardView() {
   useEffect(() => { void load() }, [load])
 
   const filtered = users // server already filters/searches/paginates
+
+  const selectable = filtered.filter(u => !lockReason(u))
+  const pageAllSelected = selectable.length > 0 && selectable.every(u => selected.has(u.id))
+  const pageSomeSelected = selectable.some(u => selected.has(u.id))
+  const toggleOne = (u: User) => setSelected(prev => {
+    const next = new Map(prev)
+    if (next.has(u.id)) next.delete(u.id); else next.set(u.id, u)
+    return next
+  })
+  const togglePage = () => setSelected(prev => {
+    const next = new Map(prev)
+    if (pageAllSelected) selectable.forEach(u => next.delete(u.id))
+    else selectable.forEach(u => next.set(u.id, u))
+    return next
+  })
+  const clearSelection = () => setSelected(new Map())
 
   // Write ops → live endpoints, then refresh the grid + counters.
   const refresh = () => { void load() }
@@ -293,9 +322,21 @@ export function AdminDashboardView() {
             <PanelEmpty msg="Ingen brukere funnet" />
           ) : (
             <div className="divide-y divide-ab-line">
+              <div className="flex items-center gap-3 px-4 py-2.5 bg-ab-base/40">
+                <SelectBox checked={pageAllSelected} indeterminate={!pageAllSelected && pageSomeSelected}
+                  disabled={selectable.length === 0} onChange={togglePage}
+                  label="Velg alle på siden" title={selectable.length === 0 ? "Ingen brukere på denne siden kan slettes" : undefined} />
+                <button onClick={togglePage} disabled={selectable.length === 0}
+                  className="cursor-pointer text-xs font-medium text-ab-fg-3 hover:text-ab-fg disabled:cursor-not-allowed disabled:opacity-40">
+                  Velg alle på siden
+                </button>
+                {selected.size > 0 && <span className="ml-auto text-xs text-ab-fg-4">{selected.size} valgt totalt</span>}
+              </div>
               {filtered.map((u, i) => (
                 <motion.div key={u.id} initial={reduced ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i, 12) * 0.025 }}
-                  className="group flex items-center gap-4 px-4 py-3 hover:bg-ab-hover transition-colors">
+                  className={cn("group flex items-center gap-4 px-4 py-3 hover:bg-ab-hover transition-colors", selected.has(u.id) && "bg-rose-500/[0.06]")}>
+                  <SelectBox checked={selected.has(u.id)} disabled={!!lockReason(u)} onChange={() => toggleOne(u)}
+                    label={`Velg ${fullName(u)}`} title={lockReason(u) ?? undefined} />
                   <div className="relative shrink-0">
                     <RoyMascot state={userRoy(u.id)} size={38} />
                     <span className={cn("absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-ab-base", u.online ? "bg-emerald-500" : "bg-ab-active")} />
@@ -355,6 +396,32 @@ export function AdminDashboardView() {
           )}
         </motion.div>
       </div>
+
+      {/* Bulk selection bar (M-DEL) */}
+      <AnimatePresence>
+        {selected.size > 0 && (
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            className="fixed bottom-5 inset-x-0 mx-auto z-40 w-[calc(100%-2rem)] max-w-xl">
+            <div role="region" aria-label="Valgte brukere"
+              className="flex items-center gap-3 rounded-2xl border border-ab-line bg-ab-overlay px-4 py-3 shadow-[0_18px_60px_-12px_rgba(0,0,0,0.6)]">
+              <span className="flex h-7 min-w-7 items-center justify-center rounded-lg bg-rose-500/15 px-2 font-mono text-sm font-bold text-rose-400">{selected.size}</span>
+              <span className="text-sm font-medium text-ab-fg">valgt</span>
+              <div className="ml-auto flex items-center gap-2">
+                <button onClick={clearSelection}
+                  className="cursor-pointer rounded-xl border border-ab-line px-3 py-2 text-sm font-medium text-ab-fg-2 hover:bg-ab-hover">Fjern valg</button>
+                <button onClick={() => setBulkOpen(true)}
+                  className="cursor-pointer flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-rose-500">
+                  <Trash2 className="h-3.5 w-3.5" /> Slett valgte
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <BulkDeleteModal open={bulkOpen} users={[...selected.values()]}
+        onClose={(ran) => { setBulkOpen(false); if (ran) { clearSelection(); refresh() } }} />
 
       {/* Modals */}
       <UserModals modal={modal} onClose={() => setModal(null)} onChangeRole={changeRole} onDelete={remove} onChanged={refresh} />
@@ -583,3 +650,114 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
 }
 
 export default AdminDashboardView
+
+// ─── Bulk delete (M-DEL, client feedback 11.11) ──────────────────────────────
+
+function SelectBox({ checked, indeterminate, disabled, onChange, label, title }: {
+  checked: boolean; indeterminate?: boolean; disabled?: boolean; onChange: () => void; label: string; title?: string
+}) {
+  return (
+    <span title={title} className="shrink-0 inline-flex">
+      <button type="button" role="checkbox" aria-checked={indeterminate ? "mixed" : checked} aria-label={label}
+        aria-disabled={disabled || undefined} disabled={disabled} onClick={onChange}
+        className={cn("cursor-pointer flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border transition-colors",
+          checked || indeterminate ? "border-rose-500 bg-rose-600 text-white" : "border-ab-line bg-ab-elevated hover:border-ab-fg-4",
+          disabled && "cursor-not-allowed opacity-35 hover:border-ab-line")}>
+        {indeterminate ? <Minus className="h-3 w-3" strokeWidth={3} /> : checked ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+      </button>
+    </span>
+  )
+}
+
+function BulkDeleteModal({ open, users, onClose }: { open: boolean; users: User[]; onClose: (ran: boolean) => void }) {
+  const [typed, setTyped] = useState("")
+  const [phase, setPhase] = useState<"confirm" | "running" | "done">("confirm")
+  const [progress, setProgress] = useState({ done: 0, total: 0 })
+  const [results, setResults] = useState<BulkDeleteResult[]>([])
+  const [error, setError] = useState("")
+
+  useEffect(() => { if (open) { setTyped(""); setPhase("confirm"); setResults([]); setError(""); setProgress({ done: 0, total: 0 }) } }, [open])
+
+  const n = users.length
+  const ok = typed.trim() === String(n) || typed.trim().toUpperCase() === "SLETT"
+  const deleted = results.filter(r => r.ok)
+  const failed = results.filter(r => !r.ok)
+
+  const run = async () => {
+    setPhase("running"); setError("")
+    try {
+      const res = await bulkDeleteUsers(users.map(u => ({ id: u.id, name: fullName(u) || u.username })),
+        (done, total) => setProgress({ done, total }))
+      setResults(res); setPhase("done")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Noe gikk galt"); setPhase("confirm")
+    }
+  }
+
+  const close = () => { if (phase !== "running") onClose(phase === "done") }
+
+  return (
+    <Modal open={open} onClose={close} width="max-w-lg">
+      <div className="p-6">
+        {phase !== "done" ? (
+          <>
+            <div className="flex items-start gap-3 mb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/15"><AlertTriangle className="h-5 w-5 text-rose-400" /></div>
+              <div>
+                <h2 className="text-lg font-bold text-ab-fg">Slett {n} {n === 1 ? "bruker" : "brukere"}</h2>
+                <p className="text-sm text-ab-fg-3 mt-0.5">Innloggingen fjernes umiddelbart, og de fjernes fra alle lister og team. Historikk (dører og salg) beholdes. Dette kan ikke angres.</p>
+              </div>
+            </div>
+            <ul className="max-h-56 overflow-y-auto rounded-xl border border-ab-line divide-y divide-ab-line mb-4" aria-label="Brukere som slettes">
+              {users.map(u => (
+                <li key={u.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span className="truncate text-ab-fg">{fullName(u) || u.username}</span>
+                  <span className="truncate text-xs text-ab-fg-4">{u.username}</span>
+                </li>
+              ))}
+            </ul>
+            {phase === "running" ? (
+              <div className="space-y-2" aria-live="polite">
+                <div className="h-2 rounded-full bg-ab-elevated overflow-hidden">
+                  <div className="h-full bg-rose-500 transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 8}%` }} />
+                </div>
+                <p className="text-xs text-ab-fg-3">Sletter… {progress.done} av {progress.total || n}</p>
+              </div>
+            ) : (
+              <>
+                <Lbl>Skriv <span className="font-mono text-ab-fg-2">{n}</span> eller <span className="font-mono text-ab-fg-2">SLETT</span> for å bekrefte</Lbl>
+                <input autoFocus value={typed} onChange={e => setTyped(e.target.value)} className={inputCls} placeholder={String(n)}
+                  onKeyDown={e => { if (e.key === "Enter" && ok) void run() }} />
+                {error && <p className="mt-2 text-sm text-rose-400">{error}</p>}
+                <div className="flex justify-end gap-2 mt-5">
+                  <button onClick={close} className="cursor-pointer rounded-xl border border-ab-line px-4 py-2.5 text-sm font-medium text-ab-fg-2 hover:bg-ab-hover">Avbryt</button>
+                  <button onClick={() => void run()} disabled={!ok}
+                    className="cursor-pointer rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40">
+                    Slett {n} {n === 1 ? "bruker" : "brukere"}
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <h2 className="text-lg font-bold text-ab-fg mb-1">Resultat</h2>
+            <p className="text-sm text-ab-fg-3 mb-4">{deleted.length} slettet{failed.length > 0 && <>, <span className="text-rose-400">{failed.length} feilet</span></>}.</p>
+            <ul className="max-h-72 overflow-y-auto rounded-xl border border-ab-line divide-y divide-ab-line" aria-label="Resultat per bruker">
+              {[...failed, ...deleted].map(r => (
+                <li key={r.id} className="flex items-center gap-2.5 px-3 py-2 text-sm">
+                  {r.ok ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" /> : <XCircle className="h-4 w-4 shrink-0 text-rose-400" />}
+                  <span className="truncate text-ab-fg">{r.name || r.id}</span>
+                  <span className={cn("ml-auto shrink-0 text-xs", r.ok ? "text-emerald-400" : "text-rose-400")}>{r.ok ? "Slettet" : r.error || "Feilet"}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-end mt-5">
+              <button onClick={close} className="cursor-pointer rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500">Lukk</button>
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
+  )
+}
