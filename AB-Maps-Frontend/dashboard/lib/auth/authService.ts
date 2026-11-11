@@ -108,29 +108,55 @@ class AuthService {
         throw e;
       }
 
-      // Store tokens and user data
-      this.storeTokens({
-        access: loginData.access,
-        refresh: loginData.refresh,
-      });
-
-      this.storeUserData({
-        user_id: loginData.user_id,
-        username: loginData.username,
-        email: loginData.email,
-        user_type: loginData.user_type,
-        user_info: loginData.user_info,
-        is_sales_chief: Boolean(loginData.is_sales_chief),
-      });
-
-      // Setup automatic token refresh
-      this.scheduleTokenRefresh(loginData.expires_in);
-
+      this.storeSession(loginData);
       return loginData;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
     }
+  }
+
+  /**
+   * Store a login response exactly like a password login does. Also used by /sso (S-SSO:
+   * the HR menu hands over with a one-time code that auth exchanges for this same body).
+   */
+  storeSession(loginData: LoginResponse): void {
+    this.storeTokens({
+      access: loginData.access,
+      refresh: loginData.refresh,
+    });
+
+    this.storeUserData({
+      user_id: loginData.user_id,
+      username: loginData.username,
+      email: loginData.email,
+      user_type: loginData.user_type,
+      user_info: loginData.user_info,
+      is_sales_chief: Boolean(loginData.is_sales_chief),
+    });
+
+    // Setup automatic token refresh
+    this.scheduleTokenRefresh(loginData.expires_in);
+  }
+
+  /**
+   * Exchange a one-time HR→maps hand-over code for a normal maps session (S-SSO).
+   * Throws with the server's Norwegian message on failure.
+   */
+  async exchangeHandoffCode(code: string): Promise<LoginResponse> {
+    const response = await fetch(`${this.API_BASE_URL}/api/auth/handoff/exchange/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, target: 'maps' }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data?.access || !data?.refresh) {
+      throw new Error(data?.detail || `Innlogging fra HR feilet (${response.status}).`);
+    }
+    // Starting a new session: drop whatever account was stored in this browser before.
+    this.clearAuthData();
+    this.storeSession(data as LoginResponse);
+    return data as LoginResponse;
   }
 
   /**
