@@ -16,7 +16,6 @@ import {
   User,
   Settings,
   LogOut,
-  Shield,
   Plus,
   BookOpen,
   CheckSquare,
@@ -99,7 +98,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/employee": "Ansatt",
   "/ab-academy": "AB Academy",
   "/ab-academy/oversikt": "AB Academy",
-  "/admin-dashboard": "Admin Dashboard",
+  "/admin-dashboard": "Brukere",
   "/analytics": "Analytics",
   "/admin/tasks": "Tildel oppgaver",
   "/uploaded-addresses": "Legg til adresse",
@@ -426,9 +425,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       icon: <BookOpen className="h-4 w-4" />,
       group: "LÆRING",
     })
-    // Admin Dashboard — superusers/admins ONLY (sales chiefs must not see it).
+    // Brukere (the admin dashboard, M1 12.11) — superusers/admins ONLY (sales chiefs must not see it).
     if (isSuperuser) {
-      items.push({ href: "/admin-dashboard", title: "Admin Dashboard", icon: <Shield className="h-4 w-4" />, group: "ADMIN" })
+      items.push({ href: "/admin-dashboard", title: "Brukere", icon: <Users className="h-4 w-4" />, group: "ADMIN" })
     }
     // Add-address oversight — superusers + sales chiefs.
     if (isSuperuser || isSalesChief) {
