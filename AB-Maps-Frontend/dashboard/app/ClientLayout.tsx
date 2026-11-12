@@ -21,6 +21,7 @@ import {
   CheckSquare,
   Globe,
   Users,
+  UserSearch,
   BarChart3,
   Search,
   ChevronsLeft,
@@ -412,6 +413,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       items.push({ href: "/teams", title: "Salgsorganisasjon", icon: <Users className="h-4 w-4" />, group: "TEAM" })
     }
     if (isStaff || isSuperuser || isSalesChief) {
+      // Rekruttering (M2, kunden 12.11) — the recruitment portal on its own domain, same
+      // username + password, own login. Opens in a new tab. Leaders and admins only;
+      // promoters have no portal. Who may do what inside is decided by the portal itself.
+      items.push({ href: "https://rekruttering.abmarketing.no", title: "Rekruttering", icon: <UserSearch className="h-4 w-4" />, group: "TEAM", external: true })
       // Goal-settings — same audience as Team management. Server-side per-row
       // permission still enforces who can actually write (leader/chief/HR-staff).
       items.push({ href: "/mal-innstillinger", title: "Mål-innstillinger", icon: <Target className="h-4 w-4" />, group: "TEAM" })
@@ -815,6 +820,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                   onSelect={() => {
                     setCommandOpen(false)
                     if (item.external && item.onClick) item.onClick()
+                    else if (item.external) window.open(item.href, "_blank", "noopener,noreferrer")
                     else if (item.href !== "#") router.push(item.href)
                   }}
                 >
