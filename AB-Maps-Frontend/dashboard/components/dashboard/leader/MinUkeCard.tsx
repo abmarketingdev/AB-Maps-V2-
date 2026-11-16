@@ -51,7 +51,7 @@ function view(d: DayCell): View {
   if (d.state === "no_show") {
     return d.not_worked
       ? { tone: "red", label: "Ikke jobbet", center: fmtNum(doors), progress: prog, dashed: false, detail: `${fmtNum(doors)}${of} dører · under ${NOT_WORKED_DOORS}`, big: fmtNum(doors), of: ofGoal, line: null, sub: `Under ${NOT_WORKED_DOORS} dører` }
-      : { tone: "red", label: "Ikke møtt", center: "✕", progress: 1, dashed: false, detail: "Satt av salgssjefen", big: null, of: null, line: "Satt av salgssjefen", sub: null }
+      : { tone: "red", label: "Ikke møtt", center: "✕", progress: 1, dashed: false, detail: "Satt av salgslederen", big: null, of: null, line: "Satt av salgslederen", sub: null }
   }
   if (d.state === "today") {
     const left = goal !== null ? Math.max(0, goal - doors) : null
@@ -183,7 +183,7 @@ export function MinUkeCard({ api = ownCalendarApi }: { api?: OwnCalendarApi }) {
         </div>
       )}
       {week && !week.person && (
-        <p className="mt-3 text-[13px] text-ab-fg-2">Ingen vakter planlagt ennå. Salgssjefen legger inn arbeidsdagene dine.</p>
+        <p className="mt-3 text-[13px] text-ab-fg-2">Ingen vakter planlagt ennå. Salgslederen legger inn arbeidsdagene dine.</p>
       )}
       {week?.person && (
         <ol ref={rowRef} className="-mx-4 mt-3 flex snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-5 sm:scroll-px-5 sm:px-5 md:mx-0 md:grid md:grid-cols-6 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden">
@@ -239,7 +239,7 @@ export function MinUkeCard({ api = ownCalendarApi }: { api?: OwnCalendarApi }) {
               onSendMove={(to, reason) => run(async () => {
                 if (!cell.shift_id) return
                 await api.requestMove(cell.shift_id, to, reason)
-                setSentText(`Forespørselen er sendt. Du får svar fra salgssjefen i kalenderen. ${DAY_LONG[weekdayIndex(to)]} ${Number(to.slice(8))}.${Number(to.slice(5, 7))} vises som byttedag.`)
+                setSentText(`Forespørselen er sendt. Du får svar fra salgslederen i kalenderen. ${DAY_LONG[weekdayIndex(to)]} ${Number(to.slice(8))}.${Number(to.slice(5, 7))} vises som byttedag.`)
                 setMode("sent"); setChosen(null)
                 await load()
               })}

@@ -158,7 +158,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
     if (nextShift) {
       return { label: "Du er fri i dag, neste vakt", date: cap(longDate(nextShift.date)), sub: goalText(nextShift), open: nextShift.date, goals: nextShift.goals }
     }
-    return { label: "Ingen planlagte vakter", date: "Ingen vakt", sub: "Salgssjefen legger inn arbeidsdagene dine.", open: null, goals: null }
+    return { label: "Ingen planlagte vakter", date: "Ingen vakt", sub: "Salgslederen legger inn arbeidsdagene dine.", open: null, goals: null }
   }, [todayCell, nextShift, today])
   const [mobWeek, setMobWeek] = React.useState(0)
 
@@ -222,7 +222,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
     run(async () => {
       if (!cell?.shift_id) return
       await api.requestMove(cell.shift_id, toDate, reason)
-      setSentText(`Forespørselen er sendt. Du får svar fra salgssjefen her. ${cap(longDate(toDate))} vises som byttedag i kalenderen.`)
+      setSentText(`Forespørselen er sendt. Du får svar fra salgslederen her. ${cap(longDate(toDate))} vises som byttedag i kalenderen.`)
       setMode("sent")
       setChosen(null)
       await load()
@@ -340,7 +340,7 @@ export function MinKalenderView({ api = ownCalendarApi, fallbackName = "" }: Min
 
         {person === null && (
           <div role="status" className="flex items-center gap-2 rounded-[14px] border border-ab-line bg-ab-elevated px-4 py-3 text-[13px] text-ab-fg-2">
-            <CalendarDays className="h-4 w-4 shrink-0" /> Ingen vakter planlagt ennå. Salgssjefen legger inn arbeidsdagene dine.
+            <CalendarDays className="h-4 w-4 shrink-0" /> Ingen vakter planlagt ennå. Salgslederen legger inn arbeidsdagene dine.
           </div>
         )}
 

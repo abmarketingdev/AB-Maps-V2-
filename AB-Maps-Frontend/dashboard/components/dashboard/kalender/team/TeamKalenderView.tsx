@@ -367,7 +367,7 @@ export function TeamKalenderView() {
         </div>
 
         {teamsError && <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-ab-line bg-ab-elevated p-4 text-[13px]"><AlertTriangle className="h-4 w-4 text-[#B91C1C]" /> {teamsError} <Btn2 tone={GREY_BTN} className="min-h-[36px]" onClick={loadTeams}>Prøv igjen</Btn2></div>}
-        {teams && teams.teams.length === 0 && <div className="rounded-[14px] border border-ab-line bg-ab-elevated p-5 text-[13px] text-ab-fg-2">Du er ikke salgssjef eller teamleder for noe team ennå. Teamene settes i HR.</div>}
+        {teams && teams.teams.length === 0 && <div className="rounded-[14px] border border-ab-line bg-ab-elevated p-5 text-[13px] text-ab-fg-2">Du er ikke salgsleder eller teamleder for noe team ennå. Teamene settes i HR.</div>}
 
         {/* KPIs */}
         {(grid || gridLoading) && (
@@ -413,7 +413,7 @@ export function TeamKalenderView() {
                 />
               )}
               <div className="border-t border-ab-line-1 px-[18px] py-3 text-[12px] text-ab-fg-3 dark:border-[#222428]">
-                {past ? `Uke ${isoWeek(weekStart)} er gjennomført. Klikk en dag for å se resultatet${canEdit ? " eller markere ikke møtt" : ""}.` : canEdit ? "Klikk en tom dag for å legge inn vakt. Klikk en vakt for å justere dagsmålet eller fjerne den." : "Kun lesing: salgssjefen for teamet planlegger."}
+                {past ? `Uke ${isoWeek(weekStart)} er gjennomført. Klikk en dag for å se resultatet${canEdit ? " eller markere ikke møtt" : ""}.` : canEdit ? "Klikk en tom dag for å legge inn vakt. Klikk en vakt for å justere dagsmålet eller fjerne den." : "Kun lesing: salgslederen for teamet planlegger."}
               </div>
             </div>
 

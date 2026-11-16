@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/lib/auth/ProtectedRoute";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 // Role-branched dashboard entry (2026-08-06 — 3-dashboard model).
-//   admin / superuser → AdminDashboard (Salgssjefer hierarchical grouping)
+//   admin / superuser → AdminDashboard (Salgsledere hierarchical grouping)
 //   sales chief / manager / team lead → SalgslederDashboard (flat teams they own)
 //   employee → redirect to /employee (PromoterDashboard)
 function DashbordSwitch() {

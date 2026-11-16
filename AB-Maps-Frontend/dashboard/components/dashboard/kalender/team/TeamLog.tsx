@@ -12,7 +12,7 @@ import { Avatar } from "./Avatar"
 
 const KIND: Record<string, { label: string; cls: string }> = {
   promotor: { label: "Promotør", cls: "bg-[#EFF6FF] text-[#1D4ED8] dark:bg-[#0E1A33] dark:text-[#93C5FD]" },
-  salgssjef: { label: "Salgssjef", cls: "bg-[#ECFDF5] text-[#047857] dark:bg-[#0F2417] dark:text-[#86EFAC]" },
+  salgssjef: { label: "Salgsleder", cls: "bg-[#ECFDF5] text-[#047857] dark:bg-[#0F2417] dark:text-[#86EFAC]" },
   admin: { label: "Admin", cls: "bg-[#F5F3FF] text-[#6D28D9] dark:bg-[#1E1A3A] dark:text-[#C4B5FD]" },
   leder: { label: "Teamleder", cls: "bg-ab-subtle text-ab-fg-2" },
 }

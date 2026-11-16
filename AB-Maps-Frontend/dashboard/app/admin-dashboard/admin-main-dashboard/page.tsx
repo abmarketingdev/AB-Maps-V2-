@@ -1536,7 +1536,7 @@ const AdminMainDashboard: React.FC = () => {
                       onChange={handleEditFormChange}
                       className="rounded border-gray-300 h-4 w-4 text-blue-600 focus:ring-blue-500"
                     />
-                    Salgssjef
+                    Salgsleder
                   </label>
                   <p className="text-xs text-gray-500 pl-6">
                     Gjelder den tilknyttede innloggingen når den finnes; ellers kan serveren godta verdien, men den har ingen effekt før en konto er koblet til.
@@ -1626,7 +1626,7 @@ const AdminMainDashboard: React.FC = () => {
                       onChange={handleEditFormChange}
                       className="rounded border-gray-300 h-4 w-4 text-green-600 focus:ring-green-500"
                     />
-                    Salgssjef
+                    Salgsleder
                   </label>
                   <p className="text-xs text-gray-500 pl-6">
                     Gjelder den tilknyttede innloggingen når den finnes; ellers kan serveren godta verdien, men den har ingen effekt før en konto er koblet til.
@@ -1685,10 +1685,10 @@ const AdminMainDashboard: React.FC = () => {
                       onChange={handleEditFormChange}
                       className="rounded border-gray-300 h-4 w-4 text-purple-600 focus:ring-purple-500"
                     />
-                    Salgssjef
+                    Salgsleder
                   </label>
                   <p className="text-xs text-gray-500 pl-6">
-                    Lagres på brukerkontoen (brukes i QC-verktøy ved varsling til salgssjefer).
+                    Lagres på brukerkontoen (brukes i QC-verktøy ved varsling til salgsledere).
                   </p>
                 </div>
                 {editFormError && <div className="bg-red-100 text-red-700 px-3 py-2 rounded text-sm text-center">{editFormError}</div>}
@@ -2516,7 +2516,7 @@ function UserRow({
         </span>
         {user.is_sales_chief && (
           <span className="inline-flex items-center h-6 px-1.5 rounded-md text-[11px] font-medium border border-ab-warning/25 bg-ab-warning/10 text-ab-warning">
-            Salgssjef
+            Salgsleder
           </span>
         )}
       </div>

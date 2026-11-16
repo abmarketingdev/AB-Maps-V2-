@@ -194,10 +194,10 @@ export function DayDetail({
           {busy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : confirm ? `Ja, fjern vakten ${day} ${date}` : "Fjern vakt"}
         </Btn2>
       )}
-      {!editable && cell.shift_id && <div className="text-[12px] text-ab-fg-3">Kun lesing. Salgssjefen for teamet endrer kalenderen.</div>}
+      {!editable && cell.shift_id && <div className="text-[12px] text-ab-fg-3">Kun lesing. Salgslederen for teamet endrer kalenderen.</div>}
       {editable && cell.shift_id && !cell.shift_editable && (
         <div className="rounded-[12px] border border-ab-line bg-ab-subtle px-3.5 py-3 text-[13px] text-ab-fg-2 dark:bg-[#1C1D21]">
-          Vakten er planlagt av <b className="text-ab-fg">{cell.shift_team_name || "et annet team"}</b>. Bare salgssjefen der (eller en admin) kan endre eller fjerne den.
+          Vakten er planlagt av <b className="text-ab-fg">{cell.shift_team_name || "et annet team"}</b>. Bare salgslederen der (eller en admin) kan endre eller fjerne den.
         </div>
       )}
     </>
@@ -248,7 +248,7 @@ export function RequestsList({ requests, loading, editable, actions, onPickTeam,
             </div>
           </div>
         )}
-        {isOpen && !editable && <span className="text-[12px] text-ab-fg-3">Venter på salgssjefen</span>}
+        {isOpen && !editable && <span className="text-[12px] text-ab-fg-3">Venter på salgslederen</span>}
         {!isOpen && (
           <span className={cn("text-[12px] font-semibold", r.status === "godkjent" ? "text-[#15803D] dark:text-[#5BE0A3]" : "text-ab-fg-2")}>
             {r.status === "godkjent" ? "Godkjent, vakten er flyttet" : r.status === "avslatt" ? `Avslått${r.decline_reason ? `: ${r.decline_reason}` : ", vakten står"}` : "Trukket tilbake"}

@@ -330,7 +330,7 @@ function DayBody(p: MinPanelProps) {
       )}
       {cell.state === "no_show" && (cell.not_worked
         ? <Note tone="red" title="Ikke jobbet" text="Under 50 dører denne dagen, så dagen telles som ikke jobbet. Det settes automatisk når dagen er over." />
-        : <Note tone="red" title="Markert som ikke møtt" text="Salgssjefen har satt dette. Snakk med salgssjefen hvis det er feil." />)}
+        : <Note tone="red" title="Markert som ikke møtt" text="Salgslederen har satt dette. Snakk med salgslederen hvis det er feil." />)}
       {cell.state === "worked" && cell.goals && (
         <span className="text-[13px] text-ab-fg-2">{goalText(cell)}</span>
       )}
@@ -339,7 +339,7 @@ function DayBody(p: MinPanelProps) {
           <Note
             tone="amber"
             title={`Du har bedt om å bytte til ${longDate(pending.to_date)}`}
-            text="Venter på svar fra salgssjefen. Til da står vakten som før."
+            text="Venter på svar fra salgslederen. Til da står vakten som før."
           />
           {pending.reason && <span className="text-[13px] text-ab-fg-2">Din grunn: «{pending.reason}»</span>}
           <Btn className="h-[46px] md:h-[46px]" disabled={p.busy} onClick={() => p.onCancelPending(pending.id)}>
@@ -348,7 +348,7 @@ function DayBody(p: MinPanelProps) {
         </>
       )}
       {pendingTo && (
-        <Note tone="amber" title={`Byttedag for ${dayShort(pendingTo.from_date)}`} text="Blir en vakt når salgssjefen godkjenner byttet." />
+        <Note tone="amber" title={`Byttedag for ${dayShort(pendingTo.from_date)}`} text="Blir en vakt når salgslederen godkjenner byttet." />
       )}
       {declined && (
         <Note
@@ -510,9 +510,9 @@ function MoveBody(p: MinPanelProps) {
           />
         )}
       </div>
-      <span className="text-[12px] leading-[1.5] text-ab-fg-2">Salgssjefen må godkjenne byttet. Til da står den opprinnelige vakten.</span>
+      <span className="text-[12px] leading-[1.5] text-ab-fg-2">Salgslederen må godkjenne byttet. Til da står den opprinnelige vakten.</span>
       <Btn variant="primary" className="h-12 md:h-12" disabled={!ok} onClick={() => to && p.onSendMove(to, reasonText)}>
-        {p.busy ? "Sender…" : ok ? "Send bytte til salgssjef" : "Velg ny dag først"}
+        {p.busy ? "Sender…" : ok ? "Send bytte til salgsleder" : "Velg ny dag først"}
       </Btn>
     </>
   )
@@ -525,7 +525,7 @@ function GoalBody(p: MinPanelProps) {
   if (!cell) return null
   const fast =
     defaults.doors === null && defaults.givers === null
-      ? "Salgssjefen har ikke satt et fast mål."
+      ? "Salgslederen har ikke satt et fast mål."
       : `Fast mål er ${fmtNum(defaults.doors)} ${doorsWord(defaults.doors)} og ${fmtNum(defaults.givers)} ${giversWord(defaults.givers)}.`
   return (
     <>

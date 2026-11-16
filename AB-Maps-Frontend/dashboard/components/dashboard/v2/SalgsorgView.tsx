@@ -1,8 +1,8 @@
 "use client"
 
 /**
- * Salgsorganisasjon on maps (S-ORG, kunden 11.11) — replaces the old /teams list.
- * Port of the HR «Salgsorganisasjon» page (City → Salgssjef → Team → Teamleder +
+ * Organisasjon on maps (S-ORG, kunden 11.11) — replaces the old /teams list.
+ * Port of the HR «Salgsorganisasjon» page (City → Salgsleder → Team → Teamleder +
  * selgere) in the maps dark look, from the same HR endpoint (/api/hr/teams/org/).
  *
  * Access is decided by HR, never guessed here: super admins see the whole org, a
@@ -120,7 +120,7 @@ export function SalgsorgView() {
         <div className="mx-auto max-w-lg rounded-2xl border border-ab-line bg-ab-elevated p-8 text-center" data-testid="org-no-access">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-ab-hover border border-ab-line"><Lock className="h-5 w-5 text-ab-fg-3" /></div>
           <h1 className="text-xl font-bold text-ab-fg">Ingen tilgang</h1>
-          <p className="mt-2 text-sm text-ab-fg-3">Bare salgssjefer og admin har tilgang til salgsorganisasjonen.</p>
+          <p className="mt-2 text-sm text-ab-fg-3">Bare salgsledere og admin har tilgang til organisasjonen.</p>
         </div>
       </div>
     )
@@ -141,9 +141,9 @@ export function SalgsorgView() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-1">
             <p className="text-xs uppercase tracking-widest text-ab-fg-4">Organisasjon</p>
-            <h1 className="text-2xl font-bold text-ab-fg sm:text-3xl">Salgsorganisasjon</h1>
+            <h1 className="text-2xl font-bold text-ab-fg sm:text-3xl">Organisasjon</h1>
             <p className="text-sm text-ab-fg-3">
-              {tree && !tree.sees_all ? "Dine team, fordelt på byer" : "Salgssjefer, team og selgere fordelt på byer"}
+              {tree && !tree.sees_all ? "Dine team, fordelt på byer" : "Salgsledere, team og selgere fordelt på byer"}
             </p>
           </div>
           <div className="relative w-full sm:w-64">
@@ -176,7 +176,7 @@ export function SalgsorgView() {
 
         {/* KPI */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {([["Salgssjefer", kpi.sjefer], ["Team", kpi.team], ["Selgere", kpi.selgere]] as const).map(([l, v]) => (
+          {([["Salgsledere", kpi.sjefer], ["Team", kpi.team], ["Selgere", kpi.selgere]] as const).map(([l, v]) => (
             <div key={l} className="rounded-xl border border-ab-line bg-ab-elevated p-4">
               <p className="text-xs text-ab-fg-3">{l}</p>
               <p className="mt-1 text-2xl font-bold text-ab-fg">{tree ? v : "–"}</p>
@@ -191,12 +191,12 @@ export function SalgsorgView() {
         <div className="flex items-center gap-2 rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5 text-sm text-ab-fg-3">
           <Info className="h-4 w-4 shrink-0 text-blue-400" />
           {anyEditable
-            ? "Endringer i medlemmer og teamledere lagres i HR. Nye team, satser og salgssjef endres i HR-systemet."
+            ? "Endringer i medlemmer og teamledere lagres i HR. Nye team, satser og salgsleder endres i HR-systemet."
             : "Team administreres i HR-systemet."}
         </div>
 
         {state === "loading" && !tree ? (
-          <div className="rounded-2xl border border-ab-line bg-ab-elevated"><PanelLoading label="Laster salgsorganisasjonen…" /></div>
+          <div className="rounded-2xl border border-ab-line bg-ab-elevated"><PanelLoading label="Laster organisasjonen…" /></div>
         ) : state === "error" ? (
           <div className="rounded-2xl border border-ab-line bg-ab-elevated"><PanelError onRetry={() => void load()} /></div>
         ) : cards.length === 0 ? (
@@ -235,10 +235,10 @@ function ChiefCard({ cityLabel, chief, teams, open, onToggle, openT, onToggleTea
           <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-lg font-semibold text-ab-fg">{chief.name}</span>
-              {real && <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300"><Crown className="h-3 w-3" />Salgssjef</span>}
+              {real && <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300"><Crown className="h-3 w-3" />Salgsleder</span>}
               <span className="flex items-center gap-1 rounded-full bg-ab-hover px-2.5 py-0.5 text-xs font-semibold text-ab-fg-2"><MapPin className="h-3 w-3" />{cityLabel}</span>
             </div>
-            <p className="text-xs text-ab-fg-3">{real ? `AB ID ${chief.ab_id ?? "mangler"}` : "Team som ikke har fått en salgssjef ennå"}</p>
+            <p className="text-xs text-ab-fg-3">{real ? `AB ID ${chief.ab_id ?? "mangler"}` : "Team som ikke har fått en salgsleder ennå"}</p>
           </div>
         </div>
         <div className="flex gap-7">
@@ -308,7 +308,7 @@ function TeamRow({ team: t, chief, open, onToggle, onEdit }: {
               <span className="truncate text-xs text-blue-300">Teamleder {t.leader.name ?? "Ukjent person"}</span>
             ) : (
               <span className="truncate text-xs text-amber-300">
-                {t.sales_chief_id ? `Ingen teamleder, rapporterer direkte til ${firstName(chief.name)}` : "Ingen teamleder og ingen salgssjef"}
+                {t.sales_chief_id ? `Ingen teamleder, rapporterer direkte til ${firstName(chief.name)}` : "Ingen teamleder og ingen salgsleder"}
               </span>
             )}
           </span>
@@ -377,7 +377,7 @@ function MemberRow({ m }: { m: OrgMember }) {
         <p className="truncate text-sm font-medium text-ab-fg">{m.name ?? "Ukjent person"}</p>
         <p className="text-xs text-ab-fg-4">AB ID {m.ab_id ?? "mangler"}</p>
       </div>
-      {m.is_chief_duplicate && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300">Salgssjef</span>}
+      {m.is_chief_duplicate && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300">Salgsleder</span>}
       {m.type === "leder" && !m.is_chief_duplicate && <span className="rounded-full bg-ab-hover px-2 py-0.5 text-[11px] font-semibold text-ab-fg-3">Leder</span>}
     </li>
   )

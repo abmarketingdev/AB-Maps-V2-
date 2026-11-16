@@ -380,7 +380,7 @@ export function AnalyticsView() {
         {/* Header */}
         <motion.div initial={reduced ? false : { opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-widest text-ab-fg-4 mb-1">Analyse · Observabilitet{isSalesChief && !isAdmin ? " · Salgssjef" : ""}</p>
+            <p className="text-xs uppercase tracking-widest text-ab-fg-4 mb-1">Analyse · Observabilitet{isSalesChief && !isAdmin ? " · Salgsleder" : ""}</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-ab-fg">Analytics</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -569,7 +569,7 @@ function TeamTab({ startStr, endStr }: { startStr: string; endStr: string }) {
           {campaignOpts.map(c => <option key={c.id} value={c.id} className="bg-ab-overlay">{c.name}</option>)}
         </select>
         <select value={chiefFilter} onChange={e => setChiefFilter(e.target.value)} className={selCls}>
-          <option value="" className="bg-ab-overlay">Alle salgssjefer</option>
+          <option value="" className="bg-ab-overlay">Alle salgsledere</option>
           {chiefOpts.map(c => <option key={c.id} value={c.id} className="bg-ab-overlay">{c.name}</option>)}
         </select>
         <span className="text-xs text-ab-fg-3 ml-1">{filtered.length} team</span>
@@ -1551,7 +1551,7 @@ function EpostloggTab({ startStr, endStr }: { startStr: string; endStr: string }
               {EMAIL_KIND_CHIPS.map(c => <button key={c.k} onClick={() => setKind(c.k)} className={cn("cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-all", kind === c.k ? "bg-ab-active text-ab-fg" : "text-ab-fg-3 hover:text-ab-fg-2")}>{c.label}</button>)}
             </div>
             <select value={chiefId} onChange={e => setChiefId(e.target.value)} className="h-8 max-w-[190px] rounded-lg bg-ab-elevated border border-ab-line px-2 text-xs text-ab-fg outline-none focus:border-blue-500/50 [color-scheme:dark]">
-              <option value="" className="bg-ab-overlay">Alle salgssjefer</option>
+              <option value="" className="bg-ab-overlay">Alle salgsledere</option>
               {chiefs.map(c => <option key={c.id} value={c.id} className="bg-ab-overlay">{c.name}</option>)}
             </select>
           </div>

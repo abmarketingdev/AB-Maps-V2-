@@ -26,14 +26,14 @@ const ROLES: RoleCard[] = [
   {
     role: "admin",
     title: "Admin / Superuser",
-    subtitle: "Hierarchical Salgssjefer view — new 2026-08-06",
+    subtitle: "Hierarchical Salgsledere view — new 2026-08-06",
     personName: "Lars Andersen",
     destination: "/dashbord",
     color: "#8B5CF6",
     Icon: Shield,
     isNew: true,
     bullets: [
-      "SALGSSJEFER hierarchical grouping (chief → teams → promoters)",
+      "SALGSLEDERE hierarchical grouping (chief → teams → promoters)",
       "MÅL MÅNED + MÅL UKE — org-wide aggregate",
       "Aggregate progress bar per chief",
       "LØNN + TOPPLISTER — global scope",

@@ -3,7 +3,7 @@
 /**
  * Team detail sheet (M-TEAM, kunden 11.11): read-only team view plus the sales chief's
  * structure controls on their OWN teams (members, «Flytt til team», leader /
- * co-leader). Opened from Salgsorganisasjon (S-ORG). HR is the writer and says per
+ * co-leader). Opened from Organisasjon (S-ORG). HR is the writer and says per
  * team in `can_restructure` whether the caller may; the buttons only show then.
  */
 
@@ -19,7 +19,7 @@ import {
 import { PanelLoading } from "./_states"
 
 const NO_CITY = "Uten by"
-const NO_CHIEF = "Uten salgssjef"
+const NO_CHIEF = "Uten salgsleder"
 
 // ─── Detail sheet ────────────────────────────────────────────────────────────
 // Read-only for everyone, plus structure controls when HR says `can_restructure`
@@ -131,7 +131,7 @@ export function TeamDetailSheet({ team, onClose, onChanged }: { team: TeamDetail
             <div className="p-6 space-y-6">
               <div className="space-y-2">
                 <Field label="Kampanje" value={team.campaign?.name || "Ingen kampanje"} />
-                <Field label="Salgssjef" value={team.sales_chief?.name || NO_CHIEF} />
+                <Field label="Salgsleder" value={team.sales_chief?.name || NO_CHIEF} />
                 <LeadField field="leader_id" label="Teamleder" person={team.owner} />
                 <LeadField field="co_leader_id" label="Nestleder" person={team.co_leader} />
               </div>
@@ -185,7 +185,7 @@ export function TeamDetailSheet({ team, onClose, onChanged }: { team: TeamDetail
               </div>
 
               <p className="text-xs text-ab-fg-4">
-                {canEdit ? "Nye team, satser og salgssjef endres i HR-systemet." : "Endringer i team gjøres i HR-systemet."}
+                {canEdit ? "Nye team, satser og salgsleder endres i HR-systemet." : "Endringer i team gjøres i HR-systemet."}
               </p>
             </div>
           </motion.div>

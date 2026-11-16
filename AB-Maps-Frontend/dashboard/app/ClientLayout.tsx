@@ -103,7 +103,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/analytics": "Analytics",
   "/admin/tasks": "Tildel oppgaver",
   "/uploaded-addresses": "Legg til adresse",
-  "/teams": "Salgsorganisasjon",
+  "/teams": "Organisasjon",
   "/mal-innstillinger": "Mål-innstillinger",
   "/kalender": "Kalender",
 }
@@ -368,7 +368,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // Role-based launch (this layout renders for manager/admin/superuser -> MANAGER map).
   const openAbMaps = () => launchMap(user, { campaignId: currentCampaignId() })
 
-  // Salgsorganisasjon (S-ORG): HR says who may open it (super admins + sales chiefs by
+  // Organisasjon (S-ORG): HR says who may open it (super admins + sales chiefs by
   // team data). Asked once per login and cached for the session; hidden on any error.
   const [orgAllowed, setOrgAllowed] = useState(false)
   useEffect(() => {
@@ -408,9 +408,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       { href: "/campaigns",            title: "Kampanje",             icon: <MapPinned className="h-4 w-4" />, group: "TERRITORIUM" },
     )
     // Campaign teams — managers (own teams), sales chiefs + admins (all teams).
-    // Salgsorganisasjon — only super admins and sales chiefs (HR `org-access`, S-ORG).
+    // Organisasjon — only super admins and sales chiefs (HR `org-access`, S-ORG).
     if (orgAllowed) {
-      items.push({ href: "/teams", title: "Salgsorganisasjon", icon: <Users className="h-4 w-4" />, group: "TEAM" })
+      items.push({ href: "/teams", title: "Organisasjon", icon: <Users className="h-4 w-4" />, group: "TEAM" })
     }
     if (isStaff || isSuperuser || isSalesChief) {
       // Rekruttering (M2, kunden 12.11) — the recruitment portal on its own domain, same

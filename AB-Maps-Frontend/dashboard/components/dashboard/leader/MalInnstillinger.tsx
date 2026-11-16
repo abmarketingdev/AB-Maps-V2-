@@ -488,7 +488,7 @@ export function MalInnstillinger() {
                 Sett mål for <span className="italic text-aurora-amber">alle team og prosjekter</span>
               </h1>
               <p className="mt-2 text-sm text-ab-fg-3">
-                {t("Månedlige og ukentlige mål — grupperte per salgssjef, med separat seksjon for prosjekter.")}
+                {t("Månedlige og ukentlige mål — grupperte per salgsleder, med separat seksjon for prosjekter.")}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -514,7 +514,7 @@ export function MalInnstillinger() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("Søk etter team, salgssjef eller prosjekt…")}
+                placeholder={t("Søk etter team, salgsleder eller prosjekt…")}
                 aria-label={t("Søk")}
                 className="w-full rounded-xl border border-ab-line bg-white/[0.03] pl-9 pr-9 py-2 text-sm text-ab-fg placeholder:text-ab-fg-4 focus:border-aurora-amber/50 focus:outline-none"
               />
@@ -557,7 +557,7 @@ export function MalInnstillinger() {
 
         {/* Teams — grouped by sales chief */}
         <div className="space-y-8">
-          <SectionHeader label={t("Teams — gruppert per salgssjef")} accent="teamleder" />
+          <SectionHeader label={t("Teams — gruppert per salgsleder")} accent="teamleder" />
 
           {loading && (
             <div className="rounded-2xl border border-dashed border-ab-line-1 bg-white/[0.02] px-6 py-12 text-center text-xs text-ab-fg-3">
@@ -614,7 +614,7 @@ export function MalInnstillinger() {
               <div className="flex items-center gap-2 pl-4">
                 <Users className="h-3.5 w-3.5 text-ab-fg-4" />
                 <p className="text-[11px] uppercase tracking-widest text-ab-fg-3 font-semibold">
-                  Ingen salgssjef
+                  Ingen salgsleder
                 </p>
                 <span className="text-[10px] text-ab-fg-4">· {groupedTeams.noChief.length}</span>
               </div>

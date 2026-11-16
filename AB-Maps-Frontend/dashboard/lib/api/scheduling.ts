@@ -142,7 +142,7 @@ export interface SchedulingApi {
 
 export const ROLE_LABEL: Record<string, string> = {
   admin: "Admin",
-  sales_chief: "Salgssjef",
+  sales_chief: "Salgsleder",
   leader: "Teamleder",
   co_leader: "Nestleder",
 }
@@ -286,7 +286,7 @@ function mapRequest(r: WireRequest): MoveRequest {
   }
 }
 
-const MEMBER_ROLE: Record<string, string> = { leader: "Teamleder", co_leader: "Nestleder", sales_chief: "Salgssjef" }
+const MEMBER_ROLE: Record<string, string> = { leader: "Teamleder", co_leader: "Nestleder", sales_chief: "Salgsleder" }
 
 // ── Live adapter ────────────────────────────────────────────────────────────
 

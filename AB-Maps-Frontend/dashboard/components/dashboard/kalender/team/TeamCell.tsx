@@ -139,7 +139,7 @@ export const TeamCell = React.memo(function TeamCell({ cell, name, today, editab
       body = (
         <>
           <span className="text-[13px] font-semibold text-[#B91C1C] dark:text-[#FCA5A5]">{cell.not_worked ? "Ikke jobbet" : "Ikke møtt"}</span>
-          <span className="text-[11px] text-ab-fg-2">{cell.not_worked ? `${a?.doors ?? 0} ${doorsWord(a?.doors ?? 0)}, under 50` : a && a.doors ? `${a.doors} ${doorsWord(a.doors)}` : "Satt av salgssjef"}</span>
+          <span className="text-[11px] text-ab-fg-2">{cell.not_worked ? `${a?.doors ?? 0} ${doorsWord(a?.doors ?? 0)}, under 50` : a && a.doors ? `${a.doors} ${doorsWord(a.doors)}` : "Satt av salgsleder"}</span>
         </>
       )
       break

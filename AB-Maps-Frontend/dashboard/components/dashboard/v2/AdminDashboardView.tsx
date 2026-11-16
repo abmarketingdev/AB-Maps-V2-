@@ -122,7 +122,7 @@ function RoleBadge({ role, dept, salesChief }: { role: Role; dept?: Dept; salesC
         <m.Icon className="h-3 w-3" />{m.label}
       </span>
       {showDept && <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", DEPT_STYLE[dept!].bg)} style={{ color: DEPT_STYLE[dept!].color }}>{DEPT_STYLE[dept!].label}</span>}
-      {salesChief && <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-400"><Star className="h-3 w-3" /> Salgssjef</span>}
+      {salesChief && <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-400"><Star className="h-3 w-3" /> Salgsleder</span>}
     </div>
   )
 }
@@ -624,7 +624,7 @@ function UserModals({ modal, onClose, onChangeRole, onDelete, onChanged }: {
               thumb had no `left`, so it drifted outside the track. Proper switch instead. */}
           {role === "manager" && (
             <div className="flex items-center justify-between rounded-xl border border-ab-line bg-ab-elevated px-3.5 py-2.5">
-              <label htmlFor="user-sales-chief" className="flex cursor-pointer items-center gap-2 text-sm text-ab-fg-2"><Star className="h-3.5 w-3.5 text-amber-400" /> Salgssjef</label>
+              <label htmlFor="user-sales-chief" className="flex cursor-pointer items-center gap-2 text-sm text-ab-fg-2"><Star className="h-3.5 w-3.5 text-amber-400" /> Salgsleder</label>
               <button
                 id="user-sales-chief"
                 type="button"

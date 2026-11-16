@@ -350,7 +350,7 @@ export function setTeamLeaders(teamId: string, body: { leader_id?: string | null
   return structWrite(`/api/hr/teams/${teamId}/leaders/`, 'PATCH', body, 'Kunne ikke endre leder');
 }
 
-// ─── Salgsorganisasjon (S-ORG, kunden 11.11) ──────────────────────────────────
+// ─── Organisasjon (S-ORG, kunden 11.11) ──────────────────────────────────
 // Same HR endpoint as the HR «Salgsorganisasjon» page: GET /api/hr/teams/org/.
 // On maps HR answers only for super admins (whole org) and sales chiefs by team data
 // (their own teams); everyone else gets 403 `no_org_access`. No provisjon on maps.
@@ -361,7 +361,7 @@ export const ORG_WARNING_LABEL: Record<OrgWarning, string> = {
   mangler_by: 'Mangler by',
   mangler_teamleder: 'Mangler teamleder',
   lederprovisjon_ikke_satt: 'Lederprovisjon ikke satt',
-  salgssjef_som_selger: 'Salgssjef står som selger',
+  salgssjef_som_selger: 'Salgsleder står som selger',
 };
 export const ORG_UTEN_BY = 'uten_by';
 

@@ -27,7 +27,7 @@ import { type TeamNode } from "./dummyData"
 // AdminDashboard (2026-08-06) — for admin / superuser only.
 // Route: /dashbord (dispatched from app/dashbord/page.tsx when isSuperuser).
 // Same MÅL + LØNN + Topplister + Sanntid sections as SalgslederDashboard,
-// but the Team section becomes a Salgssjefer grouped hierarchy so an org
+// but the Team section becomes a Salgsledere grouped hierarchy so an org
 // with 20 chiefs / 60 teams is scannable.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -288,7 +288,7 @@ export function AdminDashboard() {
   const totalChiefs = chiefGroups.filter((g) => g.chiefId !== null).length
 
   // Winning team badge — moved INSIDE SalesChiefPanel 2026-08-10 so each chief
-  // group gets its OWN "best team" badge (client ask: "for each salgssjef,
+  // group gets its OWN "best team" badge (client ask: "for each salgsleder,
   // their best team should have badge"), instead of one global winner.
 
   const onChiefExpand = (chiefId: string | null) => {
@@ -331,7 +331,7 @@ export function AdminDashboard() {
                 <span className="text-ab-fg-3">·</span>
                 <span className="inline-flex items-center gap-1">
                   <UsersIcon className="h-3.5 w-3.5 text-ab-fg-4" />
-                  <span className="font-mono text-ab-fg">{totalChiefs}</span> {t("salgssjefer")}
+                  <span className="font-mono text-ab-fg">{totalChiefs}</span> {t("salgsledere")}
                 </span>
                 <span className="text-ab-fg-3">·</span>
                 <span className="inline-flex items-center gap-1">
@@ -365,17 +365,17 @@ export function AdminDashboard() {
           </div>
 
           {/* Today's leaderboards — 2-col grid (doors + recruits) between
-              SANNTID and Salgssjefer hierarchy. */}
+              SANNTID and Salgsledere hierarchy. */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <TodayLeaderboardCard campaignId={campaignId} metric="doors" />
             <TodayLeaderboardCard campaignId={campaignId} metric="recruited" />
           </div>
 
-          {/* SALGSSJEFER — hierarchical grouping */}
+          {/* SALGSLEDERE — hierarchical grouping */}
           <div>
-            <SectionHeader label={t("Salgssjefer")} accent="teamleder" />
+            <SectionHeader label={t("Salgsledere")} accent="teamleder" />
             <p className="pb-2 pl-4 text-[11px] text-ab-fg-3">
-              {t("Klikk en salgssjef for å se teamene deres — klikk et team for å se promotørene")}
+              {t("Klikk en salgsleder for å se teamene deres — klikk et team for å se promotørene")}
             </p>
             <div className="space-y-3">
               {chiefGroups.length === 0 && (

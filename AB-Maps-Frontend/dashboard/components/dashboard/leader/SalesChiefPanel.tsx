@@ -27,7 +27,7 @@ function hexAlpha(hex: string, a: number) {
 }
 
 export interface ChiefGroup {
-  chiefId: string | null   // null = the "Ingen salgssjef" bucket
+  chiefId: string | null   // null = the "Ingen salgsleder" bucket
   chiefName: string        // "—" for the orphan bucket
   teams: TeamNode[]
 }
@@ -56,7 +56,7 @@ export function SalesChiefPanel({
   const [open, setOpen] = useState(initialOpen)
 
   // Winning team WITHIN this chief's roster — client asked (2026-08-10) for
-  // "for each salgssjef, their best team should have a badge", so we scope
+  // "for each salgsleder, their best team should have a badge", so we scope
   // the winner PER CHIEF here (not global). Uses recruits as primary metric
   // with doors as tiebreaker so fresh-month views (recruits=0) still pick a
   // meaningful leader based on activity.
@@ -160,7 +160,7 @@ export function SalesChiefPanel({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ab-fg-4">
-                {t("Salgssjef")}
+                {t("Salgsleder")}
               </p>
               <h3 className="font-instrument text-xl sm:text-2xl leading-none text-ab-fg">
                 {group.chiefName}
